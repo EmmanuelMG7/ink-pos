@@ -28,12 +28,22 @@
           <h1 class="mb-0 ms-2 text-center w-100">InkPOS</h1>
         </div>
         <form action="" method="post">
-          <input type="text" class="form-control mb-2" placeholder="Usuario" />
-          <input
-            type="text"
-            class="form-control mb-2"
-            placeholder="Contraseña"
-          />
+          <!-- 1. El token de seguridad CSRF -->
+          {% csrf_token %}
+      
+          <!-- 2. Mostrar el mensaje de error si el login falla -->
+          {% if error %}
+            <div class="alert alert-danger py-2 text-center" role="alert">
+              {{ error }}
+            </div>
+          {% endif %}
+
+          <!-- 3. Atributo name="usuario" añadido -->
+          <input type="text" name="usuario" class="form-control mb-2" placeholder="Usuario" required />
+          
+          <!-- 4. Atributo name="contrasena" y type="password" añadidos -->
+          <input type="password" name="contrasena" class="form-control mb-2" placeholder="Contraseña" required />
+          
           <button type="submit" class="btn btn-primary w-100">
             Iniciar Sesion
           </button>
