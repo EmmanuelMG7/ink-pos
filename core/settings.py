@@ -79,8 +79,8 @@ DATABASES = {
         'NAME': 'inkpos_db',
         'USER': 'postgres', 
         'PASSWORD': 'postgres', 
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'HOST': 'inkpos-postgresdb.eu1.netbird.services',
+        'PORT': '5325',
     }
 }
 
