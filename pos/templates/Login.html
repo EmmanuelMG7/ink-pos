@@ -21,34 +21,72 @@
     ></script>
   </head>
   <body class="bg-body">
+    
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      {% if error %}
+        <div
+          class="toast"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+          data-bs-autohide="true"
+          data-bs-delay="5000"
+        >
+          <div class="toast-header text-bg-danger">
+            <i class="bi bi-exclamation-diamond-fill me-2" style="font-size: large;"></i>
+            <strong class="me-auto text-white">Error</strong>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="toast"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="toast-body">{{ error }}</div>
+        </div>
+      {% endif %}
+    </div>
+
     <div class="d-flex justify-content-center align-items-center min-vh-100">
-      <div class="bg-primary-subtle p-3 rounded">
+      <div class="bg-body-tertiary p-4 rounded shadow-lg border border-secondary-subtle">
         <div class="d-flex w-100 align-items-center m-2">
-          <i class="bi bi-droplet-half" style="font-size: 2rem;"></i>
+          <i class="bi bi-droplet-half" style="font-size: 2rem"></i>
           <h1 class="mb-0 ms-2 text-center w-100">InkPOS</h1>
         </div>
-        <form action="" method="post">
-          <!-- 1. El token de seguridad CSRF -->
-          {% csrf_token %}
-      
-          <!-- 2. Mostrar el mensaje de error si el login falla -->
-          {% if error %}
-            <div class="alert alert-danger py-2 text-center" role="alert">
-              {{ error }}
-            </div>
-          {% endif %}
+        <form action="" method="post"> {% csrf_token %}
 
-          <!-- 3. Atributo name="usuario" añadido -->
-          <input type="text" name="usuario" class="form-control mb-2" placeholder="Usuario" required />
-          
-          <!-- 4. Atributo name="contrasena" y type="password" añadidos -->
-          <input type="password" name="contrasena" class="form-control mb-2" placeholder="Contraseña" required />
-          
+          <input
+            type="text"
+            name="usuario"
+            class="form-control mb-2"
+            placeholder="Usuario"
+            required
+          />
+
+          <input
+            type="password"
+            name="contrasena"
+            class="form-control mb-2"
+            placeholder="Contraseña"
+            required
+          />
+
           <button type="submit" class="btn btn-primary w-100">
             Iniciar Sesion
           </button>
         </form>
       </div>
     </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        const toastElList = document.querySelectorAll('.toast');
+        const toastList = [...toastElList].map(toastEl => {
+          const toast = new bootstrap.Toast(toastEl);
+          toast.show();
+          return toast;
+        });
+      });
+    </script>
   </body>
 </html>
