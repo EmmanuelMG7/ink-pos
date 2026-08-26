@@ -76,23 +76,40 @@
         {% endif %}
       </ul>
       <div class="dropstart d-flex">
-        <button class="btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <button
+          class="btn"
+          type="button"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
           A
-          <ul class="dropdown-menu">
-            <li>
-              <a class="dropdown-item" href="#">
-                <i class="bi bi-gear-fill me-2"></i>
-                Ajustes
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="#">
-                <i class="bi bi-door-open-fill me-2"></i>
-                Cerrar Sesion
-              </a>
-            </li>
-          </ul>
         </button>
+
+        <ul class="dropdown-menu">
+          <li>
+            <a class="dropdown-item d-flex align-items-center" href="#">
+              <i class="bi bi-gear-fill me-2"></i>
+              Ajustes
+            </a>
+          </li>
+
+          <li>
+            <form
+              action="{% url 'logout' %}"
+              method="post"
+              class="m-0 p-0 w-100"
+            >
+              {% csrf_token %}
+              <button
+                type="submit"
+                class="dropdown-item d-flex align-items-center border-0 bg-transparent text-start w-100"
+              >
+                <i class="bi bi-door-open-fill me-2"></i>
+                Cerrar Sesión
+              </button>
+            </form>
+          </li>
+        </ul>
       </div>
     </div>
   </div>
