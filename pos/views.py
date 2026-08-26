@@ -20,9 +20,9 @@ def Login(request):
             login(request, user)
             
             # Se comprueba el rol
-            if hasattr(user, 'empleado') and user.empleado.es_admin:
+            if user.is_staff:
                 # Si es admin, se envia al panel de admin
-                return redirect('gestion_facturas') 
+                return redirect('reporte_ventas') 
             else:
                 # Si es usuario normal, se envia a panel de ventas
                 return redirect('ventas')
@@ -63,6 +63,9 @@ def reporte_ventas_view(request):
     # Lógica para reporte de ventas
     return render(request, "admin/Reporte_Venta.html")
 
+@login_required
+def gestion_productos(request):
+    return render (request, "admin/Gestion_Productos.html")
 
 # Por si vamos a utilizar JavaScript
 # @login_required

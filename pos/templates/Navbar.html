@@ -17,6 +17,40 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        {% if user.is_staff %}
+        <li class="nav-item">
+          <a
+            class="nav-link {% if request.resolver_match.url_name == 'reporte_ventas' %}active{% endif %}"
+            aria-current="page"
+            href="{% url 'reporte_ventas' %}"
+            >Reporte Ventas</a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link {% if request.resolver_match.url_name == 'gestion_productos' %}active{% endif %}"
+            aria-current="page"
+            href="{% url 'gestion_productos' %}"
+            >Gestion Productos</a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link {% if request.resolver_match.url_name == 'gestion_facturas' %}active{% endif %}"
+            aria-current="page"
+            href="{% url 'gestion_facturas' %}"
+            >Gestion Facturas</a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link {% if request.resolver_match.url_name == 'gestion_empleados' %}active{% endif %}"
+            aria-current="page"
+            href="{% url 'gestion_empleados' %}"
+            >Gestion Empleados</a
+          >
+        </li>
+        {% else %}
         <li class="nav-item">
           <a
             class="nav-link {% if request.resolver_match.url_name == 'ventas' %}active{% endif %}"
@@ -39,7 +73,27 @@
             >Devoluciones</a
           >
         </li>
+        {% endif %}
       </ul>
+      <div class="dropstart d-flex">
+        <button class="btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          A
+          <ul class="dropdown-menu">
+            <li>
+              <a class="dropdown-item" href="#">
+                <i class="bi bi-gear-fill me-2"></i>
+                Ajustes
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="#">
+                <i class="bi bi-door-open-fill me-2"></i>
+                Cerrar Sesion
+              </a>
+            </li>
+          </ul>
+        </button>
+      </div>
     </div>
   </div>
 </nav>
