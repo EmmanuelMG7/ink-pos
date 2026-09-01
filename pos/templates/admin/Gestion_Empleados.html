@@ -1,7 +1,49 @@
-{% extends 'Master.html' %}
-{% block title %}
-    InkPOS - Gestion Empleados
+{% extends 'Master.html' %} 
+{% block title %} 
+    InkPOS - Gestion Empleados 
 {% endblock %}
 
 {% block content %}
+
+<div class="d-flex flex-column h-100 overflow-hidden">
+  <div class="d-flex p-2 gap-2 flex-shrink-0">
+    <button type="button" class="btn btn-primary">
+      <i class="bi bi-plus-lg"></i>
+    </button>
+
+    <form action="" method="post">
+      {% csrf_token %}
+      <input
+        type="text"
+        name="id_empleado"
+        class="form-control"
+        placeholder="Busca Aqui un Empleado"
+      />
+    </form>
+  </div>
+
+  <div class="m-2 border rounded flex-grow-1 overflow-auto">
+    <table class="table table-stripped table-hover">
+      <thead class="sticky-top">
+        <th>ID Empleado</th>
+        <th>Nombre</th>
+        <th>Telefono</th>
+        <th>Es Administrador</th>
+        <th>Editar</th>
+        <th>Eliminar</th>
+      </thead>
+    </table>
+
+    <div class="container text-center text-secondary">
+      <i class="bi bi-slash-circle" style="font-size: 6rem"></i>
+      <p class="fs-2 fw-bold mb-0">Nada Que Mostrar Aún.</p>
+      <p class="fs-4">
+        Puedes crear nuevos empleados usando el boton
+        <i class="bi bi-plus-lg"></i> <br>
+        arriba a la izquierda.
+      </p>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
