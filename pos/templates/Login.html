@@ -50,7 +50,9 @@
     <div class="d-flex justify-content-center align-items-center min-vh-100">
       <div class="bg-body-tertiary p-4 rounded shadow-lg border border-secondary-subtle">
         <div class="d-flex w-100 align-items-center m-2">
-          <i class="bi bi-droplet-half" style="font-size: 2rem"></i>
+          <div style="width: 48px; height: 48px; color: #fff;">
+            {% include "svg/Brand.svg" %}
+          </div>
           <h1 class="mb-0 ms-2 text-center w-100">InkPOS</h1>
         </div>
         <form action="" method="post"> {% csrf_token %}

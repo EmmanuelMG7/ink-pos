@@ -34,6 +34,7 @@ def Login(request):
     return render(request, "Login.html")
 
 def setup_view(request):
+    # Comprobar que no hayan admins TODO
     return render(request, "Setup.html")
 
 def logout_view(request):
