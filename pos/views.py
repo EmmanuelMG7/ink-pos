@@ -33,6 +33,9 @@ def Login(request):
     # 2. Si el usuario solo está cargando la página web por primera vez
     return render(request, "Login.html")
 
+def setup_view(request):
+    return render(request, "Setup.html")
+
 def logout_view(request):
     logout(request)
     return redirect('login')
