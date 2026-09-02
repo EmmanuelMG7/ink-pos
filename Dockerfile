@@ -15,5 +15,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+RUN chmod +x Entrypoint.sh && \
+    sed -i 's/\r$//' Entrypoint.sh
 
-ENTRYPOINT ["Entrypoint.sh"]
+ENTRYPOINT ["./Entrypoint.sh"]

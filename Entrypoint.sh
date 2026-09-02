@@ -16,4 +16,4 @@ echo "Recolectando archivos estáticos..."
 python manage.py collectstatic --noinput
 
 echo "Iniciando Gunicorn..."
-exec gunicorn mi_proyecto.wsgi:application --bind 0.0.0.0:8000 --workers 3
+exec gunicorn core.wsgi:application --bind 0.0.0.0:8000 --workers 3
