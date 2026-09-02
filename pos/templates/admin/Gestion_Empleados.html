@@ -32,17 +32,37 @@
   </div>
 
   <div class="m-2 border rounded flex-grow-1 overflow-auto">
-    <table class="table table-stripped table-hover">
+    <table class="table table-striped table-hover mb-0">
       <thead class="sticky-top">
-        <th style="width: 20%;">ID Empleado</th>
-        <th style="width: 40%;">Nombre</th>
-        <th style="width: 20%;">Telefono</th>
-        <th style="width: 10%;">Es Admin</th>
-        <th style="width: 10%;">Acciones</th>
+        <tr>
+          <th style="width: 10%;"># ID</th>
+          <th style="width: 50%;">Nombre</th>
+          <th style="width: 20%;">Telefono</th>
+          <th style="width: 10%;">Es Admin</th>
+          <th style="width: 10%;">Acciones</th>
+        </tr>
       </thead>
+      {% if empleados %}
+      <tbody>
+        {% for empleado in empleados %}
+        <tr>
+          <td>{{ empleado.id }}</td>
+          <td>{{ empleado.usuario.first_name }}</td>
+          <td>{{ empleado.telefono }}</td>
+          <td class="text-center">
+            {% if empleado.es_admin %}
+              <i class="bi bi-check-square-fill"></i>
+            {% endif %}
+          </td>
+          <td></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% endif %}
     </table>
 
-    <div class="container text-center text-secondary">
+    {% if not empleados %}
+    <div class="container text-center text-secondary mt-5">
       <i class="bi bi-slash-circle" style="font-size: 6rem"></i>
       <p class="fs-2 fw-bold mb-0">Nada Que Mostrar Aún.</p>
       <p class="fs-4">
@@ -51,7 +71,34 @@
         arriba a la derecha.
       </p>
     </div>
+    {% endif %}
   </div>
 </div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="toast align-items-center text-bg-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body">
+            {{ message }}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+    var toastList = toastElList.map(function (toastEl) {
+      return new bootstrap.Toast(toastEl, {delay: 3000})
+    })
+    toastList.forEach(toast => toast.show())
+  });
+</script>
 
 {% endblock %}
