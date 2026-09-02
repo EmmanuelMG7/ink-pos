@@ -4,4 +4,52 @@
 {% endblock %}
 
 {% block content %}
+
+<div class="d-flex flex-column h-100 overflow-hidden">
+  <div class="d-flex p-2 gap-2 flex-shrink-0">
+
+    <p class="fs-3 fw-bold mb-0 w-100">
+        Gestion de Productos
+    </p>
+
+    <div class="w-100 d-flex gap-2 justify-content-end">
+        <form action="" method="post">
+        {% csrf_token %}
+        <input
+            type="text"
+            name="search_product"
+            class="form-control h-100"
+            placeholder="Busca Aqui un Producto"
+        />
+        </form>
+
+        <button type="button" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i>
+        </button>
+    </div>
+  </div>
+
+  <div class="m-2 border rounded flex-grow-1 overflow-auto">
+    <table class="table table-stripped table-hover">
+      <thead class="sticky-top">
+        <th style="width: 20%;">ID Producto</th>
+        <th style="width: 40%;">Nombre</th>
+        <th style="width: 20%;">Stock</th>
+        <th style="width: 10%;">Precio</th>
+        <th style="width: 10%;">Acciones</th>
+      </thead>
+    </table>
+
+    <div class="container text-center text-secondary">
+      <i class="bi bi-slash-circle" style="font-size: 6rem"></i>
+      <p class="fs-2 fw-bold mb-0">Nada Que Mostrar Aún.</p>
+      <p class="fs-4">
+        Puedes crear nuevos productos usando el boton
+        <i class="bi bi-plus-lg"></i> <br>
+        arriba a la derecha.
+      </p>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
