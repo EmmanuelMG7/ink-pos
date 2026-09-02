@@ -58,7 +58,7 @@
             class="nav-link {% if request.resolver_match.url_name == 'ventas' %}active{% endif %}"
             aria-current="page"
             href="{% url 'ventas' %}"
-            >Venta</a
+            >Ventas</a
           >
         </li>
         <li class="nav-item">
@@ -77,7 +77,7 @@
         </li>
         {% endif %}
       </ul>
-      <div class="dropstart d-flex">
+      <div class="dropstart d-flex border rounded">
         <button
           class="btn"
           type="button"
