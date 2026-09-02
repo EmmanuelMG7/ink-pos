@@ -21,8 +21,10 @@
     ></script>
     <title>{% block title %}{% endblock title %}</title>
   </head>
-  <body>
+  <body class="bg-body d-flex flex-column vh-100 overflow-hidden">
     {% include 'Navbar.html' %}
-    {% block content %} {% endblock content %}
+    <main class="d-flex flex-column flex-grow-1 overflow-hidden">
+      {% block content %} {% endblock content %}
+    </main>
   </body>
 </html>

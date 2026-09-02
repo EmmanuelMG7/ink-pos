@@ -1,0 +1,119 @@
+{% load static %}
+<div class="modal fade" tabindex="-1" id="modal_agregar_empleado">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Crear Nuevo Empleado</h4>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+
+      <form action="" method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        <div class="modal-body m-2">
+          <div class="d-flex gap-2 mb-2">
+            <div class="input-group has-validation">
+              <input
+                name="identificacion"
+                type="number"
+                min="1"
+                step="1"
+                class="form-control"
+                placeholder="Identificación"
+                required
+              />
+              <div class="valid-feedback">Parece correcto.</div>
+              <div class="invalid-feedback">
+                No parece una cedula valida.
+              </div>
+            </div>
+
+            <div class="input-group has-validation">
+              <input
+                name="nombre"
+                type="text"
+                class="form-control"
+                placeholder="Nombre"
+                aria-label="nombre"
+                required
+              />
+              <div class="valid-feedback">Parece correcto.</div>
+              <div class="invalid-feedback">
+                No parece un nombre valido.
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mb-2">
+            <div class="input-group has-validation">
+              <span class="input-group-text">
+                <i class="bi bi-person-circle"></i>
+              </span>
+              <input
+                name="usuario"
+                type="text"
+                class="form-control"
+                placeholder="Usuario"
+                required
+              />
+              <div class="valid-feedback">Parece correcto.</div>
+              <div class="invalid-feedback">No parece un usuario valido.</div>
+            </div>
+
+            <div class="input-group has-validation">
+              <span class="input-group-text">
+                <i class="bi bi-telephone-fill"></i>
+              </span>
+              <input
+                name="telefono"
+                type="number"
+                min="1"
+                step="1"
+                class="form-control"
+                aria-label="Telefono"
+                placeholder="Telefono"
+                required
+              />
+              <div class="valid-feedback">Parece correcto.</div>
+              <div class="invalid-feedback">No parece un telefono valido.</div>
+            </div>
+          </div>
+
+          <div class="input-group has-validation mb-2">
+            <span class="input-group-text">
+              <i class="bi bi-key-fill"></i>
+            </span>
+            <input
+              name="contrasena"
+              type="text"
+              class="form-control"
+              aria-label="password"
+              placeholder="Contraseña"
+              required
+            />
+            <div class="valid-feedback">Parece correcto.</div>
+            <div class="invalid-feedback">No parece una contraseña valida.</div>
+          </div>
+
+          <div class="form-check">
+            <input name="admin_checkbox" class="form-check-input" type="checkbox" value="true" id="admin_checkbox">
+            <label class="form-check-label" for="admin_checkbox">Es usuario administrador</label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="reset" class="btn btn-secondary">Limpiar</button>
+          <button type="submit" class="btn btn-primary">
+            Guardar Empleado
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script src="{% static 'js/FormValidationIntercept.js' %}"></script>
