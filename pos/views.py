@@ -3,8 +3,12 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
 
 def Login(request):
+    if not User.objects.filter(is_staff=True).exists():
+        return redirect('setup')
+
     # 1. Si el usuario presiona "Iniciar Sesión" (Envía el formulario)
     if request.method == 'POST':
         # Se captura lo que escribió en las cajas de texto 
@@ -34,7 +38,9 @@ def Login(request):
     return render(request, "Login.html")
 
 def setup_view(request):
-    # Comprobar que no hayan admins TODO
+    # Comprobar que no hayan admins
+    if User.objects.filter(is_staff=True).exists():
+        return redirect('login')
     return render(request, "Setup.html")
 
 def logout_view(request):
