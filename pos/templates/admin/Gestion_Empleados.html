@@ -7,19 +7,26 @@
 
 <div class="d-flex flex-column h-100 overflow-hidden">
   <div class="d-flex p-2 gap-2 flex-shrink-0">
-    <button type="button" class="btn btn-primary">
-      <i class="bi bi-plus-lg"></i>
-    </button>
+    
+    <p class="fs-3 fw-bold mb-0 w-100">
+      Gestion de Empleados
+    </p>
 
-    <form action="" method="post">
-      {% csrf_token %}
-      <input
-        type="text"
-        name="id_empleado"
-        class="form-control"
-        placeholder="Busca Aqui un Empleado"
-      />
-    </form>
+    <div class="d-flex gap-2 justify-content-end w-100">
+      <form action="" method="post">
+        {% csrf_token %}
+        <input
+          type="text"
+          name="id_empleado"
+          class="form-control h-100"
+          placeholder="Busca Aqui un Empleado"
+        />
+      </form>
+
+      <button type="button" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i>
+      </button>
+    </div>
   </div>
 
   <div class="m-2 border rounded flex-grow-1 overflow-auto">
@@ -39,7 +46,7 @@
       <p class="fs-4">
         Puedes crear nuevos empleados usando el boton
         <i class="bi bi-plus-lg"></i> <br>
-        arriba a la izquierda.
+        arriba a la derecha.
       </p>
     </div>
   </div>
