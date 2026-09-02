@@ -5,6 +5,8 @@
 
 {% block content %}
 
+{% include "admin/modals/Modal_Agregar_Empleado.html" %}
+
 <div class="d-flex flex-column h-100 overflow-hidden">
   <div class="d-flex p-2 gap-2 flex-shrink-0">
     
@@ -23,7 +25,7 @@
         />
       </form>
 
-      <button type="button" class="btn btn-primary">
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_agregar_empleado">
         <i class="bi bi-plus-lg"></i>
       </button>
     </div>
