@@ -77,15 +77,17 @@
         </li>
         {% endif %}
       </ul>
-      <div class="dropstart d-flex border rounded">
-        <button
-          class="btn"
-          type="button"
-          data-bs-toggle="dropdown"
-          aria-expanded="false"
-        >
-          A
-        </button>
+      <div class="d-flex align-items-center gap-2">
+        <span class="mb-0 fw-medium">{{ user.username }}</span>
+        <div class="dropstart d-flex border rounded">
+          <button
+            class="btn"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            A
+          </button>
 
         <ul class="dropdown-menu">
           <li>
@@ -112,6 +114,7 @@
             </form>
           </li>
         </ul>
+        </div>
       </div>
     </div>
   </div>
