@@ -1,0 +1,58 @@
+<div class="modal fade" tabindex="-1" id="modal_agregar_producto">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Crear Nuevo Producto</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body m-2">
+        <div class="d-flex input-group mb-2">
+            <input 
+                type="text"
+                class="form-control w-25"
+                aria-label="id_producto"
+                value = "001"
+                disabled
+                readonly
+            />
+            <input 
+                type="text"
+                class="form-control w-75"
+                placeholder="Nombre"
+                aria-label="nombre"
+            />
+        </div>
+        <div class="d-flex gap-2">
+            <div class="input-group">
+              <span class="input-group-text">
+                <i class="bi bi-box-seam-fill"></i>
+              </span>
+              <input
+                type="text"
+                class="form-control"
+                aria-label="cantidad_stock"
+                placeholder="Stock"
+              />
+            </div>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input
+                type="text"
+                class="form-control"
+                aria-label="precio_producto"
+                placeholder="Precio"
+              />
+            </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <form action="" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary">Guardar Producto</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
