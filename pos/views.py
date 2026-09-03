@@ -38,9 +38,38 @@ def Login(request):
     return render(request, "Login.html")
 
 def setup_view(request):
+    from .models import Empleado
     # Comprobar que no hayan admins
     if User.objects.filter(is_staff=True).exists():
         return redirect('login')
+
+    if request.method == 'POST':
+        usuario = request.POST.get('usuario')
+        nombre = request.POST.get('nombre')
+        telefono = request.POST.get('telefono')
+        contrasena = request.POST.get('contrasena')
+
+        if usuario and contrasena:
+            # Crear el usuario
+            user = User.objects.create_user(
+                username=usuario,
+                password=contrasena,
+                first_name=nombre
+            )
+            user.is_staff = True
+            user.save()
+
+            # Crear el empleado con rol admin
+            Empleado.objects.create(
+                usuario=user,
+                telefono=telefono,
+                salario=0,
+                es_admin=True
+            )
+
+            # Redirigir al login despues de crearlo
+            return redirect('login')
+
     return render(request, "Setup.html")
 
 def logout_view(request):
