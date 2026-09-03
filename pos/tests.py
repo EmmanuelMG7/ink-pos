@@ -34,3 +34,32 @@ class AuthFlowTests(TestCase):
         url = reverse('setup')
         response = self.client.get(url)
         self.assertRedirects(response, reverse('login'))
+
+    def test_setup_post_creates_admin_user(self):
+        """Al enviar el formulario de setup se crea el primer usuario y empleado admin."""
+        url = reverse('setup')
+        data = {
+            'usuario': 'admin_test',
+            'nombre': 'Admin Prueba',
+            'telefono': '123456789',
+            'contrasena': 'supersecret'
+        }
+        response = self.client.post(url, data)
+
+        # Debe redirigir a login
+        self.assertRedirects(response, reverse('login'))
+
+        # Verificar que el usuario se haya creado
+        self.assertTrue(User.objects.filter(username='admin_test').exists())
+        user = User.objects.get(username='admin_test')
+        self.assertTrue(user.is_staff)
+        self.assertEqual(user.first_name, 'Admin Prueba')
+        self.assertTrue(user.check_password('supersecret'))
+
+        # Verificar que el empleado se haya creado
+        from .models import Empleado
+        self.assertTrue(Empleado.objects.filter(usuario=user).exists())
+        empleado = Empleado.objects.get(usuario=user)
+        self.assertTrue(empleado.es_admin)
+        self.assertEqual(empleado.telefono, '123456789')
+        self.assertEqual(empleado.salario, 0)
