@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 from pathlib import Path
+import os
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +22,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-&8k(7sphx^3s1*p=#%g@qbyqch^ua$i%9qo70=p4a=x1*$4kiy'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-&8k(7sphx^3s1*p=#%g@qbyqch^ua$i%9qo70=p4a=x1*$4kiy')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = []
+allowed_hosts_env = os.environ.get('ALLOWED_HOSTS')
+ALLOWED_HOSTS = allowed_hosts_env.split(',') if allowed_hosts_env else []
 
 
 # Application definition
@@ -73,16 +76,42 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'inkpos_db',
-        'USER': 'postgres', 
-        'PASSWORD': 'postgres', 
-        'HOST': 'inkpos-postgresdb.eu1.netbird.services',
-        'PORT': '5325',
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'inkpos_db',
+            'USER': 'postgres', 
+            'PASSWORD': 'postgres', 
+            'HOST': 'inkpos-postgresdb.eu1.netbird.services',
+            'PORT': '5325',
+        }
     }
-}
+else:
+    db_url = os.environ.get('DATABASE_URL')
+    if db_url:
+        parsed_url = urlparse(db_url)
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': parsed_url.path.lstrip('/'),
+                'USER': parsed_url.username,
+                'PASSWORD': parsed_url.password,
+                'HOST': parsed_url.hostname,
+                'PORT': parsed_url.port,
+            }
+        }
+    else:
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.environ.get('DB_NAME', 'inkpos_db'),
+                'USER': os.environ.get('DB_USER', 'postgres'),
+                'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+                'HOST': os.environ.get('DB_HOST', 'db'),
+                'PORT': os.environ.get('DB_PORT', '5432'),
+            }
+        }
 
 
 # Password validation
@@ -120,6 +149,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 
 # Email
