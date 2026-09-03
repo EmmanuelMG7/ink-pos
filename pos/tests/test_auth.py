@@ -57,9 +57,10 @@ class AuthFlowTests(TestCase):
         self.assertTrue(user.check_password('supersecret'))
 
         # Verificar que el empleado se haya creado
-        from .models import Empleado
+        from pos.models import Empleado
         self.assertTrue(Empleado.objects.filter(usuario=user).exists())
         empleado = Empleado.objects.get(usuario=user)
         self.assertTrue(empleado.es_admin)
         self.assertEqual(empleado.telefono, '123456789')
         self.assertEqual(empleado.salario, 0)
+
