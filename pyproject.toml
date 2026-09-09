@@ -10,3 +10,16 @@ strict_optional = true
 
 [tool.django-stubs]
 django_settings_module = "core.settings"
+
+[tool.coverage.run]
+source = ["pos"]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/asgi.py",
+    "*/wsgi.py",
+]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
