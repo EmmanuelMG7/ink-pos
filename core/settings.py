@@ -97,10 +97,10 @@ else:
             "default": {
                 "ENGINE": "django.db.backends.postgresql",
                 "NAME": parsed_url.path.lstrip("/"),
-                "USER": parsed_url.username,
-                "PASSWORD": parsed_url.password,
-                "HOST": parsed_url.hostname,
-                "PORT": parsed_url.port,
+                "USER": parsed_url.username or "",
+                "PASSWORD": parsed_url.password or "",
+                "HOST": parsed_url.hostname or "",
+                "PORT": str(parsed_url.port) if parsed_url.port else "",
             }
         }
     else:
