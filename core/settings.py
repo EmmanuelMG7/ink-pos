@@ -10,8 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
 from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -22,55 +22,57 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-&8k(7sphx^3s1*p=#%g@qbyqch^ua$i%9qo70=p4a=x1*$4kiy')
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY", "django-insecure-&8k(7sphx^3s1*p=#%g@qbyqch^ua$i%9qo70=p4a=x1*$4kiy"
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-allowed_hosts_env = os.environ.get('ALLOWED_HOSTS')
-ALLOWED_HOSTS = allowed_hosts_env.split(',') if allowed_hosts_env else []
+allowed_hosts_env = os.environ.get("ALLOWED_HOSTS")
+ALLOWED_HOSTS = allowed_hosts_env.split(",") if allowed_hosts_env else []
 
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'pos', 
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "pos",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'core.urls'
+ROOT_URLCONF = "core.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'core.wsgi.application'
+WSGI_APPLICATION = "core.wsgi.application"
 
 
 # Database
@@ -78,38 +80,38 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 if DEBUG:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'inkpos_db',
-            'USER': 'postgres', 
-            'PASSWORD': 'postgres', 
-            'HOST': 'inkpos-postgresdb.eu1.netbird.services',
-            'PORT': '5325',
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "inkpos_db",
+            "USER": "postgres",
+            "PASSWORD": "postgres",
+            "HOST": "inkpos-postgresdb.eu1.netbird.services",
+            "PORT": "5325",
         }
     }
 else:
-    db_url = os.environ.get('DATABASE_URL')
+    db_url = os.environ.get("DATABASE_URL")
     if db_url:
         parsed_url = urlparse(db_url)
         DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql',
-                'NAME': parsed_url.path.lstrip('/'),
-                'USER': parsed_url.username,
-                'PASSWORD': parsed_url.password,
-                'HOST': parsed_url.hostname,
-                'PORT': parsed_url.port,
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": parsed_url.path.lstrip("/"),
+                "USER": parsed_url.username,
+                "PASSWORD": parsed_url.password,
+                "HOST": parsed_url.hostname,
+                "PORT": parsed_url.port,
             }
         }
     else:
         DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql',
-                'NAME': os.environ.get('DB_NAME', 'inkpos_db'),
-                'USER': os.environ.get('DB_USER', 'postgres'),
-                'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
-                'HOST': os.environ.get('DB_HOST', 'db'),
-                'PORT': os.environ.get('DB_PORT', '5432'),
+            "default": {
+                "ENGINE": "django.db.backends.postgresql",
+                "NAME": os.environ.get("DB_NAME", "inkpos_db"),
+                "USER": os.environ.get("DB_USER", "postgres"),
+                "PASSWORD": os.environ.get("DB_PASSWORD", "postgres"),
+                "HOST": os.environ.get("DB_HOST", "db"),
+                "PORT": os.environ.get("DB_PORT", "5432"),
             }
         }
 
@@ -119,16 +121,16 @@ else:
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -136,9 +138,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -148,17 +150,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
 MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
+    "default": {
+        "BACKEND": "django.core.mail.backends.console.EmailBackend",
     },
 }
 
-LOGIN_URL = 'login'
+LOGIN_URL = "login"
