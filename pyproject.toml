@@ -2,3 +2,11 @@
 profile = "black"
 line_length = 100
 skip = ["migrations", ".venv", "__pycache__", ".git"]
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+ignore_missing_imports = true
+strict_optional = true
+
+[tool.django-stubs]
+django_settings_module = "core.settings"
