@@ -15,64 +15,159 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Cliente',
+            name="Cliente",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('documento', models.CharField(max_length=20, unique=True)),
-                ('nombre', models.CharField(max_length=100)),
-                ('direccion', models.CharField(blank=True, max_length=200, null=True)),
-                ('telefono', models.CharField(blank=True, max_length=20, null=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("documento", models.CharField(max_length=20, unique=True)),
+                ("nombre", models.CharField(max_length=100)),
+                ("direccion", models.CharField(blank=True, max_length=200, null=True)),
+                ("telefono", models.CharField(blank=True, max_length=20, null=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Producto',
+            name="Producto",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('codigo', models.CharField(max_length=50, unique=True)),
-                ('nombre', models.CharField(max_length=150)),
-                ('precio', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('stock', models.IntegerField(default=0)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("codigo", models.CharField(max_length=50, unique=True)),
+                ("nombre", models.CharField(max_length=150)),
+                ("precio", models.DecimalField(decimal_places=2, max_digits=10)),
+                ("stock", models.IntegerField(default=0)),
             ],
         ),
         migrations.CreateModel(
-            name='Empleado',
+            name="Empleado",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('telefono', models.CharField(blank=True, max_length=20, null=True)),
-                ('salario', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('usuario', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("telefono", models.CharField(blank=True, max_length=20, null=True)),
+                ("salario", models.DecimalField(decimal_places=2, max_digits=10)),
+                (
+                    "usuario",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Factura',
+            name="Factura",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('fecha_hora', models.DateTimeField(auto_now_add=True)),
-                ('id_transaccion', models.CharField(blank=True, max_length=200, null=True)),
-                ('total', models.DecimalField(decimal_places=2, default=0.0, max_digits=12)),
-                ('cliente', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='pos.cliente')),
-                ('empleado', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='pos.empleado')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("fecha_hora", models.DateTimeField(auto_now_add=True)),
+                (
+                    "id_transaccion",
+                    models.CharField(blank=True, max_length=200, null=True),
+                ),
+                (
+                    "total",
+                    models.DecimalField(decimal_places=2, default=0.0, max_digits=12),
+                ),
+                (
+                    "cliente",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT, to="pos.cliente"
+                    ),
+                ),
+                (
+                    "empleado",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT, to="pos.empleado"
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Devolucion',
+            name="Devolucion",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('fecha_hora', models.DateTimeField(auto_now_add=True)),
-                ('cantidad', models.IntegerField()),
-                ('motivo', models.TextField()),
-                ('factura', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='pos.factura')),
-                ('producto', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='pos.producto')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("fecha_hora", models.DateTimeField(auto_now_add=True)),
+                ("cantidad", models.IntegerField()),
+                ("motivo", models.TextField()),
+                (
+                    "factura",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT, to="pos.factura"
+                    ),
+                ),
+                (
+                    "producto",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT, to="pos.producto"
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='DetalleFactura',
+            name="DetalleFactura",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('cantidad', models.IntegerField()),
-                ('precio_unitario', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('factura', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='detalles', to='pos.factura')),
-                ('producto', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='pos.producto')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("cantidad", models.IntegerField()),
+                (
+                    "precio_unitario",
+                    models.DecimalField(decimal_places=2, max_digits=10),
+                ),
+                (
+                    "factura",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="detalles",
+                        to="pos.factura",
+                    ),
+                ),
+                (
+                    "producto",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.PROTECT, to="pos.producto"
+                    ),
+                ),
             ],
         ),
     ]

@@ -1,9 +1,8 @@
+from django.contrib.auth.models import User
 from django.db import models
 
 # Create your models here.
 
-from django.db import models
-from django.contrib.auth.models import User
 
 class Cliente(models.Model):
     documento = models.CharField(max_length=20, unique=True)
@@ -14,15 +13,17 @@ class Cliente(models.Model):
     def __str__(self):
         return self.nombre
 
+
 class Empleado(models.Model):
     # Relación 1 a 1 con el sistema de usuarios de Django
     usuario = models.OneToOneField(User, on_delete=models.CASCADE)
     telefono = models.CharField(max_length=20, blank=True, null=True)
     salario = models.DecimalField(max_digits=10, decimal_places=2)
-    es_admin = models.BooleanField(default=False) # Comprobar si el usuario es admin
+    es_admin = models.BooleanField(default=False)  # Comprobar si el usuario es admin
 
     def __str__(self):
         return self.usuario.username
+
 
 class Producto(models.Model):
     codigo = models.CharField(max_length=50, unique=True)
@@ -32,6 +33,7 @@ class Producto(models.Model):
 
     def __str__(self):
         return f"{self.nombre} - {self.codigo}"
+
 
 class Factura(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT)
@@ -43,14 +45,18 @@ class Factura(models.Model):
     def __str__(self):
         return f"Factura #{self.id}"
 
+
 class DetalleFactura(models.Model):
-    factura = models.ForeignKey(Factura, on_delete=models.CASCADE, related_name='detalles')
+    factura = models.ForeignKey(
+        Factura, on_delete=models.CASCADE, related_name="detalles"
+    )
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
     cantidad = models.IntegerField()
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
         return f"{self.cantidad}x {self.producto.nombre}"
+
 
 class Devolucion(models.Model):
     factura = models.ForeignKey(Factura, on_delete=models.PROTECT)
