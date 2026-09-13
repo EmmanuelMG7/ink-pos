@@ -8,6 +8,7 @@ django-debug-toolbar==7.1.1
 django-stubs==6.1.0
 django-stubs-ext==6.1.0
 flake8==7.3.0
+gunicorn==26.2.0
 identiconify==0.1.0
 isort==9.0.1
 librt==0.15.0
