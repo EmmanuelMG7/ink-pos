@@ -20,10 +20,10 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         {% if user.is_staff %}
-        {% include 'nav_item.html' with url_name='reporte_ventas' label='Reporte Ventas' %}
-        {% include 'nav_item.html' with url_name='gestion_productos' label='Gestion Productos' %}
-        {% include 'nav_item.html' with url_name='gestion_facturas' label='Gestion Facturas' %}
-        {% include 'nav_item.html' with url_name='gestion_empleados' label='Gestion Empleados' %}
+        {% include 'nav_item.html' with url_name='reporte_ventas' label='Reportes' %}
+        {% include 'nav_item.html' with url_name='gestion_productos' label='Productos' %}
+        {% include 'nav_item.html' with url_name='gestion_facturas' label='Facturas' %}
+        {% include 'nav_item.html' with url_name='gestion_empleados' label='Empleados' %}
         {% else %}
         {% include 'nav_item.html' with url_name='ventas' label='Ventas' %}
         {% include 'nav_item.html' with url_name='facturas' label='Facturas' %}
