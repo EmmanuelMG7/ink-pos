@@ -30,7 +30,7 @@ def Login(request):
 
 
 def setup_view(request):
-    from empleados.models import Empleado
+    from app_empleados.models import Empleado
 
     if User.objects.filter(is_staff=True).exists():
         return redirect("autenticacion:login")

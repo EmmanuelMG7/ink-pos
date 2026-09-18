@@ -29,10 +29,10 @@ def root_redirect(request):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", root_redirect, name="root"),
-    path("common/", include("common.urls")),
-    path("clientes/", include("clientes.urls")),
-    path("empleados/", include("empleados.urls")),
-    path("auth/", include("autenticacion.urls")),
-    path("productos/", include("productos.urls")),
-    path("ventas/", include("ventas.urls")),
+    path("common/", include("app_common.urls")),
+    path("clientes/", include("app_clientes.urls")),
+    path("empleados/", include("app_empleados.urls")),
+    path("auth/", include("app_autenticacion.urls")),
+    path("productos/", include("app_productos.urls")),
+    path("ventas/", include("app_ventas.urls")),
 ]

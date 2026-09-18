@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from empleados.models import Empleado
+from app_empleados.models import Empleado
 
 
 class AuthFlowTests(TestCase):
