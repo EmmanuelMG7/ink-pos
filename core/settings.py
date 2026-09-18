@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "empleados",
     "autenticacion",
     "productos",
+    "ventas",
     "pos",
 ]
 
