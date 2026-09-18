@@ -42,7 +42,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "pos",
+    "app_common",
+    "app_clientes",
+    "app_empleados",
+    "app_autenticacion",
+    "app_productos",
+    "app_ventas",
 ]
 
 MIDDLEWARE = [
@@ -60,7 +65,7 @@ ROOT_URLCONF = "core.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -152,6 +157,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 
 # Email
@@ -163,4 +169,4 @@ MAILERS = {
     },
 }
 
-LOGIN_URL = "login"
+LOGIN_URL = "autenticacion:login"
