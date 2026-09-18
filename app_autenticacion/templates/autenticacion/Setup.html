@@ -43,10 +43,18 @@
         
         <form action="" method="post" class="needs-validation" novalidate> {% csrf_token %}
           
-          {% include 'common/bootstrap_input_field.html' with field=form.usuario %}
-          {% include 'common/bootstrap_input_field.html' with field=form.nombre %}
-          {% include 'common/bootstrap_input_field.html' with field=form.telefono %}
-          {% include 'common/bootstrap_input_field.html' with field=form.contrasena %}
+          <div class="mb-2 has-validation">
+            {% include 'common/bootstrap_input_field.html' with field=form.usuario %}
+          </div>
+          <div class="mb-2 has-validation">
+            {% include 'common/bootstrap_input_field.html' with field=form.nombre %}
+          </div>
+          <div class="mb-2 has-validation">
+            {% include 'common/bootstrap_input_field.html' with field=form.telefono %}
+          </div>
+          <div class="mb-2 has-validation">
+            {% include 'common/bootstrap_input_field.html' with field=form.contrasena %}
+          </div>
 
           <button type="submit" class="btn btn-primary w-100">
             Crear Administrador
