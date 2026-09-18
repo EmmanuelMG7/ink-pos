@@ -11,80 +11,38 @@
         {% csrf_token %}
 
         <div class="modal-body m-2">
-          <div class="d-flex input-group mb-2 has-validation">
-              <input 
-                  type="text"
-                  class="form-control w-25"
-                  aria-label="id_producto"
-                  value="{{ siguiente_codigo }}"
-                  disabled
-                  readonly
-              />
-              <input
-                  name="nombre"
-                  type="text"
-                  class="form-control w-75"
-                  placeholder="Nombre"
-                  aria-label="nombre"
-                  required
-              />
-              <div class="valid-feedback">
-                Parece correcto.
-              </div>
-              <div class="invalid-feedback">
-                Por favor ingresa un nombre valido.
-              </div>
+          <div class="input-group mb-2 has-validation">
+            <input 
+              type="text"
+              class="form-control w-25"
+              aria-label="id_producto"
+              value="{{ siguiente_codigo }}"
+              disabled
+              readonly
+            />
+            <input type="hidden" name="codigo" value="{{ siguiente_codigo }}" />
+            {% include 'common/bootstrap_input_field.html' with field=form.nombre %}
           </div>
           <div class="d-flex gap-2">
-              <div class="input-group has-validation">
-                <span class="input-group-text">
-                  <i class="bi bi-box-seam-fill"></i>
-                </span>
-                <input
-                  name="stock"
-                  type="number"
-                  min="1"
-                  step="1"
-                  class="form-control"
-                  aria-label="cantidad_stock"
-                  placeholder="Stock"
-                  required
-                />
-                <div class="valid-feedback">
-                  Parece correcto.
-                </div>
-                <div class="invalid-feedback">
-                  Por favor ingresa un numero valido.
-                </div>
-              </div>
-              <div class="input-group has-validation">
-                <span class="input-group-text">$</span>
-                <input
-                  name="precio"
-                  type="number"
-                  min="1"
-                  step="1"
-                  class="form-control"
-                  aria-label="precio_producto"
-                  placeholder="Precio"
-                  required
-                />
-                <div class="valid-feedback">
-                  Parece correcto.
-                </div>
-                <div class="invalid-feedback">
-                  Por favor ingresa un numero valido.
-                </div>
-              </div>
+            <div class="input-group has-validation">
+              <span class="input-group-text">
+                <i class="bi bi-box-seam-fill"></i>
+              </span>
+              {% include 'common/bootstrap_input_field.html' with field=form.stock %}
+            </div>
+            <div class="input-group has-validation">
+              <span class="input-group-text">$</span>
+              {% include 'common/bootstrap_input_field.html' with field=form.precio %}
+            </div>
           </div>
         </div>
 
         <div class="modal-footer">
-            <button type="reset" class="btn btn-secondary">Limpiar</button>
-            <button type="submit" class="btn btn-primary">Guardar Producto</button>
+          <button type="reset" class="btn btn-secondary">Limpiar</button>
+          <button type="submit" class="btn btn-primary">Guardar Producto</button>
         </div>
       </form>
     </div>
   </div>
 </div>
-<script src="{% static 'js/FormValidationIntercept.js' %}"></script>
+<script src="{% static 'js/FormValidationIntercept.js' %}?v=1.3"></script>
