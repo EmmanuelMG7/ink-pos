@@ -1,0 +1,23 @@
+name: Verify PR Source Branch
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify-source:
+    name: Verify Source is Dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate head branch
+        run: |
+          echo "Head branch: ${{ github.head_ref }}"
+          echo "Base branch: ${{ github.base_ref }}"
+          
+          if [ "${{ github.head_ref }}" != "dev" ]; then
+            echo "::error::Solo se permiten Pull Requests hacia 'main' provenientes de la rama 'dev'."
+            exit 1
+          fi
+          
+          echo "Validación exitosa: El PR proviene de 'dev'."
