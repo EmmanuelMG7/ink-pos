@@ -4,25 +4,8 @@ from django.db import models
 # Create your models here.
 
 
-class Cliente(models.Model):
-    documento = models.CharField(max_length=20, unique=True)
-    nombre = models.CharField(max_length=100)
-    direccion = models.CharField(max_length=200, blank=True, null=True)
-    telefono = models.CharField(max_length=20, blank=True, null=True)
-
-    def __str__(self):
-        return self.nombre
-
-
-class Empleado(models.Model):
-    # Relación 1 a 1 con el sistema de usuarios de Django
-    usuario = models.OneToOneField(User, on_delete=models.CASCADE)
-    telefono = models.CharField(max_length=20, blank=True, null=True)
-    salario = models.DecimalField(max_digits=10, decimal_places=2)
-    es_admin = models.BooleanField(default=False)  # Comprobar si el usuario es admin
-
-    def __str__(self):
-        return self.usuario.username
+from clientes.models import Cliente
+from empleados.models import Empleado
 
 
 class Producto(models.Model):
