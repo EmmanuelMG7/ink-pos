@@ -55,23 +55,11 @@
           </div>
           <h1 class="mb-0 ms-2 text-center w-100">InkPOS</h1>
         </div>
-        <form action="" method="post"> {% csrf_token %}
 
-          <input
-            type="text"
-            name="usuario"
-            class="form-control mb-2"
-            placeholder="Usuario"
-            required
-          />
-
-          <input
-            type="password"
-            name="contrasena"
-            class="form-control mb-2"
-            placeholder="Contraseña"
-            required
-          />
+        <form action="" method="post" class="has-validation" novalidate> {% csrf_token %}
+          
+          {% include 'common/bootstrap_input_field.html' with field=form.usuario %}
+          {% include 'common/bootstrap_input_field.html' with field=form.contrasena %}
 
           <button type="submit" class="btn btn-primary w-100">
             Iniciar Sesion

@@ -1,13 +1,16 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
+from app_autenticacion.forms import LoginForm
 
 
 def Login(request):
     if not User.objects.filter(is_staff=True).exists():
         return redirect("autenticacion:setup")
 
-    if request.method == "POST":
+    form = LoginForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
         usuario_input = request.POST.get("usuario")
         contrasena_input = request.POST.get("contrasena")
 
@@ -26,7 +29,7 @@ def Login(request):
                 {"error": "Usuario o contraseña incorrectos"},
             )
 
-    return render(request, "autenticacion/Login.html")
+    return render(request, "autenticacion/Login.html", {"form": form})
 
 
 def setup_view(request):
