@@ -1,32 +1,21 @@
-<div class="mb-2 has-validation">
-  {% if field.label %}
-    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-  {% endif %}
+{{ field }}
 
-  {{ field }}
+{# Label cuando la validación se cumple (éxito) - solo si se define explícitamente #}
+{% if valid_msg %}
+  <div class="valid-feedback">{{ valid_msg }}</div>
+{% elif field.field.valid_feedback %}
+  <div class="valid-feedback">{{ field.field.valid_feedback }}</div>
+{% endif %}
 
-  {# Label cuando la validación se cumple (éxito) - solo si se define explícitamente #}
-  {% if valid_msg %}
-    <div class="valid-feedback">{{ valid_msg }}</div>
-  {% elif field.field.valid_feedback %}
-    <div class="valid-feedback">{{ field.field.valid_feedback }}</div>
-  {% endif %}
-
-  {# Label cuando la validación falla (error) #}
-  <div class="invalid-feedback text-wrap text-break">
-    {% if field.errors %}
-      {{ field.errors.0 }}
-    {% elif invalid_msg %}
-      {{ invalid_msg }}
-    {% elif field.field.invalid_feedback %}
-      {{ field.field.invalid_feedback }}
-    {% else %}
-      Por favor ingresa un valor válido.
-    {% endif %}
-  </div>
-
-  {% if field.help_text %}
-    <div class="form-text">{{ field.help_text }}</div>
+{# Label cuando la validación falla (error) #}
+<div class="invalid-feedback text-wrap text-break">
+  {% if field.errors %}
+    {{ field.errors.0 }}
+  {% elif invalid_msg %}
+    {{ invalid_msg }}
+  {% elif field.field.invalid_feedback %}
+    {{ field.field.invalid_feedback }}
+  {% else %}
+    Por favor ingresa un valor válido.
   {% endif %}
 </div>
-
