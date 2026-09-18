@@ -12,8 +12,8 @@ def Login(request):
     form = LoginForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
-        usuario_input = request.POST.get("usuario")
-        contrasena_input = request.POST.get("contrasena")
+        usuario_input = form.cleaned_data["usuario"]
+        contrasena_input = form.cleaned_data["contrasena"]
 
         user = authenticate(request, username=usuario_input, password=contrasena_input)
 
@@ -27,7 +27,7 @@ def Login(request):
             return render(
                 request,
                 "autenticacion/Login.html",
-                {"error": "Usuario o contraseña incorrectos"},
+                {"error": "Usuario o contraseña incorrectos", "form": form},
             )
 
     return render(request, "autenticacion/Login.html", {"form": form})
