@@ -5,19 +5,15 @@
 
   {{ field }}
 
-  {# Label cuando la validación se cumple (éxito) #}
-  <div class="valid-feedback">
-    {% if valid_msg %}
-      {{ valid_msg }}
-    {% elif field.field.valid_feedback %}
-      {{ field.field.valid_feedback }}
-    {% else %}
-      Parece correcto.
-    {% endif %}
-  </div>
+  {# Label cuando la validación se cumple (éxito) - solo si se define explícitamente #}
+  {% if valid_msg %}
+    <div class="valid-feedback">{{ valid_msg }}</div>
+  {% elif field.field.valid_feedback %}
+    <div class="valid-feedback">{{ field.field.valid_feedback }}</div>
+  {% endif %}
 
   {# Label cuando la validación falla (error) #}
-  <div class="invalid-feedback">
+  <div class="invalid-feedback text-wrap text-break">
     {% if field.errors %}
       {{ field.errors.0 }}
     {% elif invalid_msg %}

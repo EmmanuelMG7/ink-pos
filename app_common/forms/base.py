@@ -61,7 +61,7 @@ class BootstrapFormMixin:
     a los widgets de los campos del formulario y gestiona los estados
     de validación (is-valid e is-invalid) para mostrar los labels de feedback.
     """
-    default_valid_feedback = "Parece correcto."
+    default_valid_feedback = ""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -83,7 +83,7 @@ class BootstrapFormMixin:
             if clase_bootstrap not in clases_existentes:
                 widget.attrs['class'] = f"{clases_existentes} {clase_bootstrap}".strip()
 
-            # Mensaje por defecto cuando la validación se cumple
+            # Mensaje opcional cuando la validación se cumple
             if not hasattr(field, 'valid_feedback'):
                 field.valid_feedback = self.default_valid_feedback
 
