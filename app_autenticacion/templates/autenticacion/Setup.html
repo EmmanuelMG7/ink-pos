@@ -1,5 +1,7 @@
+{% load static %}
 <!doctype html>
 <html lang="en" data-bs-theme="dark">
+
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -23,7 +25,8 @@
   <body class="bg-body">
     <div class="d-flex justify-content-center align-items-center min-vh-100">
       <div
-        class="bg-body-tertiary p-4 rounded shadow-lg border border-secondary-subtle"
+        class="bg-body-tertiary p-4 rounded shadow-lg border border-secondary-subtle w-100"
+        style="max-width: 24rem;"
       >
         <div class="d-flex w-100 align-items-center m-2">
           <div style="width: 48px; height: 48px; color: #fff">
@@ -31,45 +34,26 @@
           </div>
           <h1 class="mb-0 ms-2 text-center w-100">InkPOS</h1>
         </div>
-        <p class="text-center text-wrap" style="max-width: 20rem;">
-          Bienvenido a InkPOS. <br>
-          Aqui podrá crear el primer usuario administrador antes de usar el sistema.
-        </p>
-        <form action="" method="post">
-          {% csrf_token %}
-          <input
-            type="text"
-            name="usuario"
-            class="form-control mb-2"
-            placeholder="Usuario"
-            required
-          />
-          <input
-            type="text"
-            name="nombre"
-            class="form-control mb-2"
-            placeholder="Nombre Completo"
-            required
-          />
-          <input
-            type="text"
-            name="telefono"
-            class="form-control mb-2"
-            placeholder="Telefono"
-            required
-          />
-          <input
-            type="text"
-            name="contrasena"
-            class="form-control mb-2"
-            placeholder="Contraseña"
-            required
-          />
+        <div class="d-flex w-100 justify-content-center">
+          <p class="text-center text-wrap" style="max-width: 20rem;">
+            Bienvenido a InkPOS. <br>
+            Aqui podrá crear el primer usuario administrador antes de usar el sistema.
+          </p>
+        </div>
+        
+        <form action="" method="post" class="needs-validation" novalidate> {% csrf_token %}
+          
+          {% include 'common/bootstrap_input_field.html' with field=form.usuario %}
+          {% include 'common/bootstrap_input_field.html' with field=form.nombre %}
+          {% include 'common/bootstrap_input_field.html' with field=form.telefono %}
+          {% include 'common/bootstrap_input_field.html' with field=form.contrasena %}
+
           <button type="submit" class="btn btn-primary w-100">
             Crear Administrador
           </button>
         </form>
       </div>
     </div>
+    <script src="{% static 'js/FormValidationIntercept.js' %}"></script>
   </body>
 </html>

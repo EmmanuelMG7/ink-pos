@@ -1,7 +1,8 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
-from app_autenticacion.forms import LoginForm
+from app_autenticacion.forms import LoginForm, SetupAdminForm
+from app_empleados.models import Empleado
 
 
 def Login(request):
@@ -33,12 +34,13 @@ def Login(request):
 
 
 def setup_view(request):
-    from app_empleados.models import Empleado
 
     if User.objects.filter(is_staff=True).exists():
         return redirect("autenticacion:login")
 
-    if request.method == "POST":
+    form = SetupAdminForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
         usuario = request.POST.get("usuario")
         nombre = request.POST.get("nombre")
         telefono = request.POST.get("telefono")
@@ -57,7 +59,7 @@ def setup_view(request):
 
             return redirect("autenticacion:login")
 
-    return render(request, "autenticacion/Setup.html")
+    return render(request, "autenticacion/Setup.html", {"form": form})
 
 
 def logout_view(request):

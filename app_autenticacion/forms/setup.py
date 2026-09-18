@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.db import transaction
-from app_common.forms import BootstrapForm, OnlyTextValidator
+from app_common.forms import BootstrapForm, OnlyTextValidator, UsernameValidator
 from app_empleados.models import Empleado
+from app_common.forms.base import validate_password_complexity
 
 
 class SetupAdminForm(BootstrapForm):
@@ -12,21 +13,58 @@ class SetupAdminForm(BootstrapForm):
     asociado dentro de una transacción atómica.
     """
     usuario = forms.CharField(
+        label="",
         max_length=150,
-        widget=forms.TextInput(attrs={'placeholder': 'Usuario'})
+        validators=[UsernameValidator],
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Usuario',
+            'class': 'username-only',
+        })
     )
+
     nombre = forms.CharField(
+        label="",
         max_length=150,
         validators=[OnlyTextValidator],
-        widget=forms.TextInput(attrs={'placeholder': 'Nombre Completo', 'class': 'solo-letras'})
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Nombre Completo',
+            'class': 'text-only',
+        })
     )
-    telefono = forms.CharField(
-        max_length=20,
-        required=False,
-        widget=forms.TextInput(attrs={'placeholder': 'Teléfono'})
+    
+    telefono = forms.IntegerField(
+        label="",
+        min_value=3000000000,
+        max_value=3999999999,
+        step_size=1,
+        error_messages={
+            'min_value': 'Ingrese un valor válido.',
+            'max_value': 'Ingrese un valor válido.',
+            'invalid': 'Ingrese un valor válido.',
+        },
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Teléfono',
+            'class': 'number-only',
+            # Sobreescribir el pattern para ajustarse al formato de un telefono
+            'pattern': '^3[0-9]{9}$',
+        })
     )
     contrasena = forms.CharField(
-        widget=forms.PasswordInput(attrs={'placeholder': 'Contraseña'})
+        label="",
+        min_length=8,
+        validators=[validate_password_complexity],
+        widget=forms.PasswordInput(
+            render_value=True,
+            attrs={
+                'placeholder': 'Contraseña',
+                'minlength': '8',
+                'class': 'password-complexity',
+            }
+        )
+    )
+    contrasena.invalid_feedback = (
+        "La contraseña debe contener al menos 8 caracteres, "
+        "una mayúscula, una minúscula, un número y un símbolo."
     )
 
     def clean_usuario(self):
@@ -56,4 +94,3 @@ class SetupAdminForm(BootstrapForm):
             )
 
         return empleado
-
