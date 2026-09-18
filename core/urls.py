@@ -23,5 +23,6 @@ urlpatterns = [
     path("common/", include("common.urls")),
     path("clientes/", include("clientes.urls")),
     path("empleados/", include("empleados.urls")),
+    path("auth/", include("autenticacion.urls")),
     path("", include("pos.urls")),
 ]

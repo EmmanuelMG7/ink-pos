@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "common",
     "clientes",
     "empleados",
+    "autenticacion",
     "pos",
 ]
 
@@ -167,4 +168,4 @@ MAILERS = {
     },
 }
 
-LOGIN_URL = "login"
+LOGIN_URL = "autenticacion:login"
