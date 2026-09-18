@@ -18,6 +18,8 @@
       {{ field.errors.0 }}
     {% elif invalid_msg %}
       {{ invalid_msg }}
+    {% elif field.field.invalid_feedback %}
+      {{ field.field.invalid_feedback }}
     {% else %}
       Por favor ingresa un valor válido.
     {% endif %}
