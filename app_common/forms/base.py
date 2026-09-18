@@ -9,6 +9,13 @@ OnlyTextValidator = RegexValidator(
     message='Solo se permiten letras y espacios.'
 )
 
+# Validador para nombres de usuario: mayúsculas, minúsculas y números (sin espacios ni símbolos)
+UsernameValidator = RegexValidator(
+    regex=r'^[a-zA-Z0-9]+$',
+    message='El nombre de usuario solo puede contener letras y números, sin espacios ni símbolos.'
+)
+
+
 class PasswordComplexityValidator:
     """
     Validador de contraseñas reutilizable.

@@ -8,6 +8,7 @@ from .base import (
     BootstrapModelForm,
     OnlyTextValidator,
     PasswordComplexityValidator,
+    UsernameValidator,
     validate_password_complexity,
 )
 
@@ -17,7 +18,6 @@ __all__ = [
     "BootstrapModelForm",
     "OnlyTextValidator",
     "PasswordComplexityValidator",
+    "UsernameValidator",
     "validate_password_complexity",
 ]
-
-
