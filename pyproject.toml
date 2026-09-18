@@ -12,7 +12,14 @@ strict_optional = true
 django_settings_module = "core.settings"
 
 [tool.coverage.run]
-source = ["pos"]
+source = [
+    "app_common",
+    "app_clientes",
+    "app_empleados",
+    "app_autenticacion",
+    "app_productos",
+    "app_ventas",
+]
 omit = [
     "*/migrations/*",
     "*/tests/*",
