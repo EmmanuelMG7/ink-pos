@@ -54,8 +54,8 @@ class AuthFlowTests(TestCase):
         data = {
             "usuario": "admin_test",
             "nombre": "Admin Prueba",
-            "telefono": "123456789",
-            "contrasena": "supersecret",
+            "telefono": "3001234567",
+            "contrasena": "AdminSecret123!",
         }
         response = self.client.post(url, data)
 
@@ -67,7 +67,7 @@ class AuthFlowTests(TestCase):
         user = User.objects.get(username="admin_test")
         self.assertTrue(user.is_staff)
         self.assertEqual(user.first_name, "Admin Prueba")
-        self.assertTrue(user.check_password("supersecret"))
+        self.assertTrue(user.check_password("AdminSecret123!"))
 
         # Verificar que el empleado se haya creado
         self.assertTrue(Empleado.objects.filter(usuario=user).exists())
