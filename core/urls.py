@@ -16,15 +16,23 @@ Including another URLconf
 """
 
 from django.contrib import admin
+from django.shortcuts import redirect
 from django.urls import include, path
+
+
+def root_redirect(request):
+    if not request.user.is_authenticated:
+        return redirect("autenticacion:login")
+    return redirect("ventas:reportes" if request.user.is_staff else "ventas:pos")
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("", root_redirect, name="root"),
     path("common/", include("common.urls")),
     path("clientes/", include("clientes.urls")),
     path("empleados/", include("empleados.urls")),
     path("auth/", include("autenticacion.urls")),
     path("productos/", include("productos.urls")),
     path("ventas/", include("ventas.urls")),
-    path("", include("pos.urls")),
 ]

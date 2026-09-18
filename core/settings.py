@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     "autenticacion",
     "productos",
     "ventas",
-    "pos",
 ]
 
 MIDDLEWARE = [
