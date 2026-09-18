@@ -1,4 +1,6 @@
+import re
 from django import forms
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 
 # Validador reutilizable para campos que solo acepten letras, acentos y espacios
@@ -6,6 +8,51 @@ OnlyTextValidator = RegexValidator(
     regex=r'^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$',
     message='Solo se permiten letras y espacios.'
 )
+
+class PasswordComplexityValidator:
+    """
+    Validador de contraseñas reutilizable.
+    Exige que la contraseña contenga al menos:
+    - Una letra mayúscula (A-Z)
+    - Una letra minúscula (a-z)
+    - Un número (0-9)
+    - Un símbolo o carácter especial (!@#$%^&*...)
+    Compatible tanto con formularios de Django como con AUTH_PASSWORD_VALIDATORS.
+    """
+    def __init__(self, min_length=None):
+        self.min_length = min_length
+
+    def __call__(self, value):
+        self.validate(value)
+
+    def validate(self, password, user=None):
+        faltantes = []
+
+        if self.min_length and len(password) < self.min_length:
+            faltantes.append(f"al menos {self.min_length} caracteres")
+        if not re.search(r"[A-Z]", password):
+            faltantes.append("una letra mayúscula")
+        if not re.search(r"[a-z]", password):
+            faltantes.append("una letra minúscula")
+        if not re.search(r"\d", password):
+            faltantes.append("un número")
+        if not re.search(r"[^a-zA-Z0-9\s]", password):
+            faltantes.append("un símbolo o carácter especial")
+
+        if faltantes:
+            mensaje = "La contraseña debe contener " + ", ".join(faltantes) + "."
+            raise ValidationError(mensaje)
+
+    def get_help_text(self):
+        partes = ["al menos una mayúscula", "una minúscula", "un número", "un símbolo"]
+        if self.min_length:
+            partes.insert(0, f"al menos {self.min_length} caracteres")
+        return "Tu contraseña debe contener " + ", ".join(partes) + "."
+
+
+# Instancia directa lista para usar en `validators=[validate_password_complexity]`
+validate_password_complexity = PasswordComplexityValidator()
+
 
 
 class BootstrapFormMixin:
