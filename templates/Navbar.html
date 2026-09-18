@@ -1,0 +1,74 @@
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand d-flex align-items-center gap-2 mb-0" href="#">
+      <div style="width: 24px; height: 24px; color: #fff;">
+        {% include "svg/Brand.svg" %}
+      </div>
+      <p class="fs-5 mb-0">InkPOS</p>
+    </a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        {% if user.is_staff %}
+        {% include 'nav_item.html' with url_name='reporte_ventas' label='Reportes' %}
+        {% include 'nav_item.html' with url_name='gestion_productos' label='Productos' %}
+        {% include 'nav_item.html' with url_name='gestion_facturas' label='Facturas' %}
+        {% include 'nav_item.html' with url_name='gestion_empleados' label='Empleados' %}
+        {% else %}
+        {% include 'nav_item.html' with url_name='ventas' label='Ventas' %}
+        {% include 'nav_item.html' with url_name='facturas' label='Facturas' %}
+        {% include 'nav_item.html' with url_name='devoluciones' label='Devoluciones' %}
+        {% endif %}
+      </ul>
+      <div class="d-flex align-items-center gap-2">
+        <span class="mb-0 fw-medium">{{ user.username }}</span>
+        <div class="dropstart d-flex border rounded">
+          <button
+            class="btn"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            A
+          </button>
+
+        <ul class="dropdown-menu">
+          <li>
+            <a class="dropdown-item d-flex align-items-center" href="#">
+              <i class="bi bi-gear-fill me-2"></i>
+              Ajustes
+            </a>
+          </li>
+
+          <li>
+            <form
+              action="{% url 'logout' %}"
+              method="post"
+              class="m-0 p-0 w-100"
+            >
+              {% csrf_token %}
+              <button
+                type="submit"
+                class="dropdown-item d-flex align-items-center border-0 bg-transparent text-start w-100"
+              >
+                <i class="bi bi-door-open-fill me-2"></i>
+                Cerrar Sesión
+              </button>
+            </form>
+          </li>
+        </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
