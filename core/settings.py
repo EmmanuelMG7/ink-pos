@@ -86,12 +86,8 @@ WSGI_APPLICATION = "core.wsgi.application"
 if DEBUG:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": "inkpos_db",
-            "USER": "postgres",
-            "PASSWORD": "postgres",
-            "HOST": "inkpos-postgresdb.eu1.netbird.services",
-            "PORT": "5325",
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
         }
     }
 else:
