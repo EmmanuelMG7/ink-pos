@@ -1,6 +1,6 @@
 from django import forms
 from app_common.forms import BootstrapModelForm
-from app_productos.models import Producto
+from app_inventario.models import Producto
 
 
 class ProductoForm(BootstrapModelForm):

@@ -16,7 +16,7 @@ class DetalleFactura(models.Model):
     factura = models.ForeignKey(
         Factura, on_delete=models.CASCADE, related_name="detalles"
     )
-    producto = models.ForeignKey("app_productos.Producto", on_delete=models.PROTECT)
+    producto = models.ForeignKey("app_inventario.Producto", on_delete=models.PROTECT)
     cantidad = models.IntegerField()
     precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -26,7 +26,7 @@ class DetalleFactura(models.Model):
 
 class Devolucion(models.Model):
     factura = models.ForeignKey(Factura, on_delete=models.PROTECT)
-    producto = models.ForeignKey("app_productos.Producto", on_delete=models.PROTECT)
+    producto = models.ForeignKey("app_inventario.Producto", on_delete=models.PROTECT)
     fecha_hora = models.DateTimeField(auto_now_add=True)
     cantidad = models.IntegerField()
     motivo = models.TextField()

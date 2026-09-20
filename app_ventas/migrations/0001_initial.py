@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('app_clientes', '0001_initial'),
         ('app_empleados', '0001_initial'),
-        ('app_productos', '0001_initial'),
+        ('app_inventario', '0001_initial'),
     ]
 
     operations = [
@@ -33,7 +33,7 @@ class Migration(migrations.Migration):
                 ('fecha_hora', models.DateTimeField(auto_now_add=True)),
                 ('cantidad', models.IntegerField()),
                 ('motivo', models.TextField()),
-                ('producto', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='app_productos.producto')),
+                ('producto', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='app_inventario.producto')),
                 ('factura', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='app_ventas.factura')),
             ],
         ),
@@ -43,7 +43,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('cantidad', models.IntegerField()),
                 ('precio_unitario', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('producto', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='app_productos.producto')),
+                ('producto', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='app_inventario.producto')),
                 ('factura', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='detalles', to='app_ventas.factura')),
             ],
         ),

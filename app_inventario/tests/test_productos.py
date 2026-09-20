@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from app_productos.models import Producto
+from app_inventario.models import Producto
 
 
 class ProductoCRUDTests(TestCase):
@@ -12,7 +12,7 @@ class ProductoCRUDTests(TestCase):
             username="admin", password="password123", is_staff=True
         )
         self.client.login(username="admin", password="password123")
-        self.url = reverse("productos:gestion")
+        self.url = reverse("inventario:gestion")
 
     def test_crear_producto_exitosamente(self):
         """Prueba que se pueda crear un producto enviando un POST válido."""
