@@ -168,3 +168,7 @@ MAILERS = {
 }
 
 LOGIN_URL = "autenticacion:login"
+
+# Configuración DIAN / Facturación Electrónica
+NIT_EMISOR = os.environ.get("NIT_EMISOR", "")
+
