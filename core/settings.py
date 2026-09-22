@@ -42,7 +42,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "pos",
+    "app_common",
+    "app_clientes",
+    "app_empleados",
+    "app_autenticacion",
+    "app_productos",
+    "app_ventas",
 ]
 
 MIDDLEWARE = [
@@ -60,7 +65,7 @@ ROOT_URLCONF = "core.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -81,12 +86,8 @@ WSGI_APPLICATION = "core.wsgi.application"
 if DEBUG:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": "inkpos_db",
-            "USER": "postgres",
-            "PASSWORD": "postgres",
-            "HOST": "inkpos-postgresdb.eu1.netbird.services",
-            "PORT": "5325",
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
         }
     }
 else:
@@ -152,6 +153,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 
 # Email
@@ -163,4 +165,4 @@ MAILERS = {
     },
 }
 
-LOGIN_URL = "login"
+LOGIN_URL = "autenticacion:login"

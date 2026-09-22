@@ -1,0 +1,67 @@
+{% load static %}
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>InkPOS - Setup</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body class="bg-body">
+    <div class="d-flex justify-content-center align-items-center min-vh-100">
+      <div
+        class="bg-body-tertiary p-4 rounded shadow-lg border border-secondary-subtle w-100"
+        style="max-width: 24rem;"
+      >
+        <div class="d-flex w-100 align-items-center m-2">
+          <div style="width: 48px; height: 48px; color: #fff">
+            {% include 'svg/Brand.svg' %}
+          </div>
+          <h1 class="mb-0 ms-2 text-center w-100">InkPOS</h1>
+        </div>
+        <div class="d-flex w-100 justify-content-center">
+          <p class="text-center text-wrap" style="max-width: 20rem;">
+            Bienvenido a InkPOS. <br>
+            Aqui podrá crear el primer usuario administrador antes de usar el sistema.
+          </p>
+        </div>
+        
+        <form action="" method="post" class="needs-validation" novalidate> {% csrf_token %}
+          
+          <div class="mb-2 has-validation">
+            {% include 'common/bootstrap_input_field.html' with field=form.usuario %}
+          </div>
+          <div class="mb-2 has-validation">
+            {% include 'common/bootstrap_input_field.html' with field=form.nombre %}
+          </div>
+          <div class="mb-2 has-validation">
+            {% include 'common/bootstrap_input_field.html' with field=form.telefono %}
+          </div>
+          <div class="mb-2 has-validation">
+            {% include 'common/bootstrap_input_field.html' with field=form.contrasena %}
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">
+            Crear Administrador
+          </button>
+        </form>
+      </div>
+    </div>
+    <script src="{% static 'js/FormValidationIntercept.js' %}"></script>
+  </body>
+</html>
