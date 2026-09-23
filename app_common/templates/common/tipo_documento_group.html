@@ -1,0 +1,45 @@
+{# Componente modular reutilizable para Tipo de Documento + Identificación #}
+{# Parámetros esperados:                                                 #}
+{#   - doc_field: Campo de tipo de documento (ej: form.tipo_documento)    #}
+{#   - id_field: Campo de número de identificación (ej: form.identificacion) #}
+{#   - group_class: (Opcional) Clases adicionales para el input-group     #}
+<div class="tipo-doc-container">
+  {{ doc_field }}
+  <div class="input-group {{ group_class|default:'' }}">
+    <button
+      class="btn btn-outline-secondary dropdown-toggle tipo-doc-btn"
+      type="button"
+      data-bs-toggle="dropdown"
+      aria-expanded="false"
+      style="min-width: 65px;"
+    >
+      <span class="tipo-doc-sigla">CC</span>
+    </button>
+    <ul class="dropdown-menu shadow p-2" 
+      style="min-width: 270px; max-height: 280px; overflow-y: auto;"
+    >
+      {% for val, label in doc_field.field.choices %}
+        <li>
+          <button
+            type="button"
+            class="dropdown-item py-1 rounded tipo-doc-item 
+              {% if doc_field.value == val or not doc_field.value and val == '13' %}
+                active
+              {% endif %}"
+            data-value="{{ val }}"
+          >
+            {{ label }}
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+    {% include 'common/bootstrap_input_field.html' with field=id_field %}
+  </div>
+
+  {% if doc_field.errors %}
+    <div class="invalid-feedback d-block mb-2">
+      {{ doc_field.errors.0 }}
+    </div>
+  {% endif %}
+</div>
+

@@ -44,6 +44,11 @@
         <form action="" method="post" class="needs-validation" novalidate> {% csrf_token %}
           
           <div class="mb-2 has-validation">
+            {% with doc_field=form.tipo_documento id_field=form.identificacion %}
+              {% include 'common/tipo_documento_group.html'%}
+            {% endwith %}
+          </div>
+          <div class="mb-2 has-validation">
             {% include 'common/bootstrap_input_field.html' with field=form.usuario %}
           </div>
           <div class="mb-2 has-validation">
@@ -63,5 +68,6 @@
       </div>
     </div>
     <script src="{% static 'js/FormValidationIntercept.js' %}"></script>
+    <script src="{% static 'js/tipo_documento_dropdown.js' %}"></script>
   </body>
 </html>

@@ -79,7 +79,7 @@ class BootstrapFormMixin:
             if isinstance(field.widget, type):
                 field.widget = field.widget()
             widget = field.widget
-            if not isinstance(widget, forms.Widget):
+            if not isinstance(widget, forms.Widget) or isinstance(widget, forms.HiddenInput):
                 continue
 
             clases_existentes = str(widget.attrs.get("class", ""))
@@ -114,7 +114,7 @@ class BootstrapFormMixin:
         errors: Any = getattr(self, "errors", {})
         for field_name, field in self.fields.items():
             widget = field.widget
-            if not isinstance(widget, forms.Widget):
+            if not isinstance(widget, forms.Widget) or isinstance(widget, forms.HiddenInput):
                 continue
 
             clases = str(widget.attrs.get("class", "")).split()

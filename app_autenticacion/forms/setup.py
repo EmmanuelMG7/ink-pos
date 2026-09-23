@@ -1,11 +1,9 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.db import transaction
-
 from app_common.forms import BootstrapForm, OnlyTextValidator, UsernameValidator
 from app_common.forms.base import validate_password_complexity
 from app_empleados.models import Empleado
-
 
 class SetupAdminForm(BootstrapForm):
     """
@@ -13,6 +11,22 @@ class SetupAdminForm(BootstrapForm):
     Crea el primer usuario administrador y su perfil de Empleado
     asociado dentro de una transacción atómica.
     """
+
+    tipo_documento = forms.ChoiceField(
+        choices=Empleado.TipoDocumento,
+        initial=Empleado.TipoDocumento.CEDULA,
+        widget=forms.HiddenInput(),
+    )
+
+    identificacion = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Identificacion",
+                "class": "number-only"
+            }
+        )
+    )
 
     usuario = forms.CharField(
         label="",
@@ -96,7 +110,8 @@ class SetupAdminForm(BootstrapForm):
 
             empleado = Empleado.objects.create(
                 auth_user=user,
-                identificacion=f"ADMIN-{user.pk:04d}",
+                tipo_documento=datos.get("tipo_documento"),
+                identificacion=datos.get("identificacion"),
                 telefono=str(datos.get("telefono")) if datos.get("telefono") is not None else None,
                 salario=0,
                 es_admin=True,
