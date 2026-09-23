@@ -63,10 +63,10 @@
         <form action="" method="post" class="needs-validation" novalidate> {% csrf_token %}
           
           <div class="mb-2 has-validation">
-            {% include 'common/bootstrap_input_field.html' with field=form.usuario %}
+            {% include 'bootstrap_input_field.html' with field=form.usuario %}
           </div>
           <div class="mb-2 has-validation">
-            {% include 'common/bootstrap_input_field.html' with field=form.contrasena %}
+            {% include 'bootstrap_input_field.html' with field=form.contrasena %}
           </div>
           
           <button type="submit" class="btn btn-primary w-100">
