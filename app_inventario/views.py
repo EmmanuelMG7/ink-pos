@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
 from app_inventario.forms import ProductoForm
-from .models import Producto
+from .models import Categoria, Marca, Producto
 
 
 @login_required
@@ -21,14 +21,16 @@ def gestion_productos(request):
         else:
             for error_list in form.errors.values():
                 for err in error_list:
-                    messages.error(request, err)
+                    messages.error(request, str(err))
             return redirect("inventario:gestion")
 
-    last_product = Producto.objects.order_by("id").last()
-    next_id = 1 if not last_product else last_product.id + 1
+    last_product = Producto.objects.order_by("pk").last()
+    next_id = (last_product.pk + 1) if (last_product and last_product.pk) else 1
     siguiente_codigo = f"{next_id:03d}"
 
-    productos = Producto.objects.all().order_by("-id")
+    productos = Producto.objects.select_related("marca", "categoria").all().order_by("-pk")
+    marcas = Marca.objects.all().order_by("nombre")
+    categorias = Categoria.objects.all().order_by("nombre")
 
     return render(
         request,
@@ -36,6 +38,8 @@ def gestion_productos(request):
         {
             "siguiente_codigo": siguiente_codigo,
             "productos": productos,
+            "marcas": marcas,
+            "categorias": categorias,
             "form": form,
         },
     )

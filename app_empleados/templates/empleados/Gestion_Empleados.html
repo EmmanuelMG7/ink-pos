@@ -35,26 +35,26 @@
     <table class="table table-striped table-hover mb-0">
       <thead class="sticky-top">
         <tr>
-          <th style="width: 10%;"># ID</th>
-          <th style="width: 50%;">Nombre</th>
-          <th style="width: 20%;">Telefono</th>
-          <th style="width: 10%;">Es Admin</th>
-          <th style="width: 10%;">Acciones</th>
+          <th>Identificación</th>
+          <th>Nombre</th>
+          <th>Teléfono</th>
+          <th class="text-center">Es Admin</th>
+          <th class="text-center">Acciones</th>
         </tr>
       </thead>
       {% if empleados %}
       <tbody>
         {% for empleado in empleados %}
         <tr>
-          <td>{{ empleado.id }}</td>
-          <td>{{ empleado.usuario.first_name }}</td>
-          <td>{{ empleado.telefono }}</td>
+          <td>{{ empleado.identificacion }}</td>
+          <td>{{ empleado.auth_user.get_full_name|default:empleado.auth_user.first_name }}</td>
+          <td>{{ empleado.telefono|default:"-" }}</td>
           <td class="text-center">
             {% if empleado.es_admin %}
               <i class="bi bi-check-square-fill"></i>
             {% endif %}
           </td>
-          <td></td>
+          <td class="text-center"></td>
         </tr>
         {% endfor %}
       </tbody>

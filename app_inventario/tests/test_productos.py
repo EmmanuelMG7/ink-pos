@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from app_inventario.models import Producto
+from app_inventario.models import Categoria, Marca, Producto
 
 
 class ProductoCRUDTests(TestCase):
@@ -29,12 +29,17 @@ class ProductoCRUDTests(TestCase):
         self.assertEqual(producto.precio, 15000)
 
         # El código generado depende del ID autoincremental de la base de datos
-        self.assertEqual(producto.codigo, f"{producto.id:03d}")
+        self.assertEqual(producto.codigo, f"{producto.pk:03d}")
 
     def test_crear_segundo_producto_codigo_incremental(self):
         """Prueba que el código se asigne de forma incremental basado en el ID."""
+        marca = Marca.objects.create(nombre="Marca Test")
         producto_previo = Producto.objects.create(
-            codigo="001", nombre="Tinta Azul", stock=10, precio=10000
+            nombre="Tinta Azul",
+            stock_actual=10,
+            precio_venta=10000,
+            costo_compra=5000,
+            marca=marca,
         )
 
         data = {"nombre": "Papel Hectografico", "stock": 100, "precio": 2000}
@@ -44,5 +49,23 @@ class ProductoCRUDTests(TestCase):
         producto2 = Producto.objects.get(nombre="Papel Hectografico")
 
         # El nuevo código debe corresponder al ID asignado (que será el ID del previo + 1)
-        expected_codigo = f"{(producto_previo.id + 1):03d}"
+        expected_codigo = f"{(producto_previo.pk + 1):03d}"
         self.assertEqual(producto2.codigo, expected_codigo)
+
+    def test_crear_producto_con_marca_y_categoria_nuevas(self):
+        """Prueba que el formulario cree automáticamente Marca y Categoría si son nuevas con transaction.atomic."""
+        data = {
+            "nombre": "Agujas 3RL",
+            "stock": 25,
+            "precio": 8000,
+            "marca_nombre": "Precision Needles",
+            "categoria_nombre": "Agujas",
+        }
+        response = self.client.post(self.url, data)
+        self.assertRedirects(response, self.url)
+
+        self.assertTrue(Producto.objects.filter(nombre="Agujas 3RL").exists())
+        prod = Producto.objects.get(nombre="Agujas 3RL")
+        self.assertEqual(prod.marca.nombre, "Precision Needles")
+        self.assertIsNotNone(prod.categoria)
+        self.assertEqual(prod.categoria.nombre, "Agujas")

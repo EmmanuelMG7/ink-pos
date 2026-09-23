@@ -35,11 +35,9 @@ class EmpleadoCRUDTests(TestCase):
         self.assertTrue(nuevo_user.check_password("secreta123"))
 
         # Verificar que el empleado asociado se creó correctamente
-        self.assertTrue(Empleado.objects.filter(usuario=nuevo_user).exists())
-        empleado = Empleado.objects.get(usuario=nuevo_user)
-        self.assertEqual(
-            empleado.id, 1234567890
-        )  # El id se asigna como la identificación
+        self.assertTrue(Empleado.objects.filter(auth_user=nuevo_user).exists())
+        empleado = Empleado.objects.get(auth_user=nuevo_user)
+        self.assertEqual(empleado.identificacion, "1234567890")
         self.assertEqual(empleado.telefono, "3001234567")
         self.assertFalse(empleado.es_admin)
         self.assertEqual(empleado.salario, 0)
@@ -63,9 +61,9 @@ class EmpleadoCRUDTests(TestCase):
         self.assertTrue(nuevo_user.is_staff)
 
         # Verificar que el empleado asociado se creó correctamente y es_admin es True
-        self.assertTrue(Empleado.objects.filter(usuario=nuevo_user).exists())
-        empleado = Empleado.objects.get(usuario=nuevo_user)
-        self.assertEqual(empleado.id, 9876543210)
+        self.assertTrue(Empleado.objects.filter(auth_user=nuevo_user).exists())
+        empleado = Empleado.objects.get(auth_user=nuevo_user)
+        self.assertEqual(empleado.identificacion, "9876543210")
         self.assertTrue(empleado.es_admin)
 
     def test_crear_empleado_usuario_existente(self):
@@ -84,4 +82,4 @@ class EmpleadoCRUDTests(TestCase):
         self.assertRedirects(response, self.url)
 
         # Como falló la creación en view, no debería haberse creado el empleado
-        self.assertFalse(Empleado.objects.filter(id=1111111111).exists())
+        self.assertFalse(Empleado.objects.filter(identificacion="1111111111").exists())

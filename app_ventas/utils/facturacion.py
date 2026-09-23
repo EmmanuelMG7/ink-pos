@@ -1,6 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.db import connection
+
 from app_ventas.models import ResolucionDIAN
+
 
 def obtener_siguiente_numero_factura(tipo_documento: str | None = None) -> str:
     """
@@ -9,10 +11,12 @@ def obtener_siguiente_numero_factura(tipo_documento: str | None = None) -> str:
     """
     # Guardián de seguridad: si no hay transacción abierta, aborta de inmediato
     if not connection.in_atomic_block:
-        raise RuntimeError(
-            "obtener_siguiente_numero_factura() debe ejecutarse dentro de un bloque transaction.atomic() "
-            "para garantizar que el incremento se revierta si la factura falla."
+        msg = (
+            "obtener_siguiente_numero_factura() debe ejecutarse dentro de un bloque "
+            "transaction.atomic() para garantizar que el incremento se revierta "
+            "si la factura falla."
         )
+        raise RuntimeError(msg)
 
     qs = ResolucionDIAN.objects.select_for_update().filter(activo=True)
     if tipo_documento:
@@ -24,9 +28,11 @@ def obtener_siguiente_numero_factura(tipo_documento: str | None = None) -> str:
 
     siguiente_numero = (resolucion.ultimo_numero or 0) + 1
     if siguiente_numero > resolucion.rango_hasta:
-        raise ValidationError(
-            f"Se ha alcanzado el límite del rango autorizado por la DIAN ({resolucion.rango_hasta})."
+        msg = (
+            "Se ha alcanzado el límite del rango autorizado por la DIAN "
+            f"({resolucion.rango_hasta})."
         )
+        raise ValidationError(msg)
 
     resolucion.ultimo_numero = siguiente_numero
     resolucion.save(update_fields=["ultimo_numero"])
