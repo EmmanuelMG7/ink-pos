@@ -34,7 +34,7 @@ def gestion_productos(request):
 
     return render(
         request,
-        "inventario/Gestion_Productos.html",
+        "Gestion_Productos.html",
         {
             "siguiente_codigo": siguiente_codigo,
             "productos": productos,
