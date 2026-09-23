@@ -1,7 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
-
 from app_empleados.forms import EmpleadoCrearForm
 from .models import Empleado
 
@@ -23,7 +22,7 @@ def gestion_empleados_view(request):
         else:
             for error_list in form.errors.values():
                 for err in error_list:
-                    messages.error(request, err)
+                    messages.error(request, str(err))
             return redirect("empleados:gestion")
 
     empleados = Empleado.objects.all().order_by("-id")

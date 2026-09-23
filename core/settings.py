@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     "app_inventario",
     "app_ventas",
     "app_caja",
-    "app_proveedores"
+    "app_proveedores",
 ]
 
 MIDDLEWARE = [
@@ -171,4 +171,3 @@ LOGIN_URL = "autenticacion:login"
 
 # Configuración DIAN / Facturación Electrónica
 NIT_EMISOR = os.environ.get("NIT_EMISOR", "")
-
