@@ -16,6 +16,15 @@ UsernameValidator = RegexValidator(
     message="El nombre de usuario solo puede contener letras y números, sin espacios ni símbolos.",
 )
 
+# Validador para campos alfanuméricos: letras (con acentos y ñ/ü), números y espacios (sin símbolos)
+AlphanumericValidator = RegexValidator(
+    regex=r"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s]+$",
+    message="Solo se permiten letras, números y espacios.",
+)
+AlphanumericWithSpacesValidator = AlphanumericValidator
+OnlyAlphaNumericValidator = AlphanumericValidator
+
+
 class PasswordComplexityValidator:
     """
     Validador de contraseñas reutilizable.
@@ -102,9 +111,37 @@ class BootstrapFormMixin:
             if not hasattr(field, "valid_feedback"):
                 setattr(field, "valid_feedback", self.default_valid_feedback)
 
+        # Sincronizar validadores asignados con clases CSS para interceptores en tiempo real
+        self.sincronizar_clases_validadores()
+
         # Si el formulario ya contiene datos enviados (POST), aplicar estados iniciales
         if self.is_bound:
             self.aplicar_estados_bootstrap()
+
+    def sincronizar_clases_validadores(self):
+        """
+        Sincroniza los validadores de Django asignados al campo con las clases CSS
+        de frontend para que FormValidationIntercept.js actúe en tiempo real.
+        """
+        for field_name, field in self.fields.items():
+            widget = getattr(field, "widget", None)
+            if not isinstance(widget, forms.Widget) or isinstance(widget, forms.HiddenInput):
+                continue
+
+            clases = str(widget.attrs.get("class", ""))
+            validators = getattr(field, "validators", [])
+
+            for v in validators:
+                if v == AlphanumericValidator and "alphanumeric-only" not in clases:
+                    clases = f"{clases} alphanumeric-only".strip()
+                elif v == OnlyTextValidator and "text-only" not in clases:
+                    clases = f"{clases} text-only".strip()
+                elif v == UsernameValidator and "username-only" not in clases:
+                    clases = f"{clases} username-only".strip()
+                elif (isinstance(v, PasswordComplexityValidator) or v == validate_password_complexity) and "password-complexity" not in clases:
+                    clases = f"{clases} password-complexity".strip()
+
+            widget.attrs["class"] = clases
 
     def aplicar_estados_bootstrap(self):
         """

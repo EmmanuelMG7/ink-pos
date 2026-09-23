@@ -10,13 +10,15 @@ function initValidation() {
             input.setAttribute('pattern', '^[0-9]+$');
         } else if (input.classList.contains('username-only') && !input.hasAttribute('pattern')) {
             input.setAttribute('pattern', '^[a-zA-Z0-9]+$');
+        } else if ((input.classList.contains('alphanumeric-only') || input.classList.contains('alphanumeric-spaces')) && !input.hasAttribute('pattern')) {
+            input.setAttribute('pattern', '^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\\s]+$');
         } else if (input.classList.contains('password-complexity') && !input.hasAttribute('pattern')) {
             input.setAttribute('pattern', '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9\\s]).{8,}$');
         }
     };
 
     document.querySelectorAll(
-        'input.text-only, input.number-only, input.username-only, input.password-complexity'
+        'input.text-only, input.number-only, input.username-only, input.alphanumeric-only, input.alphanumeric-spaces, input.password-complexity'
     ).forEach(assignPattern);
 
     // Interceptor global de eventos 'input' (funciona en tiempo real para escribir y pegar)
@@ -33,6 +35,9 @@ function initValidation() {
         } else if (input.classList.contains('username-only')) {
             // Solo letras y números (elimina símbolos y espacios)
             input.value = input.value.replace(/[^a-zA-Z0-9]/g, '');
+        } else if (input.classList.contains('alphanumeric-only') || input.classList.contains('alphanumeric-spaces')) {
+            // Solo letras, números y espacios (elimina símbolos)
+            input.value = input.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
         }
     });
 
