@@ -52,6 +52,8 @@ class AuthFlowTests(TestCase):
         """Al enviar el formulario de setup se crea el primer usuario y empleado admin."""
         url = reverse("autenticacion:setup")
         data = {
+            "tipo_documento": Empleado.TipoDocumento.CEDULA,
+            "identificacion": "1234567890",
             "usuario": "admintest",
             "nombre": "Admin Prueba",
             "telefono": "3001234567",
@@ -75,3 +77,5 @@ class AuthFlowTests(TestCase):
         self.assertTrue(empleado.es_admin)
         self.assertEqual(empleado.telefono, "3001234567")
         self.assertEqual(empleado.salario, 0)
+        self.assertEqual(empleado.tipo_documento, Empleado.TipoDocumento.CEDULA)
+        self.assertEqual(empleado.identificacion, "1234567890")
