@@ -17,7 +17,7 @@ class AuthFlowTests(TestCase):
         url = reverse("autenticacion:setup")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "autenticacion/Setup.html")
+        self.assertTemplateUsed(response, "Setup.html")
 
     def test_login_loads_when_admin_exists(self):
         """Si hay un administrador, el login carga correctamente."""
@@ -32,7 +32,7 @@ class AuthFlowTests(TestCase):
         url = reverse("autenticacion:login")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "autenticacion/Login.html")
+        self.assertTemplateUsed(response, "Login.html")
 
     def test_setup_redirects_to_login_when_admin_exists(self):
         """Si hay un administrador, intentar acceder a setup redirige a login."""

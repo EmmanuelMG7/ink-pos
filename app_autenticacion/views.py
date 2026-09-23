@@ -22,10 +22,10 @@ def Login(request):
         else:
             return render(
                 request,
-                "autenticacion/Login.html",
+                "Login.html",
                 {"error": "Usuario o contraseña incorrectos", "form": form},
             )
-    return render(request, "autenticacion/Login.html", {"form": form})
+    return render(request, "Login.html", {"form": form})
 
 
 def setup_view(request):
@@ -35,7 +35,7 @@ def setup_view(request):
     if request.method == "POST" and form.is_valid():
         form.save()
         return redirect("autenticacion:login")
-    return render(request, "autenticacion/Setup.html", {"form": form})
+    return render(request, "Setup.html", {"form": form})
 
 
 def logout_view(request):
