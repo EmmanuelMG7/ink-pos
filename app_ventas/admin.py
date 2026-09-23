@@ -1,12 +1,13 @@
 from django.contrib import admin
+
 from .models import (
     Descuento,
-    ResolucionDIAN,
-    Factura,
-    DetalleFactura,
-    PagoFactura,
-    Devolucion,
     DetalleDevolucion,
+    DetalleFactura,
+    Devolucion,
+    Factura,
+    PagoFactura,
+    ResolucionDIAN,
 )
 
 
@@ -14,13 +15,16 @@ class DetalleFacturaInline(admin.TabularInline):
     model = DetalleFactura
     extra = 0
 
+
 class PagoFacturaInline(admin.TabularInline):
     model = PagoFactura
     extra = 0
 
+
 class DetalleDevolucionInline(admin.TabularInline):
     model = DetalleDevolucion
     extra = 0
+
 
 @admin.register(Descuento)
 class DescuentoAdmin(admin.ModelAdmin):
@@ -40,6 +44,7 @@ class DescuentoAdmin(admin.ModelAdmin):
     search_fields = ("nombre", "codigo_cupon")
     filter_horizontal = ("productos", "categorias")
 
+
 @admin.register(ResolucionDIAN)
 class ResolucionDIANAdmin(admin.ModelAdmin):
     list_display = (
@@ -56,6 +61,7 @@ class ResolucionDIANAdmin(admin.ModelAdmin):
     )
     list_filter = ("tipo_documento", "activo")
     search_fields = ("numero_resolucion", "prefijo")
+
 
 @admin.register(Factura)
 class FacturaAdmin(admin.ModelAdmin):
@@ -76,6 +82,7 @@ class FacturaAdmin(admin.ModelAdmin):
     search_fields = ("codigo", "cliente__nombre", "cliente__identificacion")
     inlines = [DetalleFacturaInline, PagoFacturaInline]
 
+
 @admin.register(DetalleFactura)
 class DetalleFacturaAdmin(admin.ModelAdmin):
     list_display = (
@@ -89,11 +96,13 @@ class DetalleFacturaAdmin(admin.ModelAdmin):
     )
     search_fields = ("factura__codigo", "producto__nombre")
 
+
 @admin.register(PagoFactura)
 class PagoFacturaAdmin(admin.ModelAdmin):
     list_display = ("id", "factura", "metodo_pago", "monto", "referencia_transferencia")
     list_filter = ("metodo_pago",)
     search_fields = ("factura__codigo", "referencia_transferencia")
+
 
 @admin.register(Devolucion)
 class DevolucionAdmin(admin.ModelAdmin):
@@ -102,8 +111,16 @@ class DevolucionAdmin(admin.ModelAdmin):
     search_fields = ("factura__codigo", "motivo")
     inlines = [DetalleDevolucionInline]
 
+
 @admin.register(DetalleDevolucion)
 class DetalleDevolucionAdmin(admin.ModelAdmin):
-    list_display = ("id", "devolucion", "producto", "cantidad", "precio_unitario", "retorno_inventario")
+    list_display = (
+        "id",
+        "devolucion",
+        "producto",
+        "cantidad",
+        "precio_unitario",
+        "retorno_inventario",
+    )
     list_filter = ("retorno_inventario",)
     search_fields = ("producto__nombre",)

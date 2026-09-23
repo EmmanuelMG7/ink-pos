@@ -1,21 +1,26 @@
 from django.contrib import admin
-from .models import Categoria, Marca, Impuesto, Producto, MovimientoInventario
+
+from .models import Categoria, Impuesto, Marca, MovimientoInventario, Producto
+
 
 @admin.register(Categoria)
 class CategoriaAdmin(admin.ModelAdmin):
     list_display = ("id", "nombre")
     search_fields = ("nombre",)
 
+
 @admin.register(Marca)
 class MarcaAdmin(admin.ModelAdmin):
     list_display = ("id", "nombre")
     search_fields = ("nombre",)
+
 
 @admin.register(Impuesto)
 class ImpuestoAdmin(admin.ModelAdmin):
     list_display = ("id", "nombre", "codigo_tributario", "tarifa", "tipo_impuesto", "activo")
     list_filter = ("tipo_impuesto", "activo")
     search_fields = ("nombre", "codigo_tributario")
+
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
@@ -32,6 +37,7 @@ class ProductoAdmin(admin.ModelAdmin):
     )
     list_filter = ("marca", "categoria", "activo")
     search_fields = ("nombre",)
+
 
 @admin.register(MovimientoInventario)
 class MovimientoInventarioAdmin(admin.ModelAdmin):

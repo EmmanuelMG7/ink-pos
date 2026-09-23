@@ -1,9 +1,12 @@
 from django.contrib import admin
-from .models import SesionCaja, AjustesCaja
+
+from .models import AjustesCaja, SesionCaja
+
 
 class AjustesCajaInline(admin.TabularInline):
     model = AjustesCaja
     extra = 0
+
 
 @admin.register(SesionCaja)
 class SesionCajaAdmin(admin.ModelAdmin):
@@ -21,6 +24,7 @@ class SesionCajaAdmin(admin.ModelAdmin):
     list_filter = ("estado", "fecha_hora_apertura", "empleado")
     search_fields = ("empleado__auth_user__username", "empleado__identificacion")
     inlines = [AjustesCajaInline]
+
 
 @admin.register(AjustesCaja)
 class AjustesCajaAdmin(admin.ModelAdmin):
