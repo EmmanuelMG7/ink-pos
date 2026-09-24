@@ -27,6 +27,7 @@ services:
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - DB_USER=${DB_USER}
+      - PROXY_HOSTNAME=${PROXY_HOSTNAME}
     depends_on:
       db:
         condition: service_healthy
