@@ -2,17 +2,21 @@
 Formularios base y validadores compartidos de app_common.
 """
 
-from .base import (
+from .validators import (
     AlphanumericValidator,
     AlphanumericWithSpacesValidator,
-    BootstrapForm,
-    BootstrapFormMixin,
-    BootstrapModelForm,
     OnlyAlphaNumericValidator,
     OnlyTextValidator,
     PasswordComplexityValidator,
+    PasswordValidator,
     UsernameValidator,
     validate_password_complexity,
+)
+
+from .bootstrap import (
+    BootstrapForm,
+    BootstrapFormMixin,
+    BootstrapModelForm,
 )
 
 __all__ = [
@@ -24,6 +28,7 @@ __all__ = [
     "OnlyAlphaNumericValidator",
     "OnlyTextValidator",
     "PasswordComplexityValidator",
+    "PasswordValidator",
     "UsernameValidator",
     "validate_password_complexity",
 ]

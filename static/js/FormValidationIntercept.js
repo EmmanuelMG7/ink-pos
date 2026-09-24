@@ -4,6 +4,15 @@ function initValidation() {
     // Asignar patterns por defecto al cargar o enfocar
     const assignPattern = function (input) {
         if (!input || !input.classList) return;
+
+        // 1. Patrón universal proveniente de Django via data-regex
+        const dataRegex = input.getAttribute('data-regex');
+        if (dataRegex && !input.hasAttribute('pattern')) {
+            const cleanPattern = dataRegex.replace(/^\^/, '').replace(/\$$/, '');
+            input.setAttribute('pattern', cleanPattern);
+        }
+
+        // 2. Retrocompatibilidad para inputs con clases tradicionales
         if (input.classList.contains('text-only') && !input.hasAttribute('pattern')) {
             input.setAttribute('pattern', '^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$');
         } else if (input.classList.contains('number-only') && !input.hasAttribute('pattern')) {
@@ -18,7 +27,7 @@ function initValidation() {
     };
 
     document.querySelectorAll(
-        'input.text-only, input.number-only, input.username-only, input.alphanumeric-only, input.alphanumeric-spaces, input.password-complexity'
+        'input[data-regex], input.text-only, input.number-only, input.username-only, input.alphanumeric-only, input.alphanumeric-spaces, input.password-complexity'
     ).forEach(assignPattern);
 
     // Interceptor global de eventos 'input' (funciona en tiempo real para escribir y pegar)
@@ -26,17 +35,43 @@ function initValidation() {
         const input = event.target;
         if (!input || input.tagName !== 'INPUT') return;
 
+        // A. Campos de contraseña o complejidad: validación de reglas en tiempo real (NO borra caracteres)
+        const isComplexity = input.type === 'password' ||
+            input.getAttribute('data-validation-type') === 'complexity' ||
+            input.classList.contains('password-complexity');
+
+        if (isComplexity && input.hasAttribute('pattern')) {
+            if (input.value.length === 0) {
+                input.classList.remove('is-valid', 'is-invalid');
+            } else if (input.checkValidity()) {
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+            } else {
+                input.classList.remove('is-valid');
+                input.classList.add('is-invalid');
+            }
+            return;
+        }
+
+        // B. Sanitización universal de caracteres permitidos (Whitelist)
+        const dataRegex = input.getAttribute('data-regex');
+        if (dataRegex) {
+            const match = dataRegex.match(/^\^\[(.*?)\]\+\$?$/);
+            if (match) {
+                const stripRegex = new RegExp(`[^${match[1]}]`, 'g');
+                input.value = input.value.replace(stripRegex, '');
+                return;
+            }
+        }
+
+        // C. Fallback por clases CSS tradicionales
         if (input.classList.contains('text-only')) {
-            // Solo letras, tildes y espacios (elimina números y símbolos)
             input.value = input.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
         } else if (input.classList.contains('number-only')) {
-            // Solo dígitos numéricos (elimina letras y símbolos)
             input.value = input.value.replace(/\D/g, '');
         } else if (input.classList.contains('username-only')) {
-            // Solo letras y números (elimina símbolos y espacios)
             input.value = input.value.replace(/[^a-zA-Z0-9]/g, '');
         } else if (input.classList.contains('alphanumeric-only') || input.classList.contains('alphanumeric-spaces')) {
-            // Solo letras, números y espacios (elimina símbolos)
             input.value = input.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
         }
     });
@@ -53,6 +88,9 @@ function initValidation() {
 
         form.addEventListener('reset', function () {
             form.classList.remove('was-validated');
+            form.querySelectorAll('.is-valid, .is-invalid').forEach(function (el) {
+                el.classList.remove('is-valid', 'is-invalid');
+            });
         }, false);
     });
 }

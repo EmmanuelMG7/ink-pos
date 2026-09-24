@@ -1,8 +1,12 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.db import transaction
-from app_common.forms import BootstrapForm, OnlyTextValidator, UsernameValidator
-from app_common.forms.base import validate_password_complexity
+from app_common.forms import (
+    BootstrapForm,
+    OnlyTextValidator,
+    UsernameValidator,
+    validate_password_complexity,
+)
 from app_empleados.models import Empleado
 
 class SetupAdminForm(BootstrapForm):

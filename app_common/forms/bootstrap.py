@@ -1,75 +1,14 @@
-import re
 from typing import Any
 
 from django import forms
-from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-
-# Validador reutilizable para campos que solo acepten letras, acentos y espacios
-OnlyTextValidator = RegexValidator(
-    regex=r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$", message="Solo se permiten letras y espacios."
+from .validators import (
+    AlphanumericValidator,
+    OnlyAlphaNumericValidator,
+    OnlyTextValidator,
+    PasswordValidator,
+    UsernameValidator,
 )
-
-# Validador para nombres de usuario: mayúsculas, minúsculas y números (sin espacios ni símbolos)
-UsernameValidator = RegexValidator(
-    regex=r"^[a-zA-Z0-9]+$",
-    message="El nombre de usuario solo puede contener letras y números, sin espacios ni símbolos.",
-)
-
-# Validador para campos alfanuméricos: letras (con acentos y ñ/ü), números y espacios (sin símbolos)
-AlphanumericValidator = RegexValidator(
-    regex=r"^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s]+$",
-    message="Solo se permiten letras, números y espacios.",
-)
-AlphanumericWithSpacesValidator = AlphanumericValidator
-OnlyAlphaNumericValidator = AlphanumericValidator
-
-
-class PasswordComplexityValidator:
-    """
-    Validador de contraseñas reutilizable.
-    Exige que la contraseña contenga al menos:
-    - Una letra mayúscula (A-Z)
-    - Una letra minúscula (a-z)
-    - Un número (0-9)
-    - Un símbolo o carácter especial (!@#$%^&*...)
-    Compatible tanto con formularios de Django como con AUTH_PASSWORD_VALIDATORS.
-    """
-
-    def __init__(self, min_length=None):
-        self.min_length = min_length
-
-    def __call__(self, value):
-        self.validate(value)
-
-    def validate(self, password, user=None):
-        faltantes = []
-
-        if self.min_length and len(password) < self.min_length:
-            faltantes.append(f"al menos {self.min_length} caracteres")
-        if not re.search(r"[A-Z]", password):
-            faltantes.append("una letra mayúscula")
-        if not re.search(r"[a-z]", password):
-            faltantes.append("una letra minúscula")
-        if not re.search(r"\d", password):
-            faltantes.append("un número")
-        if not re.search(r"[^a-zA-Z0-9\s]", password):
-            faltantes.append("un símbolo o carácter especial")
-
-        if faltantes:
-            mensaje = "La contraseña debe contener " + ", ".join(faltantes) + "."
-            raise ValidationError(mensaje)
-
-    def get_help_text(self):
-        partes = ["al menos una mayúscula", "una minúscula", "un número", "un símbolo"]
-        if self.min_length:
-            partes.insert(0, f"al menos {self.min_length} caracteres")
-        return "Tu contraseña debe contener " + ", ".join(partes) + "."
-
-
-# Instancia directa lista para usar en `validators=[validate_password_complexity]`
-validate_password_complexity = PasswordComplexityValidator()
-
 
 class BootstrapFormMixin:
     """
@@ -120,8 +59,9 @@ class BootstrapFormMixin:
 
     def sincronizar_clases_validadores(self):
         """
-        Sincroniza los validadores de Django asignados al campo con las clases CSS
-        de frontend para que FormValidationIntercept.js actúe en tiempo real.
+        Sincroniza los validadores de Django asignados al campo con atributos HTML5
+        (pattern, data-regex, data-invalid-feedback, minlength) y clases CSS
+        para que FormValidationIntercept.js actúe en tiempo real de forma universal.
         """
         for field_name, field in self.fields.items():
             widget = getattr(field, "widget", None)
@@ -131,15 +71,39 @@ class BootstrapFormMixin:
             clases = str(widget.attrs.get("class", ""))
             validators = getattr(field, "validators", [])
 
-            for v in validators:
-                if v == AlphanumericValidator and "alphanumeric-only" not in clases:
-                    clases = f"{clases} alphanumeric-only".strip()
-                elif v == OnlyTextValidator and "text-only" not in clases:
-                    clases = f"{clases} text-only".strip()
-                elif v == UsernameValidator and "username-only" not in clases:
-                    clases = f"{clases} username-only".strip()
-                elif (isinstance(v, PasswordComplexityValidator) or v == validate_password_complexity) and "password-complexity" not in clases:
-                    clases = f"{clases} password-complexity".strip()
+            for validator in validators:
+                if isinstance(validator, RegexValidator):
+                    pat: str = str(getattr(validator.regex, "pattern", validator.regex))
+                    widget.attrs["data-regex"] = pat
+
+                    # Asignar atributo pattern para HTML5
+                    if "pattern" not in widget.attrs:
+                        if "(?=" in pat:
+                            widget.attrs["pattern"] = pat
+                        else:
+                            widget.attrs["pattern"] = pat.lstrip("^").rstrip("$")
+
+                    # Usar los error_messages de Django para el feedback
+                    if validator.message:
+                        msg = str(validator.message)
+                        field.error_messages["invalid"] = msg
+                        widget.attrs["data-invalid-feedback"] = msg
+                    elif "invalid" in field.error_messages:
+                        widget.attrs["data-invalid-feedback"] = str(field.error_messages["invalid"])
+
+                    # Si es validador de contraseña o campo password
+                    if validator == PasswordValidator or "(?=" in pat or isinstance(widget, forms.PasswordInput):
+                        widget.attrs["data-validation-type"] = "complexity"
+                        if "minlength" not in widget.attrs:
+                            widget.attrs["minlength"] = "8"
+                        if "password-complexity" not in clases:
+                            clases = f"{clases} password-complexity".strip()
+                    elif validator in (AlphanumericValidator, OnlyAlphaNumericValidator) and "alphanumeric-only" not in clases:
+                        clases = f"{clases} alphanumeric-only".strip()
+                    elif validator == OnlyTextValidator and "text-only" not in clases:
+                        clases = f"{clases} text-only".strip()
+                    elif validator == UsernameValidator and "username-only" not in clases:
+                        clases = f"{clases} username-only".strip()
 
             widget.attrs["class"] = clases
 
