@@ -28,14 +28,29 @@ def gestion_productos(request):
     next_id = 1 if not last_product else last_product.id + 1
     siguiente_codigo = f"{next_id:03d}"
 
-    productos = Producto.objects.all().order_by("-id")
+    sort_param = request.GET.get('sort', '-id')
+    valid_sorts = ['precio', '-precio', 'stock', '-stock', '-id']
+
+    # Validar que el parámetro sea seguro
+    if sort_param not in valid_sorts:
+        sort_param = '-id'
+
+    # Aplicar el orden dinámico a la consulta
+    productos = Producto.objects.all().order_by(sort_param)
+
+    # Calcular el orden inverso para el próximo clic en el HTML
+    next_sort_precio = '-precio' if sort_param == 'precio' else 'precio'
+    next_sort_stock = '-stock' if sort_param == 'stock' else 'stock'
 
     return render(
-        request,
-        "productos/Gestion_Productos.html",
-        {
-            "siguiente_codigo": siguiente_codigo,
-            "productos": productos,
-            "form": form,
-        },
-    )
+    request,
+    "productos/Gestion_Productos.html",
+    {
+        "siguiente_codigo": siguiente_codigo,
+        "productos": productos,
+        "form": form,
+        # Inyectar las variables de ordenamiento al template
+        "next_sort_precio": next_sort_precio,
+        "next_sort_stock": next_sort_stock,
+    },
+)
