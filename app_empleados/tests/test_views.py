@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -5,7 +7,7 @@ from django.urls import reverse
 from app_empleados.models import Empleado
 
 
-class EmpleadoCRUDTests(TestCase):
+class GestionEmpleadosViewTests(TestCase):
     def setUp(self):
         # Crear un usuario administrador y loguearlo para acceder a gestion_empleados
         self.user = User.objects.create_user(
@@ -70,7 +72,6 @@ class EmpleadoCRUDTests(TestCase):
 
     def test_crear_empleado_usuario_existente(self):
         """Prueba que no se pueda crear un empleado si el nombre de usuario ya existe."""
-        # Creamos un usuario que ya exista
         User.objects.create_user(username="usuario_existente", password="123")
 
         data = {
@@ -86,3 +87,17 @@ class EmpleadoCRUDTests(TestCase):
 
         # Como falló la creación en view, no debería haberse creado el empleado
         self.assertFalse(Empleado.objects.filter(identificacion="1111111111").exists())
+
+    def test_gestion_empleados_view_exception_handling(self):
+        """Prueba manejo de excepción en gestion_empleados_view."""
+        data = {
+            "tipo_documento": Empleado.TipoDocumento.CEDULA,
+            "identificacion": "5566778899",
+            "nombre": "Pedro Gomez",
+            "usuario": "pedrog",
+            "telefono": "3009998877",
+            "contrasena": "Secreta123!",
+        }
+        with patch("app_empleados.views.EmpleadoForm.save", side_effect=Exception("Fallo en BD")):
+            response = self.client.post(self.url, data)
+            self.assertRedirects(response, self.url)

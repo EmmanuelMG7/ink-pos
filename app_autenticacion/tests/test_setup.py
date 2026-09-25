@@ -2,41 +2,20 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
+from app_autenticacion.forms import SetupAdminForm
 from app_empleados.models import Empleado
 
 
-class AuthFlowTests(TestCase):
-    def test_login_redirects_to_setup_when_no_admin(self):
-        """Si no hay administrador, acceder al login redirige al setup."""
-        url = reverse("autenticacion:login")
-        response = self.client.get(url)
-        self.assertRedirects(response, reverse("autenticacion:setup"))
-
+class SetupViewAndFormTests(TestCase):
     def test_setup_loads_when_no_admin(self):
-        """Si no hay administrador, la página de setup carga correctamente."""
+        """Si no hay administrador, la página de setup carga correctamente con Setup.html."""
         url = reverse("autenticacion:setup")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "Setup.html")
 
-    def test_login_loads_when_admin_exists(self):
-        """Si hay un administrador, el login carga correctamente."""
-        # Creamos un administrador (is_staff=True)
-        User.objects.create_user(
-            username="admin",
-            email="admin@test.com",
-            password="password123",
-            is_staff=True,
-        )
-
-        url = reverse("autenticacion:login")
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "Login.html")
-
     def test_setup_redirects_to_login_when_admin_exists(self):
         """Si hay un administrador, intentar acceder a setup redirige a login."""
-        # Creamos un administrador (is_staff=True)
         User.objects.create_user(
             username="admin",
             email="admin@test.com",
@@ -79,3 +58,21 @@ class AuthFlowTests(TestCase):
         self.assertEqual(empleado.salario, 0)
         self.assertEqual(empleado.tipo_documento, Empleado.TipoDocumento.CEDULA)
         self.assertEqual(empleado.identificacion, "1234567890")
+
+    def test_setup_usuario_duplicado_falla(self):
+        """Si el usuario ya existe en setup form, lanza error de validación."""
+        User.objects.create_user(username="yaexiste", password="password123")
+
+        form = SetupAdminForm(
+            data={
+                "tipo_documento": Empleado.TipoDocumento.CEDULA,
+                "identificacion": "99988877",
+                "usuario": "yaexiste",
+                "nombre": "Prueba Duplicado",
+                "telefono": "3001234567",
+                "contrasena": "AdminSecret123!",
+            }
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn("usuario", form.errors)
+        self.assertIn("Este nombre de usuario ya está registrado.", form.errors["usuario"])

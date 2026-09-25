@@ -5,7 +5,7 @@ from django.test import TestCase
 from app_clientes.models import Cliente
 
 
-class ClienteBoundaryTests(TestCase):
+class ClienteModelTests(TestCase):
     def test_cliente_identificacion_valida_y_sanitizacion(self):
         """Cliente con espacios en identificación y nombre se sanea con strip."""
         cliente = Cliente.objects.create(
@@ -41,3 +41,17 @@ class ClienteBoundaryTests(TestCase):
         )
         with self.assertRaises(ValidationError):
             cliente.save()
+
+    def test_cliente_telefono_direccion_email_sanitizacion_y_str(self):
+        """Campos opcionales se sanean y __str__ devuelve formato esperado."""
+        cliente = Cliente.objects.create(
+            identificacion=" 987654321 ",
+            nombre=" Maria Perez ",
+            telefono=" 3001234567 ",
+            direccion=" Calle 100 # 20-30 ",
+            email="Test.User@Domain.COM",
+        )
+        self.assertEqual(cliente.telefono, "3001234567")
+        self.assertEqual(cliente.direccion, "Calle 100 # 20-30")
+        self.assertEqual(cliente.email, "test.user@domain.com")
+        self.assertEqual(str(cliente), "Maria Perez (987654321)")

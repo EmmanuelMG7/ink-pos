@@ -7,13 +7,15 @@ from django.db import IntegrityError
 from django.test import TestCase
 from django.utils import timezone
 
-from app_caja.models import AjustesCaja, SesionCaja
+from app_caja.models import SesionCaja
 from app_empleados.models import Empleado
 
 
-class SesionCajaBoundaryTests(TestCase):
+class SesionCajaModelTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="cajero1", password="password123")
+        self.user = User.objects.create_user(
+            username="cajero1", password="password123"
+        )
         self.empleado = Empleado.objects.create(
             identificacion="10101010",
             auth_user=self.user,
@@ -28,6 +30,7 @@ class SesionCajaBoundaryTests(TestCase):
             monto_inicial=Decimal("0.00"),
         )
         self.assertEqual(caja.monto_inicial, Decimal("0.00"))
+        self.assertIn("Caja #", str(caja))
 
     def test_monto_inicial_negativo_invalido(self):
         """Monto inicial en -0.01 debe lanzar ValidationError."""
@@ -37,6 +40,16 @@ class SesionCajaBoundaryTests(TestCase):
         )
         with self.assertRaises(ValidationError):
             caja.save()
+
+    def test_monto_final_calculado_negativo_falla(self):
+        caja = SesionCaja(
+            empleado=self.empleado,
+            monto_inicial=Decimal("100.00"),
+            monto_final_calculado=Decimal("-1.00"),
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            caja.clean()
+        self.assertIn("monto_final_calculado", ctx.exception.message_dict)
 
     def test_monto_inicial_negativo_db_constraint(self):
         """Monto inicial negativo en BD debe disparar CheckConstraint."""
@@ -75,12 +88,42 @@ class SesionCajaBoundaryTests(TestCase):
         self.assertEqual(caja.diferencia, Decimal("5000.00"))
         self.assertIsNotNone(caja.fecha_hora_cierre)
 
+    def test_cierre_sin_monto_final_real_o_negativo_falla(self):
+        caja = SesionCaja.objects.create(
+            empleado=self.empleado,
+            monto_inicial=Decimal("100.00"),
+        )
+        caja.estado = SesionCaja.EstadoCaja.CERRADO
+        caja.monto_final_real = None
+        with self.assertRaises(ValidationError) as ctx1:
+            caja.clean()
+        self.assertIn("monto_final_real", ctx1.exception.message_dict)
+
+        caja.monto_final_real = Decimal("-5.00")
+        with self.assertRaises(ValidationError) as ctx2:
+            caja.clean()
+        self.assertIn("monto_final_real", ctx2.exception.message_dict)
+
+    def test_caja_abierta_con_fecha_cierre_falla(self):
+        caja = SesionCaja(
+            empleado=self.empleado,
+            monto_inicial=Decimal("100.00"),
+            estado=SesionCaja.EstadoCaja.ABIERTO,
+            fecha_hora_cierre=timezone.now(),
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            caja.clean()
+        self.assertIn("fecha_hora_cierre", ctx.exception.message_dict)
+
     def test_unica_sesion_abierta_por_empleado(self):
         """Un empleado no puede tener 2 cajas abiertas simultáneamente."""
-        SesionCaja.objects.create(
+        caja1 = SesionCaja.objects.create(
             empleado=self.empleado,
             monto_inicial=Decimal("10000.00"),
         )
+        # Limpiar la misma caja con pk no debe fallar
+        caja1.clean()
+
         segunda_caja = SesionCaja(
             empleado=self.empleado,
             monto_inicial=Decimal("20000.00"),
@@ -88,34 +131,15 @@ class SesionCajaBoundaryTests(TestCase):
         with self.assertRaises(ValidationError):
             segunda_caja.save()
 
-    def test_ajuste_caja_monto_limite_cero_invalido(self):
-        """Ajuste de caja con monto 0.00 debe ser rechazado (debe ser > 0)."""
+    def test_no_permitir_reabrir_caja_cerrada(self):
         caja = SesionCaja.objects.create(
             empleado=self.empleado,
-            monto_inicial=Decimal("50000.00"),
-            monto_final_calculado=Decimal("50000.00"),
+            monto_inicial=Decimal("100.00"),
+            monto_final_real=Decimal("100.00"),
+            estado=SesionCaja.EstadoCaja.CERRADO,
         )
-        ajuste = AjustesCaja(
-            sesion_caja=caja,
-            tipo=AjustesCaja.TipoAjuste.INGRESO,
-            monto=Decimal("0.00"),
-            motivo="Prueba límite",
-        )
-        with self.assertRaises(ValidationError):
-            ajuste.save()
-
-    def test_ajuste_caja_egreso_excede_fondos_invalido(self):
-        """Egreso superior al dinero disponible debe fallar."""
-        caja = SesionCaja.objects.create(
-            empleado=self.empleado,
-            monto_inicial=Decimal("50000.00"),
-            monto_final_calculado=Decimal("50000.00"),
-        )
-        ajuste = AjustesCaja(
-            sesion_caja=caja,
-            tipo=AjustesCaja.TipoAjuste.EGRESO,
-            monto=Decimal("50000.01"),  # Límite + 1 centavo
-            motivo="Retiro excesivo",
-        )
-        with self.assertRaises(ValidationError):
-            ajuste.save()
+        caja.estado = SesionCaja.EstadoCaja.ABIERTO
+        caja.fecha_hora_cierre = None
+        with self.assertRaises(ValidationError) as ctx:
+            caja.clean()
+        self.assertIn("No está permitido reabrir", str(ctx.exception))

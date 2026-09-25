@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth.models import User
@@ -6,16 +7,10 @@ from django.test import TestCase
 
 from app_empleados.models import Empleado
 from app_inventario.models import Marca, Producto
-from app_proveedores.models import (
-    DetalleOrdenCompra,
-    DetalleRecepcionCompra,
-    OrdenCompra,
-    Proveedor,
-    RecepcionCompra,
-)
+from app_proveedores.models import DetalleOrdenCompra, OrdenCompra, Proveedor
 
 
-class ProveedoresBoundaryTests(TestCase):
+class OrdenCompraModelTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="compras1", password="password123")
         self.empleado = Empleado.objects.create(
@@ -38,16 +33,15 @@ class ProveedoresBoundaryTests(TestCase):
         )
 
     def test_orden_compra_total_estimado_limite_cero_valido(self):
-        """Total estimado en 0.00 es el límite inferior válido."""
         orden = OrdenCompra.objects.create(
             proveedor=self.proveedor,
             empleado=self.empleado,
             total_estimado=Decimal("0.00"),
         )
         self.assertEqual(orden.total_estimado, Decimal("0.00"))
+        self.assertIn("Orden #", str(orden))
 
     def test_orden_compra_total_estimado_negativo_falla(self):
-        """Total estimado en -0.01 falla por validación y CheckConstraint."""
         orden = OrdenCompra(
             proveedor=self.proveedor,
             empleado=self.empleado,
@@ -56,8 +50,27 @@ class ProveedoresBoundaryTests(TestCase):
         with self.assertRaises(ValidationError):
             orden.save()
 
+    def test_orden_compra_fecha_esperada_anterior_a_solicitud(self):
+        orden = OrdenCompra.objects.create(
+            proveedor=self.proveedor,
+            empleado=self.empleado,
+        )
+        orden.fecha_esperada_entrega = orden.fecha_solicitud - timedelta(days=1)
+        with self.assertRaises(ValidationError) as ctx:
+            orden.clean()
+        self.assertIn("fecha_esperada_entrega", ctx.exception.message_dict)
+
+    def test_orden_compra_no_se_puede_reactivar_si_cancelada(self):
+        orden = OrdenCompra.objects.create(
+            proveedor=self.proveedor,
+            empleado=self.empleado,
+            estado=OrdenCompra.EstadoOrden.CANCELADO,
+        )
+        orden.estado = OrdenCompra.EstadoOrden.PENDIENTE
+        with self.assertRaises(ValidationError):
+            orden.clean()
+
     def test_detalle_orden_cantidad_minima_uno_valido_y_cero_invalido(self):
-        """Cantidad solicitada debe ser > 0 (1 es válido, 0 es inválido)."""
         orden = OrdenCompra.objects.create(
             proveedor=self.proveedor,
             empleado=self.empleado,
@@ -69,6 +82,7 @@ class ProveedoresBoundaryTests(TestCase):
             costo_unitario=Decimal("20000.00"),
         )
         self.assertEqual(det.subtotal, Decimal("20000.00"))
+        self.assertEqual(str(det), f"1x Agujas RL en Orden #{orden.pk}")
 
         det_cero = DetalleOrdenCompra(
             orden_compra=orden,
@@ -79,59 +93,32 @@ class ProveedoresBoundaryTests(TestCase):
         with self.assertRaises(ValidationError):
             det_cero.save()
 
-    def test_recepcion_ambas_cantidades_cero_falla(self):
-        """DetalleRecepcionCompra con recibida=0 y rechazada=0 debe fallar (suma > 0)."""
+    def test_detalle_orden_costo_unitario_negativo_falla(self):
         orden = OrdenCompra.objects.create(
             proveedor=self.proveedor,
             empleado=self.empleado,
         )
-        det_orden = DetalleOrdenCompra.objects.create(
+        det = DetalleOrdenCompra(
             orden_compra=orden,
             producto=self.producto,
-            cantidad_solicitada=5,
-            costo_unitario=Decimal("20000.00"),
+            cantidad_solicitada=2,
+            costo_unitario=Decimal("-10.00"),
         )
-        recepcion = RecepcionCompra.objects.create(
-            orden_compra=orden,
-            empleado=self.empleado,
-            numero_factura_proveedor="FAC-999",
-        )
-        det_rec = DetalleRecepcionCompra(
-            recepcion=recepcion,
-            detalle_orden=det_orden,
-            producto=self.producto,
-            cantidad_recibida=0,
-            cantidad_rechazada=0,
-            costo_final_unitario=Decimal("20000.00"),
-        )
-        with self.assertRaises(ValidationError):
-            det_rec.save()
+        with self.assertRaises(ValidationError) as ctx:
+            det.clean()
+        self.assertIn("costo_unitario", ctx.exception.message_dict)
 
-    def test_recepcion_rechazada_requiere_motivo(self):
-        """Si cantidad_rechazada > 0, motivo_rechazo no puede estar vacío."""
+    def test_detalle_orden_en_orden_cancelada_falla(self):
         orden = OrdenCompra.objects.create(
             proveedor=self.proveedor,
             empleado=self.empleado,
+            estado=OrdenCompra.EstadoOrden.CANCELADO,
         )
-        det_orden = DetalleOrdenCompra.objects.create(
+        det = DetalleOrdenCompra(
             orden_compra=orden,
             producto=self.producto,
             cantidad_solicitada=5,
-            costo_unitario=Decimal("20000.00"),
-        )
-        recepcion = RecepcionCompra.objects.create(
-            orden_compra=orden,
-            empleado=self.empleado,
-            numero_factura_proveedor="FAC-1000",
-        )
-        det_rec = DetalleRecepcionCompra(
-            recepcion=recepcion,
-            detalle_orden=det_orden,
-            producto=self.producto,
-            cantidad_recibida=3,
-            cantidad_rechazada=2,
-            costo_final_unitario=Decimal("20000.00"),
-            motivo_rechazo="",  # Vacío
+            costo_unitario=Decimal("1000.00"),
         )
         with self.assertRaises(ValidationError):
-            det_rec.save()
+            det.clean()

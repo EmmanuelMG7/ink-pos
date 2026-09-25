@@ -1,4 +1,6 @@
 from decimal import Decimal
+from unittest.mock import patch
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
@@ -6,7 +8,7 @@ from django.urls import reverse
 from app_inventario.models import Marca, Producto
 
 
-class ProductoCRUDTests(TestCase):
+class GestionProductosViewTests(TestCase):
     def setUp(self):
         # Crear un usuario administrador y loguearlo para pasar el @login_required
         self.user = User.objects.create_user(
@@ -25,8 +27,6 @@ class ProductoCRUDTests(TestCase):
             "stock_minimo": 5,
         }
         response = self.client.post(self.url, data)
-
-        # Después de crear exitosamente, redirige a sí mismo (gestion)
         self.assertRedirects(response, self.url)
 
         # Verificar que el producto se creó en la BD
@@ -120,3 +120,20 @@ class ProductoCRUDTests(TestCase):
 
         # Verificar inclusión del script modular
         self.assertIn("search_and_create_dropdown.js", content)
+
+    def test_gestion_productos_view_exception_handling(self):
+        data = {
+            "nombre": "Nuevo Prod",
+            "marca": "MarcaA",
+            "categoria": "CatA",
+            "costo_compra": "10.00",
+            "precio_venta": "20.00",
+            "stock_actual": "5",
+            "stock_minimo": "1",
+        }
+        with patch(
+            "app_inventario.views.ProductoForm.save",
+            side_effect=Exception("Fallo al guardar"),
+        ):
+            response = self.client.post(self.url, data)
+            self.assertEqual(response.status_code, 200)
