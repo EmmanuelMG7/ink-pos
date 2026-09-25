@@ -4,101 +4,66 @@
     <div class="modal-content">
       <div class="modal-header">
         <h4 class="modal-title">Crear Nuevo Producto</h4>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+        </button>
       </div>
 
       <form action="" method="post" class="needs-validation" novalidate id="form_crear_producto">
         {% csrf_token %}
 
         <div class="modal-body m-2">
-          <!-- Código y Nombre -->
-          <div class="input-group mb-2 has-validation">
-            <input 
-              type="text"
-              class="form-control w-25"
-              aria-label="id_producto"
-              value="{{ siguiente_codigo }}"
-              disabled
-              readonly
-            />
-            <input type="hidden" name="codigo" value="{{ siguiente_codigo }}" />
-            {% include 'bootstrap_input_field.html' with field=form.nombre %}
-          </div>
-
-          <div class="d-flex gap-2 mb-2">
-            <div class="flex-fill dropdown" id="dropdown_marca_container">
-              <input type="hidden" name="marca_nombre" id="input_marca_nombre" value="General">
-              <button 
-                class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center" 
-                type="button" 
-                id="btn_dropdown_marca" 
-                data-bs-toggle="dropdown" 
-                aria-expanded="false">
-                <span id="label_marca_seleccionada" class="text-truncate">Marca: General</span>
-              </button>
-              <div class="dropdown-menu p-2 shadow w-100" style="max-height: 250px; overflow-y: auto;" aria-labelledby="btn_dropdown_marca">
-                <input 
-                  type="text" 
-                  class="form-control form-control-sm mb-2" 
-                  id="search_marca_input" 
-                  placeholder="Buscar o crear marca..." 
-                  autocomplete="off"
-                />
-                <div id="lista_marcas_items">
-                  <button type="button" class="dropdown-item py-1 rounded marca-item active" data-valor="General">General</button>
-                  {% for m in marcas %}
-                    {% if m.nombre != "General" %}
-                      <button type="button" class="dropdown-item py-1 rounded marca-item" data-valor="{{ m.nombre }}">{{ m.nombre }}</button>
-                    {% endif %}
-                  {% endfor %}
-                </div>
-                <div id="crear_marca_item" class="dropdown-item text-primary fst-italic py-1 rounded d-none" style="cursor: pointer;">
-                  <i class="bi bi-plus-circle me-1"></i> Crear "<span id="texto_crear_marca"></span>" (Enter)
-                </div>
-              </div>
-            </div>
-
-            <div class="flex-fill dropdown" id="dropdown_categoria_container">
-              <input type="hidden" name="categoria_nombre" id="input_categoria_nombre" value="">
-              <button 
-                class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center" 
-                type="button" 
-                id="btn_dropdown_categoria" 
-                data-bs-toggle="dropdown" 
-                aria-expanded="false">
-                <span id="label_categoria_seleccionada" class="text-truncate text-secondary">Categoría: Ninguna</span>
-              </button>
-              <div class="dropdown-menu p-2 shadow w-100" style="max-height: 250px; overflow-y: auto;" aria-labelledby="btn_dropdown_categoria">
-                <input 
-                  type="text" 
-                  class="form-control form-control-sm mb-2" 
-                  id="search_categoria_input" 
-                  placeholder="Buscar o crear categoría..." 
-                  autocomplete="off"
-                />
-                <div id="lista_categorias_items">
-                  <button type="button" class="dropdown-item py-1 rounded categoria-item text-secondary active" data-valor="">Ninguna</button>
-                  {% for c in categorias %}
-                    <button type="button" class="dropdown-item py-1 rounded categoria-item" data-valor="{{ c.nombre }}">{{ c.nombre }}</button>
-                  {% endfor %}
-                </div>
-                <div id="crear_categoria_item" class="dropdown-item text-primary fst-italic py-1 rounded d-none" style="cursor: pointer;">
-                  <i class="bi bi-plus-circle me-1"></i> Crear "<span id="texto_crear_categoria"></span>" (Enter)
-                </div>
-              </div>
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with field=form.nombre span_text=siguiente_codigo %}
+                {% include 'bootstrap_input_field.html' %}
+              {% endwith %}
             </div>
           </div>
 
-          <div class="d-flex gap-2">
-            <div class="input-group has-validation">
-              <span class="input-group-text">
-                <i class="bi bi-box-seam-fill"></i>
-              </span>
-              {% include 'bootstrap_input_field.html' with field=form.stock %}
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with field=form.precio_venta span_icon="bi bi-tags-fill"%}
+                {% include 'bootstrap_input_field.html' %}
+              {% endwith %}
             </div>
-            <div class="input-group has-validation">
-              <span class="input-group-text">$</span>
-              {% include 'bootstrap_input_field.html' with field=form.precio %}
+            <div class="col">
+            {% with field=form.costo_compra span_icon="bi bi-cash-stack"%}
+              {% include 'bootstrap_input_field.html' %}
+            {% endwith %}
+            </div>
+          </div>
+
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with field=form.stock_actual span_icon="bi bi-box-seam-fill" %}
+                {% include 'bootstrap_input_field.html' %}
+              {% endwith %}
+            </div>
+            <div class="col">
+              {% with field=form.stock_minimo span_icon="bi bi-box-arrow-in-down" %}
+                {% include 'bootstrap_input_field.html' %}
+              {% endwith %}
+            </div>
+          </div>
+          
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with id='marca' label='Marca' value=form.marca.value|default:'Generico' items=marcas %}
+                {% include 'search_and_create_dropdown.html' %}
+              {% endwith %}
+            </div>
+            <div class="col">
+              {% with id='categoria' label='Categoría' value=form.categoria.value|default:'Ninguna' items=categorias %}
+                {% include 'search_and_create_dropdown.html' %}
+              {% endwith %}
+            </div>
+          </div>
+
+          <div class="row g-2 align-items-start">
+            <div class="col">
+              {% with field=form.impuesto span_icon="bi bi-receipt" %}
+                {% include 'bootstrap_input_field.html' %} 
+              {% endwith %}
             </div>
           </div>
         </div>
@@ -112,155 +77,5 @@
   </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  // Función utilitaria para inicializar dropdowns buscables y creables al vuelo
-  function configurarDropdownBuscable(config) {
-    const searchInput = document.getElementById(config.searchId);
-    const hiddenInput = document.getElementById(config.hiddenId);
-    const labelSpan = document.getElementById(config.labelId);
-    const btnDropdown = document.getElementById(config.btnId);
-    const itemsList = document.getElementById(config.listId);
-    const crearItem = document.getElementById(config.crearId);
-    const textoCrear = document.getElementById(config.textoCrearId);
-    const prefix = config.prefix || "";
-
-    if (!searchInput || !btnDropdown) return;
-
-    // Al abrir el dropdown, enfocar el campo de búsqueda
-    btnDropdown.addEventListener('shown.bs.dropdown', function () {
-      searchInput.focus();
-      searchInput.value = '';
-      filtrarOpciones('');
-    });
-
-    function seleccionarValor(valor, display) {
-      hiddenInput.value = valor;
-      labelSpan.textContent = prefix + (display || valor || 'Ninguna');
-      if (valor) {
-        labelSpan.classList.remove('text-secondary');
-      } else {
-        labelSpan.classList.add('text-secondary');
-      }
-      // Actualizar estado activo en la lista
-      itemsList.querySelectorAll(config.itemClass).forEach(function (btn) {
-        if (btn.getAttribute('data-valor') === valor) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
-      });
-      // Cerrar dropdown
-      const bsDropdown = bootstrap.Dropdown.getInstance(btnDropdown);
-      if (bsDropdown) {
-        bsDropdown.hide();
-      }
-    }
-
-    // Filtrar opciones en tiempo real
-    function filtrarOpciones(query) {
-      const q = query.trim().toLowerCase();
-      let matchExacto = false;
-      let totalVisibles = 0;
-
-      itemsList.querySelectorAll(config.itemClass).forEach(function (btn) {
-        const val = (btn.getAttribute('data-valor') || "").trim().toLowerCase();
-        const texto = btn.textContent.trim().toLowerCase();
-
-        if (val && val === q) {
-          matchExacto = true;
-        }
-
-        if (!q || texto.includes(q)) {
-          btn.classList.remove('d-none');
-          totalVisibles++;
-        } else {
-          btn.classList.add('d-none');
-        }
-      });
-
-      if (q && !matchExacto) {
-        crearItem.classList.remove('d-none');
-        textoCrear.textContent = query.trim();
-      } else {
-        crearItem.classList.add('d-none');
-      }
-    }
-
-    searchInput.addEventListener('input', function () {
-      filtrarOpciones(this.value);
-    });
-
-    // Interceptar Enter en la búsqueda para seleccionar/crear sin enviar el formulario del modal
-    searchInput.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        e.stopPropagation();
-        const texto = this.value.trim();
-        if (texto) {
-          seleccionarValor(texto, texto);
-        }
-      }
-    });
-
-    // Clic en opción existente
-    itemsList.addEventListener('click', function (e) {
-      const btn = e.target.closest(config.itemClass);
-      if (btn) {
-        e.preventDefault();
-        const val = btn.getAttribute('data-valor') || '';
-        seleccionarValor(val, btn.textContent.trim());
-      }
-    });
-
-    // Clic en crear nuevo
-    crearItem.addEventListener('click', function (e) {
-      e.preventDefault();
-      const nuevo = searchInput.value.trim();
-      if (nuevo) {
-        seleccionarValor(nuevo, nuevo);
-      }
-    });
-  }
-
-  // Inicializar Dropdown de Marca
-  configurarDropdownBuscable({
-    searchId: 'search_marca_input',
-    hiddenId: 'input_marca_nombre',
-    labelId: 'label_marca_seleccionada',
-    btnId: 'btn_dropdown_marca',
-    listId: 'lista_marcas_items',
-    crearId: 'crear_marca_item',
-    textoCrearId: 'texto_crear_marca',
-    itemClass: '.marca-item',
-    prefix: 'Marca: '
-  });
-
-  // Inicializar Dropdown de Categoría
-  configurarDropdownBuscable({
-    searchId: 'search_categoria_input',
-    hiddenId: 'input_categoria_nombre',
-    labelId: 'label_categoria_seleccionada',
-    btnId: 'btn_dropdown_categoria',
-    listId: 'lista_categorias_items',
-    crearId: 'crear_categoria_item',
-    textoCrearId: 'texto_crear_categoria',
-    itemClass: '.categoria-item',
-    prefix: 'Categoría: '
-  });
-
-  // Reset del modal restaura valores por defecto
-  const btnReset = document.getElementById('btn_reset_modal_producto');
-  if (btnReset) {
-    btnReset.addEventListener('click', function () {
-      document.getElementById('input_marca_nombre').value = 'General';
-      document.getElementById('label_marca_seleccionada').textContent = 'Marca: General';
-      document.getElementById('input_categoria_nombre').value = '';
-      document.getElementById('label_categoria_seleccionada').textContent = 'Categoría: Ninguna';
-      document.getElementById('label_categoria_seleccionada').classList.add('text-secondary');
-    });
-  }
-});
-</script>
-
-<script src="{% static 'js/FormValidationIntercept.js' %}?v=1.3"></script>
+<script src="{% static 'js/search_and_create_dropdown.js' %}"></script>
+<script src="{% static 'js/FormValidationIntercept.js' %}"></script>

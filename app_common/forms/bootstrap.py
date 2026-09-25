@@ -17,7 +17,10 @@ class BootstrapFormMixin:
     de validación (is-valid e is-invalid) para mostrar los labels de feedback.
     """
 
-    default_valid_feedback: str = ""
+    default_messages: dict[str, str] = {
+        "required": "Este campo es obligatorio.",
+        "invalid": "Por favor ingresa un valor válido.",
+    }
     fields: dict[str, forms.Field]
     is_bound: bool
 
@@ -46,9 +49,8 @@ class BootstrapFormMixin:
             if clase_bootstrap not in clases_existentes:
                 widget.attrs["class"] = f"{clases_existentes} {clase_bootstrap}".strip()
 
-            # Mensaje opcional cuando la validación se cumple
-            if not hasattr(field, "valid_feedback"):
-                setattr(field, "valid_feedback", self.default_valid_feedback)
+            # Aplicar mensajes por defecto (validez y errores) desde default_messages
+            self.aplicar_default_messages(field, widget)
 
         # Sincronizar validadores asignados con clases CSS para interceptores en tiempo real
         self.sincronizar_clases_validadores()
@@ -56,6 +58,32 @@ class BootstrapFormMixin:
         # Si el formulario ya contiene datos enviados (POST), aplicar estados iniciales
         if self.is_bound:
             self.aplicar_estados_bootstrap()
+
+    def aplicar_default_messages(self, field: forms.Field, widget: forms.Widget) -> None:
+        """
+        Aplica los mensajes por defecto definidos en self.default_messages a field.error_messages
+        y a los atributos data-* del widget HTML5, respetando cualquier personalización existente.
+        """
+        valid_text = getattr(field, "valid_feedback", None)
+        if valid_text:
+            widget.attrs["data-valid-feedback"] = str(valid_text)
+
+        for code, default_text in self.default_messages.items():
+            if not default_text or code == "valid":
+                continue
+
+            # Si el campo no es requerido, no aplicar mensaje de required
+            if code == "required" and not field.required:
+                continue
+
+            current_msg = field.error_messages.get(code)
+            default_django_msg = forms.Field.default_error_messages.get(code)
+
+            # Si no tiene mensaje o solo tiene el genérico de Django, asignar el de default_messages
+            if current_msg is None or current_msg == default_django_msg:
+                field.error_messages[code] = default_text
+
+            widget.attrs[f"data-{code}-feedback"] = str(field.error_messages[code])
 
     def sincronizar_clases_validadores(self):
         """

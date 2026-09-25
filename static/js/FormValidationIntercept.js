@@ -74,11 +74,48 @@ function initValidation() {
         } else if (input.classList.contains('alphanumeric-only') || input.classList.contains('alphanumeric-spaces')) {
             input.value = input.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
         }
+        actualizarFeedback(input);
+    });
+
+    const actualizarFeedback = function (input) {
+        if (!input || !input.checkValidity) return;
+        const container = input.closest('.has-validation, .input-group, .mb-2, .mb-3, .form-group') || input.parentElement;
+        if (!container) return;
+
+        const invalidFeedback = container.querySelector('.invalid-feedback');
+        const validFeedback = container.querySelector('.valid-feedback');
+
+        // Feedback de validez (éxito) - solo si tiene texto explícito
+        if (validFeedback) {
+            const validText = input.getAttribute('data-valid-feedback');
+            validFeedback.textContent = validText || '';
+        }
+
+        // Feedback de error agnóstico al tipo de error
+        if (invalidFeedback && !input.checkValidity()) {
+            const errorMsg = input.getAttribute('data-error-message') ||
+                input.getAttribute('data-invalid-feedback') ||
+                input.validationMessage ||
+                '';
+            if (errorMsg) {
+                invalidFeedback.textContent = errorMsg;
+            }
+        }
+    };
+
+    // Escuchar cambios en campos de formulario (select, textarea, inputs no tecleados)
+    document.addEventListener('change', function (event) {
+        const target = event.target;
+        if (target && (target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.tagName === 'INPUT')) {
+            actualizarFeedback(target);
+        }
     });
 
     // Interceptor del submit para Bootstrap 5 (needs-validation)
     document.querySelectorAll('.needs-validation').forEach(function (form) {
         form.addEventListener('submit', function (event) {
+            form.querySelectorAll('input, select, textarea').forEach(actualizarFeedback);
+
             if (!form.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
@@ -101,3 +138,4 @@ if (document.readyState === 'loading') {
 } else {
     initValidation();
 }
+
