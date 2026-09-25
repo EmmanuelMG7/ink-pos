@@ -10,19 +10,14 @@ from .models import Categoria, Marca, Producto
 def gestion_productos(request):
     form = ProductoForm(request.POST or None)
 
-    if request.method == "POST" and "nombre" in request.POST:
+    if request.method == "POST":
         if form.is_valid():
             try:
                 producto = form.save()
                 messages.success(request, f"Producto '{producto.nombre}' creado correctamente.")
+                return redirect("inventario:gestion")
             except Exception as e:
                 messages.error(request, f"Hubo un error al crear el producto: {str(e)}")
-            return redirect("inventario:gestion")
-        else:
-            for error_list in form.errors.values():
-                for err in error_list:
-                    messages.error(request, str(err))
-            return redirect("inventario:gestion")
 
     last_product = Producto.objects.order_by("pk").last()
     next_id = (last_product.pk + 1) if (last_product and last_product.pk) else 1
