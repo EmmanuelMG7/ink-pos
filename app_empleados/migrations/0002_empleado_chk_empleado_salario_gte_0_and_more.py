@@ -7,17 +7,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app_empleados', '0001_initial'),
+        ("app_empleados", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='empleado',
-            constraint=models.CheckConstraint(condition=models.Q(('salario__gte', 0)), name='chk_empleado_salario_gte_0'),
+            model_name="empleado",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("salario__gte", 0)),
+                name="chk_empleado_salario_gte_0",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='empleado',
-            constraint=models.CheckConstraint(condition=models.Q(('identificacion', ''), _negated=True), name='chk_empleado_identificacion_no_vacia'),
+            model_name="empleado",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("identificacion", ""), _negated=True),
+                name="chk_empleado_identificacion_no_vacia",
+            ),
         ),
     ]

@@ -1,9 +1,11 @@
 from django import forms
+
 from app_common.forms import (
     BootstrapForm,
     PasswordValidator,
     UsernameValidator,
 )
+
 
 class LoginForm(BootstrapForm):
     """Formulario para inicio de sesión."""

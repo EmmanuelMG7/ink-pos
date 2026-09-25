@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class TipoDocumento(models.TextChoices):
     CEDULA = "13", "Cédula de Ciudadanía (CC)"
     NIT = "31", "NIT (Número de Identificación Tributaria)"

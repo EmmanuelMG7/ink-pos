@@ -129,7 +129,5 @@ class DianUtilsTests(TestCase):
 
         # Factura con cliente sin identificación
         self.factura.cliente.identificacion = ""
-        cufe_sin_cliente = calcular_cufe_cude(
-            self.factura, self.resolucion, nit_emisor="800111222"
-        )
+        cufe_sin_cliente = calcular_cufe_cude(self.factura, self.resolucion, nit_emisor="800111222")
         self.assertEqual(len(cufe_sin_cliente), 96)

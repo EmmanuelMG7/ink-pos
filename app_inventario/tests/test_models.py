@@ -49,23 +49,17 @@ class InventarioModelosTests(TestCase):
 
     def test_impuesto_clean_and_str(self):
         # Empty nombre
-        imp_sin_nom = Impuesto(
-            nombre="   ", codigo_tributario="01", tarifa=Decimal("19.00")
-        )
+        imp_sin_nom = Impuesto(nombre="   ", codigo_tributario="01", tarifa=Decimal("19.00"))
         with self.assertRaises(ValidationError):
             imp_sin_nom.clean()
 
         # Empty codigo tributario
-        imp_sin_cod = Impuesto(
-            nombre="IVA", codigo_tributario="   ", tarifa=Decimal("19.00")
-        )
+        imp_sin_cod = Impuesto(nombre="IVA", codigo_tributario="   ", tarifa=Decimal("19.00"))
         with self.assertRaises(ValidationError):
             imp_sin_cod.clean()
 
         # Tarifa negativa
-        imp_neg = Impuesto(
-            nombre="IVA", codigo_tributario="01", tarifa=Decimal("-5.00")
-        )
+        imp_neg = Impuesto(nombre="IVA", codigo_tributario="01", tarifa=Decimal("-5.00"))
         with self.assertRaises(ValidationError):
             imp_neg.clean()
 

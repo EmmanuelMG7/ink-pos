@@ -98,6 +98,9 @@ class GestionEmpleadosViewTests(TestCase):
             "telefono": "3009998877",
             "contrasena": "Secreta123!",
         }
-        with patch("app_empleados.views.EmpleadoForm.save", side_effect=Exception("Fallo en BD")):
+        with patch(
+            "app_empleados.views.EmpleadoForm.save",
+            side_effect=Exception("Fallo en BD"),
+        ):
             response = self.client.post(self.url, data)
             self.assertRedirects(response, self.url)

@@ -17,7 +17,14 @@ class MarcaAdmin(admin.ModelAdmin):
 
 @admin.register(Impuesto)
 class ImpuestoAdmin(admin.ModelAdmin):
-    list_display = ("id", "nombre", "codigo_tributario", "tarifa", "tipo_impuesto", "activo")
+    list_display = (
+        "id",
+        "nombre",
+        "codigo_tributario",
+        "tarifa",
+        "tipo_impuesto",
+        "activo",
+    )
     list_filter = ("tipo_impuesto", "activo")
     search_fields = ("nombre", "codigo_tributario")
 

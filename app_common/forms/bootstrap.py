@@ -2,6 +2,7 @@ from typing import Any
 
 from django import forms
 from django.core.validators import RegexValidator
+
 from .validators import (
     AlphanumericValidator,
     OnlyAlphaNumericValidator,
@@ -9,6 +10,7 @@ from .validators import (
     PasswordValidator,
     UsernameValidator,
 )
+
 
 class BootstrapFormMixin:
     """
@@ -120,13 +122,20 @@ class BootstrapFormMixin:
                         widget.attrs["data-invalid-feedback"] = str(field.error_messages["invalid"])
 
                     # Si es validador de contraseña o campo password
-                    if validator == PasswordValidator or "(?=" in pat or isinstance(widget, forms.PasswordInput):
+                    if (
+                        validator == PasswordValidator
+                        or "(?=" in pat
+                        or isinstance(widget, forms.PasswordInput)
+                    ):
                         widget.attrs["data-validation-type"] = "complexity"
                         if "minlength" not in widget.attrs:
                             widget.attrs["minlength"] = "8"
                         if "password-complexity" not in clases:
                             clases = f"{clases} password-complexity".strip()
-                    elif validator in (AlphanumericValidator, OnlyAlphaNumericValidator) and "alphanumeric-only" not in clases:
+                    elif (
+                        validator in (AlphanumericValidator, OnlyAlphaNumericValidator)
+                        and "alphanumeric-only" not in clases
+                    ):
                         clases = f"{clases} alphanumeric-only".strip()
                     elif validator == OnlyTextValidator and "text-only" not in clases:
                         clases = f"{clases} text-only".strip()
@@ -172,9 +181,11 @@ class BootstrapFormMixin:
 
 class BootstrapForm(BootstrapFormMixin, forms.Form):
     """Formulario estándar de Django con estilos de Bootstrap 5 integrados."""
+
     pass
 
 
 class BootstrapModelForm(BootstrapFormMixin, forms.ModelForm):
     """ModelForm de Django con estilos de Bootstrap 5 integrados."""
+
     pass

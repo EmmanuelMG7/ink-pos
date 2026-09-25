@@ -106,7 +106,14 @@ class PagoFacturaAdmin(admin.ModelAdmin):
 
 @admin.register(Devolucion)
 class DevolucionAdmin(admin.ModelAdmin):
-    list_display = ("id", "factura", "empleado", "sesion_caja", "total_devuelto", "fecha_hora")
+    list_display = (
+        "id",
+        "factura",
+        "empleado",
+        "sesion_caja",
+        "total_devuelto",
+        "fecha_hora",
+    )
     list_filter = ("fecha_hora",)
     search_fields = ("factura__codigo", "motivo")
     inlines = [DetalleDevolucionInline]

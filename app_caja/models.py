@@ -1,7 +1,9 @@
 from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
+
 from app_empleados.models import Empleado
 
 
@@ -124,6 +126,7 @@ class SesionCaja(models.Model):
 
     def __str__(self):
         return f"Caja #{self.pk} - {self.empleado} ({self.estado})"
+
 
 class AjustesCaja(models.Model):
 

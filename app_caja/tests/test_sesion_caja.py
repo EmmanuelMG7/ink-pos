@@ -13,9 +13,7 @@ from app_empleados.models import Empleado
 
 class SesionCajaModelTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="cajero1", password="password123"
-        )
+        self.user = User.objects.create_user(username="cajero1", password="password123")
         self.empleado = Empleado.objects.create(
             identificacion="10101010",
             auth_user=self.user,

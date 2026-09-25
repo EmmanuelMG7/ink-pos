@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.db import transaction
+
 from app_common.forms import (
     BootstrapForm,
     OnlyTextValidator,
@@ -8,6 +9,7 @@ from app_common.forms import (
     validate_password_complexity,
 )
 from app_empleados.models import Empleado
+
 
 class SetupAdminForm(BootstrapForm):
     """
@@ -24,12 +26,7 @@ class SetupAdminForm(BootstrapForm):
 
     identificacion = forms.CharField(
         max_length=20,
-        widget=forms.TextInput(
-            attrs={
-                "placeholder": "Identificacion",
-                "class": "number-only"
-            }
-        )
+        widget=forms.TextInput(attrs={"placeholder": "Identificacion", "class": "number-only"}),
     )
 
     usuario = forms.CharField(
@@ -107,7 +104,9 @@ class SetupAdminForm(BootstrapForm):
 
         with transaction.atomic():
             user = User.objects.create_user(
-                username=datos["usuario"], password=datos["contrasena"], first_name=datos["nombre"]
+                username=datos["usuario"],
+                password=datos["contrasena"],
+                first_name=datos["nombre"],
             )
             user.is_staff = True
             user.save()
@@ -116,7 +115,9 @@ class SetupAdminForm(BootstrapForm):
                 auth_user=user,
                 tipo_documento=datos.get("tipo_documento"),
                 identificacion=datos.get("identificacion"),
-                telefono=str(datos.get("telefono")) if datos.get("telefono") is not None else None,
+                telefono=(
+                    str(datos.get("telefono")) if datos.get("telefono") is not None else None
+                ),
                 salario=0,
                 es_admin=True,
             )

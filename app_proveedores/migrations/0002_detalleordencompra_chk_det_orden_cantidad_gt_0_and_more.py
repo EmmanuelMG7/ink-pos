@@ -6,62 +6,109 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app_empleados', '0002_empleado_chk_empleado_salario_gte_0_and_more'),
-        ('app_inventario', '0002_categoria_chk_categoria_nombre_no_vacio_and_more'),
-        ('app_proveedores', '0001_initial'),
+        ("app_empleados", "0002_empleado_chk_empleado_salario_gte_0_and_more"),
+        ("app_inventario", "0002_categoria_chk_categoria_nombre_no_vacio_and_more"),
+        ("app_proveedores", "0001_initial"),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='detalleordencompra',
-            constraint=models.CheckConstraint(condition=models.Q(('cantidad_solicitada__gt', 0)), name='chk_det_orden_cantidad_gt_0'),
+            model_name="detalleordencompra",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("cantidad_solicitada__gt", 0)),
+                name="chk_det_orden_cantidad_gt_0",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='detalleordencompra',
-            constraint=models.CheckConstraint(condition=models.Q(('costo_unitario__gte', 0)), name='chk_det_orden_costo_gte_0'),
+            model_name="detalleordencompra",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("costo_unitario__gte", 0)),
+                name="chk_det_orden_costo_gte_0",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='detalleordencompra',
-            constraint=models.CheckConstraint(condition=models.Q(('subtotal__gte', 0)), name='chk_det_orden_subtotal_gte_0'),
+            model_name="detalleordencompra",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("subtotal__gte", 0)),
+                name="chk_det_orden_subtotal_gte_0",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='detalleordencompra',
-            constraint=models.UniqueConstraint(fields=('orden_compra', 'producto'), name='uq_detalle_orden_producto'),
+            model_name="detalleordencompra",
+            constraint=models.UniqueConstraint(
+                fields=("orden_compra", "producto"), name="uq_detalle_orden_producto"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='detallerecepcioncompra',
-            constraint=models.CheckConstraint(condition=models.Q(('cantidad_recibida__gte', 0)), name='chk_det_rec_recibida_gte_0'),
+            model_name="detallerecepcioncompra",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("cantidad_recibida__gte", 0)),
+                name="chk_det_rec_recibida_gte_0",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='detallerecepcioncompra',
-            constraint=models.CheckConstraint(condition=models.Q(('cantidad_rechazada__gte', 0)), name='chk_det_rec_rechazada_gte_0'),
+            model_name="detallerecepcioncompra",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("cantidad_rechazada__gte", 0)),
+                name="chk_det_rec_rechazada_gte_0",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='detallerecepcioncompra',
-            constraint=models.CheckConstraint(condition=models.Q(('costo_final_unitario__gte', 0)), name='chk_det_rec_costo_gte_0'),
+            model_name="detallerecepcioncompra",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("costo_final_unitario__gte", 0)),
+                name="chk_det_rec_costo_gte_0",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='detallerecepcioncompra',
-            constraint=models.CheckConstraint(condition=models.Q(('cantidad_recibida__gt', 0), ('cantidad_rechazada__gt', 0), _connector='OR'), name='chk_det_rec_suma_gt_0'),
+            model_name="detallerecepcioncompra",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("cantidad_recibida__gt", 0),
+                    ("cantidad_rechazada__gt", 0),
+                    _connector="OR",
+                ),
+                name="chk_det_rec_suma_gt_0",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='ordencompra',
-            constraint=models.CheckConstraint(condition=models.Q(('total_estimado__gte', 0)), name='chk_orden_total_estimado_gte_0'),
+            model_name="ordencompra",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("total_estimado__gte", 0)),
+                name="chk_orden_total_estimado_gte_0",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='ordencompra',
-            constraint=models.CheckConstraint(condition=models.Q(('fecha_esperada_entrega__isnull', True), ('fecha_solicitud__isnull', True), ('fecha_esperada_entrega__gte', models.F('fecha_solicitud')), _connector='OR'), name='chk_orden_fecha_entrega_gte_solicitud'),
+            model_name="ordencompra",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("fecha_esperada_entrega__isnull", True),
+                    ("fecha_solicitud__isnull", True),
+                    ("fecha_esperada_entrega__gte", models.F("fecha_solicitud")),
+                    _connector="OR",
+                ),
+                name="chk_orden_fecha_entrega_gte_solicitud",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='proveedor',
-            constraint=models.CheckConstraint(condition=models.Q(('identificacion', ''), _negated=True), name='chk_proveedor_identificacion_no_vacia'),
+            model_name="proveedor",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("identificacion", ""), _negated=True),
+                name="chk_proveedor_identificacion_no_vacia",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='proveedor',
-            constraint=models.CheckConstraint(condition=models.Q(('razon_social', ''), _negated=True), name='chk_proveedor_razon_social_no_vacia'),
+            model_name="proveedor",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("razon_social", ""), _negated=True),
+                name="chk_proveedor_razon_social_no_vacia",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='recepcioncompra',
-            constraint=models.CheckConstraint(condition=models.Q(('numero_factura_proveedor', ''), _negated=True), name='chk_recepcion_factura_no_vacia'),
+            model_name="recepcioncompra",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("numero_factura_proveedor", ""), _negated=True),
+                name="chk_recepcion_factura_no_vacia",
+            ),
         ),
     ]

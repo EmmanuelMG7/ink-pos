@@ -32,15 +32,11 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "monto_final_real",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=12, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True),
                 ),
                 (
                     "diferencia",
-                    models.DecimalField(
-                        blank=True, decimal_places=2, max_digits=12, null=True
-                    ),
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True),
                 ),
                 (
                     "estado",

@@ -6,7 +6,13 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from app_empleados.models import Empleado
-from app_inventario.models import Categoria, Impuesto, Marca, MovimientoInventario, Producto
+from app_inventario.models import (
+    Categoria,
+    Impuesto,
+    Marca,
+    MovimientoInventario,
+    Producto,
+)
 
 
 class InventarioBoundaryTests(TestCase):

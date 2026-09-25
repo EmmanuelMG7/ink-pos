@@ -6,16 +6,22 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app_clientes', '0001_initial'),
+        ("app_clientes", "0001_initial"),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='cliente',
-            constraint=models.CheckConstraint(condition=models.Q(('identificacion', ''), _negated=True), name='chk_cliente_identificacion_no_vacia'),
+            model_name="cliente",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("identificacion", ""), _negated=True),
+                name="chk_cliente_identificacion_no_vacia",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='cliente',
-            constraint=models.CheckConstraint(condition=models.Q(('nombre', ''), _negated=True), name='chk_cliente_nombre_no_vacio'),
+            model_name="cliente",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("nombre", ""), _negated=True),
+                name="chk_cliente_nombre_no_vacio",
+            ),
         ),
     ]

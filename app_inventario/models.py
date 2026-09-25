@@ -1,7 +1,10 @@
 from decimal import Decimal
+
 from django.core.exceptions import ValidationError
 from django.db import models
+
 from app_empleados.models import Empleado
+
 
 class Categoria(models.Model):
     nombre = models.CharField(max_length=50, unique=True)
@@ -29,6 +32,7 @@ class Categoria(models.Model):
     def __str__(self):
         return self.nombre
 
+
 class Marca(models.Model):
     nombre = models.CharField(max_length=50, unique=True)
 
@@ -54,6 +58,7 @@ class Marca(models.Model):
 
     def __str__(self):
         return self.nombre
+
 
 class Impuesto(models.Model):
 
@@ -123,6 +128,7 @@ class Impuesto(models.Model):
         simbolo = "%" if self.tipo_impuesto == Impuesto.TipoImpuesto.PORCENTAJE else "$"
         return f"{self.nombre} ({self.tarifa}{simbolo})"
 
+
 class Producto(models.Model):
     nombre = models.CharField(max_length=150)
     marca = models.ForeignKey(Marca, on_delete=models.PROTECT, related_name="productos")
@@ -176,9 +182,9 @@ class Producto(models.Model):
         ]
 
     def save(self, *args, skip_clean=False, **kwargs):
-        '''Funcion llamada para hacer INSERT o UPDATE en la base de datos, se encarga de que se 
-        llamen a las funciones de validacion de campos usando `self.full_clean()` y permite 
-        saltarse las validaciones para testing de base de datos'''
+        """Funcion llamada para hacer INSERT o UPDATE en la base de datos, se encarga de que se
+        llamen a las funciones de validacion de campos usando `self.full_clean()` y permite
+        saltarse las validaciones para testing de base de datos"""
         if not skip_clean:
             self.full_clean()
         super().save(*args, **kwargs)
@@ -187,6 +193,7 @@ class Producto(models.Model):
     @property
     def codigo(self) -> str:
         return f"{self.pk:05d}" if self.pk else ""
+
 
 class MovimientoInventario(models.Model):
     class TipoMovimiento(models.TextChoices):

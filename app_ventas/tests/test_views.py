@@ -5,9 +5,7 @@ from django.urls import reverse
 
 class VentasViewsTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(
-            username="ventas_user", password="password123"
-        )
+        self.user = User.objects.create_user(username="ventas_user", password="password123")
         self.client.login(username="ventas_user", password="password123")
 
     def test_todas_las_vistas_de_ventas(self):

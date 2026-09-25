@@ -79,9 +79,7 @@ class VentasModelosDetalladosTests(TestCase):
             d_usos.clean()
 
         # Veces usado > limite_usos
-        d_exceso = Descuento(
-            nombre="Exceso", valor=Decimal("10.00"), limite_usos=5, veces_usado=6
-        )
+        d_exceso = Descuento(nombre="Exceso", valor=Decimal("10.00"), limite_usos=5, veces_usado=6)
         with self.assertRaises(ValidationError):
             d_exceso.clean()
 
@@ -106,16 +104,12 @@ class VentasModelosDetalladosTests(TestCase):
             res.clean()
 
         # Rango desde <= 0
-        res_desde = ResolucionDIAN(
-            numero_resolucion="123", rango_desde=0, rango_hasta=10
-        )
+        res_desde = ResolucionDIAN(numero_resolucion="123", rango_desde=0, rango_hasta=10)
         with self.assertRaises(ValidationError):
             res_desde.clean()
 
         # Rango hasta < rango desde
-        res_hasta = ResolucionDIAN(
-            numero_resolucion="123", rango_desde=10, rango_hasta=5
-        )
+        res_hasta = ResolucionDIAN(numero_resolucion="123", rango_desde=10, rango_hasta=5)
         with self.assertRaises(ValidationError):
             res_hasta.clean()
 
@@ -200,9 +194,7 @@ class VentasModelosDetalladosTests(TestCase):
             f_tot_neg.clean()
 
         # Caja cerrada en nueva factura
-        caja_cerrada = SesionCaja(
-            empleado=self.empleado, estado=SesionCaja.EstadoCaja.CERRADO
-        )
+        caja_cerrada = SesionCaja(empleado=self.empleado, estado=SesionCaja.EstadoCaja.CERRADO)
         f_caja = Factura(
             codigo="F1",
             cliente=self.cliente,
@@ -480,9 +472,7 @@ class VentasModelosDetalladosTests(TestCase):
             dev_supera.clean()
 
         # Sesion caja cerrada
-        caja_cerrada = SesionCaja(
-            empleado=self.empleado, estado=SesionCaja.EstadoCaja.CERRADO
-        )
+        caja_cerrada = SesionCaja(empleado=self.empleado, estado=SesionCaja.EstadoCaja.CERRADO)
         dev_caja_cerrada = Devolucion(
             factura=factura,
             sesion_caja=caja_cerrada,

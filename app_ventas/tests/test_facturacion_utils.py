@@ -37,9 +37,7 @@ class FacturacionUtilsTests(TestCase):
 
             # Con resolución activa
             self.resolucion.activo = True
-            self.resolucion.tipo_documento = (
-                ResolucionDIAN.TipoDocumento.FACTURA_ELECTRONICA
-            )
+            self.resolucion.tipo_documento = ResolucionDIAN.TipoDocumento.FACTURA_ELECTRONICA
             self.resolucion.ultimo_numero = 1
             self.resolucion.save()
 

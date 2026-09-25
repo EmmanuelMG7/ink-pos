@@ -1,6 +1,8 @@
 from decimal import Decimal
+
 from django import forms
 from django.db import transaction
+
 from app_common.forms import BootstrapModelForm
 from app_inventario.models import Categoria, Marca, Producto
 
@@ -8,14 +10,14 @@ from app_inventario.models import Categoria, Marca, Producto
 class ProductoForm(BootstrapModelForm):
     """
     Formulario para la creación y edición de Productos.
-    
+
     Hereda de BootstrapModelForm (que a su vez extiende de forms.ModelForm),
     lo que nos permite:
       1. Mapear automáticamente campos del modelo Producto.
       2. Inyectar automáticamente las clases CSS de Bootstrap 5.
       3. Disponer de 'self.instance' para diferenciar CREACIÓN de ACTUALIZACIÓN.
     """
-    
+
     # Campo visual para mostrar el código sugerido o actual (solo lectura)
     codigo = forms.CharField(
         label="",
@@ -77,20 +79,15 @@ class ProductoForm(BootstrapModelForm):
                     "step": "1",
                 }
             ),
-            "stock_minimo": forms.NumberInput(
-                attrs={
-                    "placeholder": "Stock Minimo"
-                }
-            ),
+            "stock_minimo": forms.NumberInput(attrs={"placeholder": "Stock Minimo"}),
         }
-
 
     def __init__(self, *args, **kwargs):
         """
-        Al inicializar el formulario. Si estamos editando (self.instance.pk existe), 
+        Al inicializar el formulario. Si estamos editando (self.instance.pk existe),
         poblamos los campos con los valores guardados.
         """
-        #Inicializar la instancia padre de este formulario
+        # Inicializar la instancia padre de este formulario
         super().__init__(*args, **kwargs)
 
         # Si el formulario está ligado a un producto existente y no es un POST con datos
@@ -102,7 +99,6 @@ class ProductoForm(BootstrapModelForm):
                 self.fields["marca"].initial = self.instance.marca.nombre
             if "categoria" in self.fields and self.instance.categoria:
                 self.fields["categoria"].initial = self.instance.categoria.nombre
-
 
     def clean(self):
         """
@@ -129,14 +125,14 @@ class ProductoForm(BootstrapModelForm):
             if precio_venta < costo_compra:
                 self.add_error(
                     "precio_venta",
-                    f"El precio debe ser superior al costo.",
+                    "El precio debe ser superior al costo.",
                 )
         return cleaned_data
 
     def save(self, commit=True):
         """
         Persiste el producto y sus relaciones asociadas en la base de datos.
-        
+
         Patrones clave de ModelForm en este método:
         - super().save(commit=False): Crea la instancia en memoria con los campos de Meta.fields
           sin ejecutar el INSERT/UPDATE en la BD todavía.
@@ -147,8 +143,8 @@ class ProductoForm(BootstrapModelForm):
         - transaction.atomic(): Asegura que la creación de Marca, Categoría y Producto ocurra
           en una única transacción atómica para proteger la integridad de los datos.
         """
-        
-        # Se requiere usar una trasaccion atomica ya que se podrian crear nuevos registros en 
+
+        # Se requiere usar una trasaccion atomica ya que se podrian crear nuevos registros en
         # las tablas marca y categoria. De esta manera, si en la posterior creacion del producto
         # la transaccion falla, los cambios en marca y categoria se revierten.
         with transaction.atomic():

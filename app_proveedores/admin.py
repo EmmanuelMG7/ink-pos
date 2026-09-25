@@ -21,7 +21,14 @@ class DetalleRecepcionCompraInline(admin.TabularInline):
 
 @admin.register(Proveedor)
 class ProveedorAdmin(admin.ModelAdmin):
-    list_display = ("id", "razon_social", "tipo_documento", "identificacion", "telefono", "email")
+    list_display = (
+        "id",
+        "razon_social",
+        "tipo_documento",
+        "identificacion",
+        "telefono",
+        "email",
+    )
     search_fields = ("razon_social", "identificacion")
     list_filter = ("tipo_documento",)
 
@@ -53,7 +60,10 @@ class RecepcionCompraAdmin(admin.ModelAdmin):
         "fecha_hora",
     )
     list_filter = ("estado", "fecha_hora")
-    search_fields = ("numero_factura_proveedor", "orden_compra__proveedor__razon_social")
+    search_fields = (
+        "numero_factura_proveedor",
+        "orden_compra__proveedor__razon_social",
+    )
     inlines = [DetalleRecepcionCompraInline]
 
 

@@ -20,10 +20,12 @@ AlphanumericValidator = RegexValidator(
 AlphanumericWithSpacesValidator = AlphanumericValidator
 OnlyAlphaNumericValidator = AlphanumericValidator
 
-# Validador de complejidad de contraseñas: mínimo 8 caracteres, al menos una mayúscula, una minúscula, un número y un símbolo
+# Validador de complejidad de contraseñas: mínimo 8 caracteres, al menos una mayúscula,
+# una minúscula, un número y un símbolo
 PasswordValidator = RegexValidator(
     regex=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9\s]).{8,}$",
-    message="La contraseña debe contener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo.",
+    message="La contraseña debe contener al menos 8 caracteres, una mayúscula,"
+    " una minúscula, un número y un símbolo.",
 )
 # Aliases de compatibilidad
 PasswordComplexityValidator = PasswordValidator

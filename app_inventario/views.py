@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
 from app_inventario.forms import ProductoForm
+
 from .models import Categoria, Marca, Producto
 
 

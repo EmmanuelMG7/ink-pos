@@ -1,15 +1,19 @@
 import hashlib
 from decimal import Decimal
+
 from django.conf import settings
 from django.db.models import Sum
 from django.utils import timezone
+
 from app_ventas.models import Factura
+
 
 def formatear_decimal(valor: Decimal) -> str:
     """Formatea importes a exactamente dos decimales requeridos por la DIAN (ej: '15000.00')."""
     if valor is None:
         valor = Decimal("0.00")
     return f"{Decimal(valor):.2f}"
+
 
 def extraer_totales_por_tributo(factura):
     """
@@ -31,6 +35,7 @@ def extraer_totales_por_tributo(factura):
     val_ica = mapa_impuestos.get("03", Decimal("0.00"))
 
     return val_iva, val_inc, val_ica
+
 
 def calcular_cufe_cude(
     factura: Factura,

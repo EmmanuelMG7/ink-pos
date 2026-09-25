@@ -83,7 +83,12 @@ class EmpleadoForm(BootstrapModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Población inicial de campos de User al editar un Empleado existente
-        if self.instance and self.instance.pk and hasattr(self.instance, "auth_user") and self.instance.auth_user:
+        if (
+            self.instance
+            and self.instance.pk
+            and hasattr(self.instance, "auth_user")
+            and self.instance.auth_user
+        ):
             if "usuario" in self.fields and not self.is_bound:
                 self.fields["usuario"].initial = self.instance.auth_user.username
             if "nombre" in self.fields and not self.is_bound:
@@ -116,7 +121,12 @@ class EmpleadoForm(BootstrapModelForm):
         if not usuario:
             return usuario
         query = User.objects.filter(username=usuario)
-        if self.instance and self.instance.pk and hasattr(self.instance, "auth_user_id") and self.instance.auth_user_id:
+        if (
+            self.instance
+            and self.instance.pk
+            and hasattr(self.instance, "auth_user_id")
+            and self.instance.auth_user_id
+        ):
             query = query.exclude(pk=self.instance.auth_user_id)
         if query.exists():
             raise forms.ValidationError(f"Ya existe un empleado con el usuario '{usuario}'.")
@@ -129,7 +139,12 @@ class EmpleadoForm(BootstrapModelForm):
         # Compatibilidad si se envía 'admin_checkbox' en datos POST en vez de 'es_admin'
         if "admin_checkbox" in self.data and not cleaned_data.get("es_admin"):
             admin_val = self.data.get("admin_checkbox")
-            cleaned_data["es_admin"] = str(admin_val).lower() in ("true", "1", "on", "yes")
+            cleaned_data["es_admin"] = str(admin_val).lower() in (
+                "true",
+                "1",
+                "on",
+                "yes",
+            )
         return cleaned_data
 
     def save(self, commit=True):
