@@ -1,8 +1,9 @@
+from decimal import Decimal
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from app_inventario.models import Categoria, Marca, Producto
+from app_inventario.models import Marca, Producto
 
 
 class ProductoCRUDTests(TestCase):
@@ -16,7 +17,13 @@ class ProductoCRUDTests(TestCase):
 
     def test_crear_producto_exitosamente(self):
         """Prueba que se pueda crear un producto enviando un POST válido."""
-        data = {"nombre": "Tinta Negra", "stock_actual": 50, "precio_venta": 15000}
+        data = {
+            "nombre": "Tinta Negra",
+            "stock_actual": 50,
+            "precio_venta": 15000,
+            "costo_compra": Decimal("0.00"),
+            "stock_minimo": 5,
+        }
         response = self.client.post(self.url, data)
 
         # Después de crear exitosamente, redirige a sí mismo (gestion)
@@ -42,7 +49,13 @@ class ProductoCRUDTests(TestCase):
             marca=marca,
         )
 
-        data = {"nombre": "Papel Hectografico", "stock_actual": 100, "precio_venta": 2000}
+        data = {
+            "nombre": "Papel Hectografico",
+            "stock_actual": 100,
+            "precio_venta": 2000,
+            "costo_compra": Decimal("0.00"),
+            "stock_minimo": 5,
+        }
         self.client.post(self.url, data)
 
         self.assertTrue(Producto.objects.filter(nombre="Papel Hectografico").exists())
@@ -53,13 +66,15 @@ class ProductoCRUDTests(TestCase):
         self.assertEqual(producto2.codigo, expected_codigo)
 
     def test_crear_producto_con_marca_y_categoria_nuevas(self):
-        """Prueba que el formulario cree automáticamente Marca y Categoría si son nuevas con transaction.atomic."""
+        """Prueba que el formulario cree automáticamente Marca y Categoría si son nuevas."""
         data = {
             "nombre": "Agujas 3RL",
             "stock_actual": 25,
             "precio_venta": 8000,
-            "marca_nombre": "Precision Needles",
-            "categoria_nombre": "Agujas",
+            "costo_compra": Decimal("0.00"),
+            "stock_minimo": 5,
+            "marca": "Precision Needles",
+            "categoria": "Agujas",
         }
         response = self.client.post(self.url, data)
         self.assertRedirects(response, self.url)
@@ -71,11 +86,13 @@ class ProductoCRUDTests(TestCase):
         self.assertEqual(prod.categoria.nombre, "Agujas")
 
     def test_crear_producto_marca_defecto_generico(self):
-        """Prueba que si no se envía marca_nombre, se asigne 'Generico' por defecto."""
+        """Prueba que si no se envía marca, se asigne 'Generico' por defecto."""
         data = {
             "nombre": "Guantes Nitrilo",
             "stock_actual": 100,
             "precio_venta": 35000,
+            "costo_compra": Decimal("0.00"),
+            "stock_minimo": 5,
         }
         response = self.client.post(self.url, data)
         self.assertRedirects(response, self.url)
@@ -91,16 +108,15 @@ class ProductoCRUDTests(TestCase):
         content = response.content.decode("utf-8")
         # Verificar contenedores e inputs generados por search_and_create_dropdown.html
         self.assertIn('id="dropdown_marca_container"', content)
-        self.assertIn('name="marca_nombre"', content)
+        self.assertIn('id="input_marca_nombre"', content)
         self.assertIn('value="Generico"', content)
-        self.assertIn("Marca:", content)
+        self.assertIn("Marca", content)
         self.assertIn("Generico", content)
 
         self.assertIn('id="dropdown_categoria_container"', content)
-        self.assertIn('name="categoria_nombre"', content)
-        self.assertIn("Categoría:", content)
+        self.assertIn('id="input_categoria_nombre"', content)
+        self.assertIn("Categoría", content)
         self.assertIn("Ninguna", content)
 
         # Verificar inclusión del script modular
         self.assertIn("search_and_create_dropdown.js", content)
-

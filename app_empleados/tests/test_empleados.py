@@ -17,11 +17,12 @@ class EmpleadoCRUDTests(TestCase):
     def test_crear_empleado_normal_exitosamente(self):
         """Prueba que se pueda crear un empleado normal."""
         data = {
+            "tipo_documento": Empleado.TipoDocumento.CEDULA,
             "identificacion": "1234567890",
             "nombre": "Juan Perez",
             "usuario": "juanp",
             "telefono": "3001234567",
-            "contrasena": "secreta123",
+            "contrasena": "Secreta123!",
             # admin_checkbox no se envía si el checkbox no está marcado
         }
         response = self.client.post(self.url, data)
@@ -32,7 +33,7 @@ class EmpleadoCRUDTests(TestCase):
         nuevo_user = User.objects.get(username="juanp")
         self.assertFalse(nuevo_user.is_staff)
         self.assertEqual(nuevo_user.first_name, "Juan Perez")
-        self.assertTrue(nuevo_user.check_password("secreta123"))
+        self.assertTrue(nuevo_user.check_password("Secreta123!"))
 
         # Verificar que el empleado asociado se creó correctamente
         self.assertTrue(Empleado.objects.filter(auth_user=nuevo_user).exists())
@@ -45,11 +46,12 @@ class EmpleadoCRUDTests(TestCase):
     def test_crear_empleado_administrador_exitosamente(self):
         """Prueba que se pueda crear un empleado administrador."""
         data = {
+            "tipo_documento": Empleado.TipoDocumento.CEDULA,
             "identificacion": "9876543210",
             "nombre": "Ana Gomez",
             "usuario": "anag",
             "telefono": "3119876543",
-            "contrasena": "adminpass",
+            "contrasena": "Adminpass123!",
             "admin_checkbox": "true",
         }
         response = self.client.post(self.url, data)
@@ -72,11 +74,12 @@ class EmpleadoCRUDTests(TestCase):
         User.objects.create_user(username="usuario_existente", password="123")
 
         data = {
+            "tipo_documento": Empleado.TipoDocumento.CEDULA,
             "identificacion": "1111111111",
             "nombre": "Usuario Duplicado",
             "usuario": "usuario_existente",
             "telefono": "3333333333",
-            "contrasena": "12345",
+            "contrasena": "Adminpass123!",
         }
         response = self.client.post(self.url, data)
         self.assertRedirects(response, self.url)
