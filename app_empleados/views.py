@@ -28,6 +28,6 @@ def gestion_empleados_view(request):
     empleados = Empleado.objects.all().order_by("-id")
     return render(
         request,
-        "empleados/Gestion_Empleados.html",
+        "Gestion_Empleados.html",
         {"empleados": empleados, "form": form},
     )
