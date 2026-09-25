@@ -1,11 +1,25 @@
+{% load static %}
 {# Componente modular reutilizable para Tipo de Documento + Identificación #}
 {# Parámetros esperados:                                                 #}
 {#   - doc_field: Campo de tipo de documento (ej: form.tipo_documento)    #}
 {#   - id_field: Campo de número de identificación (ej: form.identificacion) #}
 {#   - group_class: (Opcional) Clases adicionales para el input-group     #}
+{#   - span_icon: (Opcional) Icono adicional (ej: 'bi bi-person-badge')   #}
+{#   - span_text: (Opcional) Texto adicional para el addon                #}
 <div class="tipo-doc-container">
   {{ doc_field }}
-  <div class="input-group {{ group_class|default:'' }}">
+  <div class="input-group has-validation {{ group_class|default:'' }}">
+    {% if span_icon or span_text %}
+      <span class="input-group-text">
+      {% if span_icon %}
+        <i class="{{ span_icon }}"></i>
+      {% endif %}
+      {% if span_text %}
+        {{ span_text }}
+      {% endif %}
+      </span>
+    {% endif %}
+
     <button
       class="btn btn-outline-secondary dropdown-toggle tipo-doc-btn"
       type="button"
@@ -33,13 +47,31 @@
         </li>
       {% endfor %}
     </ul>
-    {% include 'bootstrap_input_field.html' with field=id_field %}
-  </div>
 
-  {% if doc_field.errors %}
-    <div class="invalid-feedback d-block mb-2">
-      {{ doc_field.errors.0 }}
+    <div class="form-floating">
+      {{ id_field }}
+      <label for="{{ id_field.id_for_label }}">
+        {{ id_field.label|default:id_field.name|capfirst }}
+      </label>
     </div>
-  {% endif %}
+
+    {# Label cuando la validación falla (error) #}
+    <div class="invalid-feedback text-wrap text-break {% if doc_field.errors %}d-block{% endif %}">
+      {% firstof id_field.errors.0 doc_field.errors.0 "Por favor ingresa un valor valido" %}
+    </div>
+  </div>
 </div>
 
+<style>
+  .tipo-doc-container select {
+    display: none !important;
+  }
+
+  /* Muestra el feedback si el input dentro del input-group es inválido (en vivo o por Django) */
+  .input-group.has-validation:has(.is-invalid) > .invalid-feedback,
+  .was-validated .input-group.has-validation:has(:invalid) > .invalid-feedback {
+    display: block;
+  }
+</style>
+
+<script src="{% static 'js/tipo_documento_dropdown.js' %}"></script>

@@ -6,6 +6,9 @@
 (function () {
   'use strict';
 
+  if (window.__tipoDocumentoDropdownInitialized) return;
+  window.__tipoDocumentoDropdownInitialized = true;
+
   // Diccionario de respaldo para códigos estándar
   const CODIGOS_SIGLAS = {
     '13': 'CC',
@@ -25,6 +28,8 @@
    * 4. Si no coincide, retorna el valor o "CC" por defecto
    */
   function getSigla(val, itemText) {
+    itemText = itemText ? itemText.trim() : '';
+
     if (itemText) {
       const matchParen = itemText.match(/\(([A-Z0-9]{2,5})\)/i);
       if (matchParen) return matchParen[1].toUpperCase();
@@ -66,7 +71,7 @@
       const container = item.closest('.tipo-doc-container');
       if (!container) return;
 
-      const hiddenInput = container.querySelector('input[type="hidden"]');
+      const hiddenInput = container.querySelector('input[type="hidden"], select');
       const val = item.getAttribute('data-value');
 
       if (hiddenInput) {
@@ -84,7 +89,7 @@
 
     // Sincronizar todos los dropdowns al cargar la vista
     document.querySelectorAll('.tipo-doc-container').forEach(function (container) {
-      const hiddenInput = container.querySelector('input[type="hidden"]');
+      const hiddenInput = container.querySelector('input[type="hidden"], select');
       const val = hiddenInput ? hiddenInput.value : null;
 
       let item = null;

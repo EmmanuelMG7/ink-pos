@@ -16,42 +16,43 @@
         {% csrf_token %}
 
         <div class="modal-body m-2">
-          <div class="d-flex gap-2 mb-2">
-            <div class="input-group has-validation">
-              {% include 'bootstrap_input_field.html' with field=form.identificacion %}
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with doc_field=form.tipo_documento id_field=form.identificacion %}
+                {% include 'tipo_documento_group.html'%}
+              {% endwith %}
             </div>
-
-            <div class="input-group has-validation">
+            <div class="col">
               {% include 'bootstrap_input_field.html' with field=form.nombre %}
             </div>
           </div>
 
-          <div class="d-flex gap-2 mb-2">
-            <div class="input-group has-validation">
-              <span class="input-group-text">
-                <i class="bi bi-person-circle"></i>
-              </span>
-              {% include 'bootstrap_input_field.html' with field=form.usuario %}
-            </div>
-
-            <div class="input-group has-validation">
-              <span class="input-group-text">
-                <i class="bi bi-telephone-fill"></i>
-              </span>
-              {% include 'bootstrap_input_field.html' with field=form.telefono %}
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with field=form.usuario span_icon="bi bi-person-circle" %}
+                {% include 'bootstrap_input_field.html' %} 
+              {% endwith %}
+            </div> 
+            <div class="col">
+              {% with field=form.telefono span_icon="bi bi-telephone-fill" %}
+                {% include 'bootstrap_input_field.html' %}
+              {% endwith %}
             </div>
           </div>
 
-          <div class="input-group has-validation mb-2">
-            <span class="input-group-text">
-              <i class="bi bi-key-fill"></i>
-            </span>
-            {% include 'bootstrap_input_field.html' with field=form.contrasena %}
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with field=form.contrasena span_icon="bi bi-key-fill" %}
+                {% include 'bootstrap_input_field.html' %}
+              {% endwith %}
+            </div>
           </div>
 
           <div class="form-check">
-            {{ form.admin_checkbox }}
-            <label class="form-check-label" for="{{ form.admin_checkbox.id_for_label }}">Es usuario administrador</label>
+            {{ form.es_admin }}
+            <label class="form-check-label" for="{{ form.es_admin.id_for_label }}">
+              {{ form.es_admin.label }}
+            </label>
           </div>
         </div>
 
@@ -66,3 +67,4 @@
   </div>
 </div>
 <script src="{% static 'js/FormValidationIntercept.js' %}"></script>
+<script src="{% static 'js/tipo_documento_dropdown.js' %}"></script>
