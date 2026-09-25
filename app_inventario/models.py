@@ -148,73 +148,45 @@ class Producto(models.Model):
 
     class Meta:
         constraints = [
+            # costo_compra >= 0
             models.CheckConstraint(
                 condition=models.Q(costo_compra__gte=0),
                 name="chk_producto_costo_gte_0",
             ),
+            # precio_venta >= costo_compra
             models.CheckConstraint(
                 condition=models.Q(precio_venta__gte=models.F("costo_compra")),
                 name="chk_producto_precio_gte_costo",
             ),
+            # stock_actual >= 0
             models.CheckConstraint(
                 condition=models.Q(stock_actual__gte=0),
                 name="chk_producto_stock_actual_gte_0",
             ),
+            # stock_minimo >= 0
             models.CheckConstraint(
                 condition=models.Q(stock_minimo__gte=0),
                 name="chk_producto_stock_minimo_gte_0",
             ),
+            # nombre no puede estar vacio
             models.CheckConstraint(
                 condition=~models.Q(nombre=""),
                 name="chk_producto_nombre_no_vacio",
             ),
         ]
 
-    def clean(self):
-        super().clean()
-        if self.nombre:
-            self.nombre = self.nombre.strip()
-        if not self.nombre:
-            raise ValidationError({"nombre": "El nombre del producto no puede estar vacío."})
-
-        if self.costo_compra is not None and self.costo_compra < 0:
-            raise ValidationError({"costo_compra": "El costo de compra no puede ser negativo."})
-
-        if self.precio_venta is not None:
-            if self.precio_venta < 0:
-                raise ValidationError({"precio_venta": "El precio de venta no puede ser negativo."})
-            if self.costo_compra is not None and self.precio_venta < self.costo_compra:
-                msg = (
-                    f"El precio de venta ({self.precio_venta}) no puede ser "
-                    f"inferior al costo de compra ({self.costo_compra})."
-                )
-                raise ValidationError({"precio_venta": msg})
-
-        if self.stock_actual is not None and self.stock_actual < 0:
-            raise ValidationError({"stock_actual": "El stock actual no puede ser negativo."})
-
-        if self.stock_minimo is not None and self.stock_minimo < 0:
-            raise ValidationError({"stock_minimo": "El stock mínimo no puede ser negativo."})
-
     def save(self, *args, skip_clean=False, **kwargs):
+        '''Funcion llamada para hacer INSERT o UPDATE en la base de datos, se encarga de que se 
+        llamen a las funciones de validacion de campos usando `self.full_clean()` y permite 
+        saltarse las validaciones para testing de base de datos'''
         if not skip_clean:
             self.full_clean()
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"{self.nombre} ({self.marca.nombre})"
-
+    # Formatear automaticamente el id del producto a 5 digitos
     @property
     def codigo(self) -> str:
-        return f"{self.pk:03d}" if self.pk else ""
-
-    @property
-    def precio(self) -> Decimal:
-        return self.precio_venta
-
-    @property
-    def stock(self) -> int:
-        return self.stock_actual
+        return f"{self.pk:05d}" if self.pk else ""
 
 class MovimientoInventario(models.Model):
     class TipoMovimiento(models.TextChoices):
