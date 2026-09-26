@@ -1,0 +1,32 @@
+<div class="input-group has-validation">
+  {% if span_icon or span_text %}
+    <span class="input-group-text">
+    {% if span_icon %}
+      <i class="{{ span_icon }}"></i>
+    {% endif %}
+    {% if span_text %}
+      {{ span_text }}
+    {% endif %}
+    </span>
+  {% endif %}
+  
+  <div class="form-floating">
+    {{ field }}
+    <label for="{{ field.id_for_label }}">
+      {{ field.label|default:field.name|capfirst }}
+    </label>
+  </div>
+  
+  {# Label cuando la validación falla (error) #}
+  <div class="invalid-feedback text-wrap text-break">
+    {% firstof field.errors.0 "Por favor ingresa un valor valido" %}
+  </div>
+</div>
+
+<style>
+  /* Muestra el feedback si el input dentro del input-group es inválido (en vivo o por Django) */
+  .input-group.has-validation:has(.is-invalid) > .invalid-feedback,
+  .was-validated .input-group.has-validation:has(:invalid) > .invalid-feedback {
+    display: block;
+  }
+</style>

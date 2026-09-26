@@ -1,0 +1,81 @@
+{% load static %}
+<div class="modal fade" tabindex="-1" id="modal_agregar_producto">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Crear Nuevo Producto</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+        </button>
+      </div>
+
+      <form action="" method="post" class="needs-validation" novalidate id="form_crear_producto">
+        {% csrf_token %}
+
+        <div class="modal-body m-2">
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with field=form.nombre span_text=siguiente_codigo %}
+                {% include 'bootstrap_input_field.html' %}
+              {% endwith %}
+            </div>
+          </div>
+
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with field=form.precio_venta span_icon="bi bi-tags-fill"%}
+                {% include 'bootstrap_input_field.html' %}
+              {% endwith %}
+            </div>
+            <div class="col">
+            {% with field=form.costo_compra span_icon="bi bi-cash-stack"%}
+              {% include 'bootstrap_input_field.html' %}
+            {% endwith %}
+            </div>
+          </div>
+
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with field=form.stock_actual span_icon="bi bi-box-seam-fill" %}
+                {% include 'bootstrap_input_field.html' %}
+              {% endwith %}
+            </div>
+            <div class="col">
+              {% with field=form.stock_minimo span_icon="bi bi-box-arrow-in-down" %}
+                {% include 'bootstrap_input_field.html' %}
+              {% endwith %}
+            </div>
+          </div>
+          
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with id='marca' label='Marca' value=form.marca.value|default:'Generico' items=marcas %}
+                {% include 'search_and_create_dropdown.html' %}
+              {% endwith %}
+            </div>
+            <div class="col">
+              {% with id='categoria' label='Categoría' value=form.categoria.value|default:'Ninguna' items=categorias %}
+                {% include 'search_and_create_dropdown.html' %}
+              {% endwith %}
+            </div>
+          </div>
+
+          <div class="row g-2 align-items-start">
+            <div class="col">
+              {% with field=form.impuesto span_icon="bi bi-receipt" %}
+                {% include 'bootstrap_input_field.html' %} 
+              {% endwith %}
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="reset" class="btn btn-secondary" id="btn_reset_modal_producto">Limpiar</button>
+          <button type="submit" class="btn btn-primary">Guardar Producto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'js/search_and_create_dropdown.js' %}"></script>
+<script src="{% static 'js/FormValidationIntercept.js' %}"></script>

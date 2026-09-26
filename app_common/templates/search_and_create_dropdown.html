@@ -1,0 +1,126 @@
+{# Componente modular reutilizable para Dropdown Buscable y Creable #}
+{# Parámetros esperados: #}
+{#   - id: Identificador único del componente (ej: 'marca', 'categoria') #}
+{#   - name: (Opcional) Nombre del campo hidden para el envío POST (por defecto: {{ id }}) #}
+{#   - value: (Opcional) Valor y label inicial (ej: 'Generico', 'Ninguna') #}
+{#   - label: (Opcional) Etiqueta de texto para el addon / buscador (ej: 'Marca', 'Categoría') #}
+{#   - span_icon: (Opcional) Clase de icono de Bootstrap Icons (ej: 'bi bi-tag-fill') #}
+{#   - span_text: (Opcional) Texto explícito para el addon del input-group #}
+{#   - items: Lista de objetos con atributo 'nombre' (ej: marcas, categorias) #}
+{#   - placeholder: (Opcional) Texto de placeholder en el buscador #}
+{#   - container_class: (Opcional) Clases adicionales para el contenedor #}
+{#   - button_class: (Opcional) Clases adicionales para el botón toggle #}
+
+{% firstof id "dropdown" as field_id %}
+{% firstof value default_value "Ninguna" as current_val %}
+
+<div class="dropdown searchable-dropdown-container w-100 {{ container_class|default:'' }}"
+     id="dropdown_{{ field_id }}_container"
+     style="flex: 1 1 0; min-width: 0;"
+     data-searchable-dropdown="true"
+     data-id="{{ field_id }}"
+     data-default-value="{{ current_val }}">
+
+  <input 
+    type="hidden" 
+    name="{{ name }}" 
+    id="input_{{ field_id }}_nombre" 
+    class="searchable-hidden-input"
+    value="{{ current_val }}" 
+  />
+
+  <div class="input-group has-validation">
+    {% if span_icon or span_text or label %}
+      <span class="input-group-text">
+        {% if span_icon %}
+          <i class="{{ span_icon }}"></i>
+        {% endif %}
+        {% if span_text %}
+          {{ span_text }}
+        {% elif not span_icon and label %}
+          {{ label }}
+        {% endif %}
+      </span>
+    {% endif %}
+
+    <button 
+      class="form-control text-start d-flex justify-content-between align-items-center dropdown-toggle {{ button_class|default:'' }}" 
+      type="button" 
+      id="btn_dropdown_{{ field_id }}" 
+      data-bs-toggle="dropdown" 
+      aria-expanded="false"
+      style="min-width: 0;">
+      <span id="label_{{ field_id }}_seleccionada"
+        class="text-truncate searchable-label {% if not current_val or current_val == 'Ninguna' %}text-secondary{% endif %}"
+        style="min-width: 0;">
+        {{ current_val }}
+      </span>
+    </button>
+
+    <div class="dropdown-menu p-2 shadow w-100"
+      style="max-height: 250px; overflow-y: auto;"
+      aria-labelledby="btn_dropdown_{{ field_id }}"
+    >
+      {% with ph_text=placeholder|default:None %}
+      <input 
+        type="text" 
+        class="form-control form-control-sm mb-2 searchable-input" 
+        id="search_{{ field_id }}_input" 
+        placeholder="{% if ph_text %}{{ ph_text }}{% elif label %}Buscar o crear {{ label|lower }}...{% else %}Buscar o crear...{% endif %}"
+        autocomplete="off" 
+      />
+      {% endwith %}
+
+      <div id="lista_{{ field_id }}_items" class="searchable-items-list">
+        {% if current_val and current_val != 'Ninguna' %}
+          <button
+            type="button"
+            class="dropdown-item py-1 rounded {{ field_id }}-item searchable-item active"
+            data-valor="{{ current_val }}">
+            {{ current_val }}
+          </button>
+          {% for item in items %}
+            {% if item.nombre != current_val %}
+              <button
+                type="button"
+                class="dropdown-item py-1 rounded {{ field_id }}-item searchable-item"
+                data-valor="{{ item.nombre }}">
+                {{ item.nombre }}
+              </button>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <button
+            type="button"
+            class="dropdown-item py-1 rounded {{ field_id }}-item searchable-item active"
+            data-valor="Ninguna">
+            Ninguna
+          </button>
+          {% for item in items %}
+            {% if item.nombre != 'Ninguna' %}
+              <button
+                type="button"
+                class="dropdown-item py-1 rounded {{ field_id }}-item searchable-item"
+                data-valor="{{ item.nombre }}">
+                {{ item.nombre }}
+              </button>
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <div
+        id="crear_{{ field_id }}_item"
+        class="dropdown-item text-primary fst-italic py-1 rounded d-none searchable-crear-item"
+        style="cursor: pointer;">
+        <i class="bi bi-plus-circle me-1"></i> Crear "
+          <span id="texto_crear_{{ field_id }}" class="searchable-texto-crear"></span>" (Enter)
+      </div>
+    </div>
+
+    {# Label cuando la validación falla (error) idéntico a bootstrap_input_field.html #}
+    <div class="invalid-feedback text-wrap text-break">
+      {% firstof field.errors.0 "Ingrese un valor valido" %}
+    </div>
+  </div>
+</div>

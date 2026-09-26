@@ -1,0 +1,70 @@
+{% load static %}
+<div class="modal fade" tabindex="-1" id="modal_agregar_empleado">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Crear Nuevo Empleado</h4>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+
+      <form action="" method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+
+        <div class="modal-body m-2">
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with doc_field=form.tipo_documento id_field=form.identificacion %}
+                {% include 'tipo_documento_group.html'%}
+              {% endwith %}
+            </div>
+            <div class="col">
+              {% include 'bootstrap_input_field.html' with field=form.nombre %}
+            </div>
+          </div>
+
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with field=form.usuario span_icon="bi bi-person-circle" %}
+                {% include 'bootstrap_input_field.html' %} 
+              {% endwith %}
+            </div> 
+            <div class="col">
+              {% with field=form.telefono span_icon="bi bi-telephone-fill" %}
+                {% include 'bootstrap_input_field.html' %}
+              {% endwith %}
+            </div>
+          </div>
+
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+              {% with field=form.contrasena span_icon="bi bi-key-fill" %}
+                {% include 'bootstrap_input_field.html' %}
+              {% endwith %}
+            </div>
+          </div>
+
+          <div class="form-check">
+            {{ form.es_admin }}
+            <label class="form-check-label" for="{{ form.es_admin.id_for_label }}">
+              {{ form.es_admin.label }}
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="reset" class="btn btn-secondary">Limpiar</button>
+          <button type="submit" class="btn btn-primary">
+            Guardar Empleado
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script src="{% static 'js/FormValidationIntercept.js' %}"></script>
+<script src="{% static 'js/tipo_documento_dropdown.js' %}"></script>

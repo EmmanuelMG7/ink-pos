@@ -33,6 +33,6 @@ urlpatterns = [
     path("clientes/", include("app_clientes.urls")),
     path("empleados/", include("app_empleados.urls")),
     path("auth/", include("app_autenticacion.urls")),
-    path("productos/", include("app_productos.urls")),
+    path("inventario/", include("app_inventario.urls")),
     path("ventas/", include("app_ventas.urls")),
 ]
