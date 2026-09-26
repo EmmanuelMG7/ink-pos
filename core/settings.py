@@ -169,5 +169,13 @@ MAILERS = {
 
 LOGIN_URL = "autenticacion:login"
 
+# Proxies
+if DEBUG == False:
+    CSRF_TRUSTED_ORIGINS = [
+        f"https://{os.getenv("PROXY_HOSTNAME")}" ,
+    ]
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    USE_X_FORWARDED_HOST = True
+
 # Configuración DIAN / Facturación Electrónica
 NIT_EMISOR = os.environ.get("NIT_EMISOR", "")
