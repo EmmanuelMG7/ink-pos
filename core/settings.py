@@ -170,9 +170,9 @@ MAILERS = {
 LOGIN_URL = "autenticacion:login"
 
 # Proxies
-if DEBUG == False:
+if DEBUG is False:
     CSRF_TRUSTED_ORIGINS = [
-        f"https://{os.getenv("PROXY_HOSTNAME")}" ,
+        f"https://{os.getenv("PROXY_HOSTNAME")}",
     ]
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     USE_X_FORWARDED_HOST = True
