@@ -47,6 +47,31 @@ class ProductoCRUDTests(TestCase):
         expected_codigo = f"{(producto_previo.id + 1):03d}"
         self.assertEqual(producto2.codigo, expected_codigo)
 
+    def test_acceso_requiere_login(self):
+        """Verifica que un usuario anónimo sea redirigido al intentar entrar."""
+        self.client.logout()  # Deslogueamos al admin que se logueó en el setUp
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+
+    def test_get_renderiza_tabla_y_paginacion(self):
+        """Prueba CA-02: Renderizado de vista y paginación a 10 registros."""
+        for i in range(11):
+            Producto.objects.create(
+                codigo=f"{i:03d}",
+                nombre=f"Prod {i}",
+                precio=1500,
+                stock=20,
+            )
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "productos/Gestion_Productos.html")
+        self.assertIn("table", response.context)
+
+        tabla = response.context["table"]
+        self.assertEqual(len(tabla.page.object_list), 10)
+        self.assertTrue(tabla.page.has_next())
+
     def test_hu5_tc03_stock_minimo_invalido(self):
         """Prueba HU5-TC03: El formulario debe ser inválido si el stock es menor a 1."""
         from app_productos.forms import ProductoForm
@@ -62,14 +87,12 @@ class ProductoCRUDTests(TestCase):
         )
 
     def test_post_formulario_invalido(self):
-        """Verifica que la vista maneje correctamente un formulario con errores."""
-        # Enviamos datos incompletos (falta precio) y stock inválido
+        """Verifica que el sistema maneje los errores si el formulario POST es inválido."""
+        # Enviamos un formulario incompleto (falta precio y stock inválido)
         data = {
             "nombre": "Producto Incompleto",
             "stock": 0,
         }
         response = self.client.post(self.url, data)
-
-        # Debe redirigir de vuelta a la página de gestión y no crear el producto
-        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, self.url)
         self.assertFalse(Producto.objects.filter(nombre="Producto Incompleto").exists())
