@@ -30,17 +30,20 @@ class ProductoForm(BootstrapModelForm):
 
     stock = forms.IntegerField(
         label="",
-        min_value=0,
+        min_value=1,
+        error_messages={
+            "min_value": "Se debe ingresar un valor válido en el campo de Stock."
+        },
         widget=forms.NumberInput(
             attrs={
                 "placeholder": "Stock",
                 "class": "number-only",
-                "min": "0",
+                "min": "1",
                 "step": "1",
             }
         ),
     )
-    stock.invalid_feedback = "Por favor ingresa un numero valido."
+    stock.invalid_feedback = "Se debe ingresar un valor válido en el campo de Stock."
 
     precio = forms.DecimalField(
         label="",
@@ -75,6 +78,18 @@ class ProductoForm(BootstrapModelForm):
             next_id = 1 if not last_product else last_product.id + 1
             codigo = f"{next_id:03d}"
         return codigo
+
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get("nombre")
+        qs = Producto.objects.filter(nombre__iexact=nombre)
+
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+
+        if qs.exists():
+            raise forms.ValidationError("El producto ya existe.")
+
+        return nombre
 
     def save(self, commit=True):
         instance = super().save(commit=False)
