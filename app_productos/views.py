@@ -1,9 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django_tables2 import RequestConfig
 
 from app_productos.forms import ProductoForm
+
 from .models import Producto
+from .tables import ProductoTable
 
 
 @login_required
@@ -14,7 +17,9 @@ def gestion_productos(request):
         if form.is_valid():
             try:
                 producto = form.save()
-                messages.success(request, f"Producto '{producto.nombre}' creado correctamente.")
+                messages.success(
+                    request, f"Producto '{producto.nombre}' creado correctamente."
+                )
             except Exception as e:
                 messages.error(request, f"Hubo un error al crear el producto: {str(e)}")
             return redirect("productos:gestion")
@@ -28,29 +33,19 @@ def gestion_productos(request):
     next_id = 1 if not last_product else last_product.id + 1
     siguiente_codigo = f"{next_id:03d}"
 
-    sort_param = request.GET.get('sort', '-id')
-    valid_sorts = ['precio', '-precio', 'stock', '-stock', '-id']
+    # Consultar productos
+    productos_queryset = Producto.objects.all().order_by("-id")
+    tabla_productos = ProductoTable(productos_queryset)
 
-    # Validar que el parámetro sea seguro
-    if sort_param not in valid_sorts:
-        sort_param = '-id'
-
-    # Aplicar el orden dinámico a la consulta
-    productos = Producto.objects.all().order_by(sort_param)
-
-    # Calcular el orden inverso para el próximo clic en el HTML
-    next_sort_precio = '-precio' if sort_param == 'precio' else 'precio'
-    next_sort_stock = '-stock' if sort_param == 'stock' else 'stock'
+    # Configurar paginación a 10 registros por página
+    RequestConfig(request, paginate={"per_page": 10}).configure(tabla_productos)
 
     return render(
-    request,
-    "productos/Gestion_Productos.html",
-    {
-        "siguiente_codigo": siguiente_codigo,
-        "productos": productos,
-        "form": form,
-        # Inyectar las variables de ordenamiento al template
-        "next_sort_precio": next_sort_precio,
-        "next_sort_stock": next_sort_stock,
-    },
-)
+        request,
+        "productos/Gestion_Productos.html",
+        {
+            "siguiente_codigo": siguiente_codigo,
+            "table": tabla_productos,
+            "form": form,
+        },
+    )
