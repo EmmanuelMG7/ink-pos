@@ -46,3 +46,30 @@ class ProductoCRUDTests(TestCase):
         # El nuevo código debe corresponder al ID asignado (que será el ID del previo + 1)
         expected_codigo = f"{(producto_previo.id + 1):03d}"
         self.assertEqual(producto2.codigo, expected_codigo)
+
+    def test_hu5_tc03_stock_minimo_invalido(self):
+            """Prueba HU5-TC03: El formulario debe ser inválido si el stock es menor a 1."""
+            from app_productos.forms import ProductoForm
+            
+            data = {"nombre": "Marcador Rojo", "stock": 0, "precio": 1500}
+            form = ProductoForm(data=data)
+            
+            self.assertFalse(form.is_valid())
+            self.assertIn('stock', form.errors)
+            self.assertEqual(
+                form.errors['stock'][0],
+                'Se debe ingresar un valor válido en el campo de Stock.'
+            )
+
+    def test_post_formulario_invalido(self):
+        """Verifica que la vista maneje correctamente un formulario con errores."""
+        # Enviamos datos incompletos (falta precio) y stock inválido
+        data = {
+            "nombre": "Producto Incompleto",
+            "stock": 0, 
+        }
+        response = self.client.post(self.url, data)
+        
+        # Debe redirigir de vuelta a la página de gestión y no crear el producto
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Producto.objects.filter(nombre="Producto Incompleto").exists())
