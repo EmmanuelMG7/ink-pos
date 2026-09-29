@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "app_autenticacion",
     "app_productos",
     "app_ventas",
+    "django_tables2",
 ]
 
 MIDDLEWARE = [
@@ -168,7 +169,7 @@ MAILERS = {
 LOGIN_URL = "autenticacion:login"
 
 # Proxies
-if DEBUG == False:
+if DEBUG is False:
     CSRF_TRUSTED_ORIGINS = [
         f"https://{os.getenv("PROXY_HOSTNAME")}" ,
     ]
