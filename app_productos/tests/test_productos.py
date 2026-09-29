@@ -96,3 +96,19 @@ class ProductoCRUDTests(TestCase):
         response = self.client.post(self.url, data)
         self.assertRedirects(response, self.url)
         self.assertFalse(Producto.objects.filter(nombre="Producto Incompleto").exists())
+
+    def test_crear_producto_duplicado_error(self):
+        """Prueba: No se debe permitir crear un producto con un nombre ya existente."""
+        from app_productos.forms import ProductoForm
+        from app_productos.models import Producto
+
+        # Creamos un producto inicial en la base de datos
+        Producto.objects.create(nombre="Marcador Rojo", stock=20, precio=10000)
+
+        # Intentamos validar un formulario con exactamente el mismo nombre
+        data = {"nombre": "Marcador Rojo", "stock": 50, "precio": 5000}
+        form = ProductoForm(data=data)
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("nombre", form.errors)
+        self.assertEqual(form.errors["nombre"][0], "El producto ya existe.")

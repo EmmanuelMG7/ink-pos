@@ -79,6 +79,18 @@ class ProductoForm(BootstrapModelForm):
             codigo = f"{next_id:03d}"
         return codigo
 
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get("nombre")
+        qs = Producto.objects.filter(nombre__iexact=nombre)
+
+        if self.instance and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+
+        if qs.exists():
+            raise forms.ValidationError("El producto ya existe.")
+
+        return nombre
+
     def save(self, commit=True):
         instance = super().save(commit=False)
         if not instance.codigo:
