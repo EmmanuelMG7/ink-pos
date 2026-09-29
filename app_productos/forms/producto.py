@@ -30,17 +30,20 @@ class ProductoForm(BootstrapModelForm):
 
     stock = forms.IntegerField(
         label="",
-        min_value=0,
+        min_value=1,
+        error_messages={
+            "min_value": "Se debe ingresar un valor válido en el campo de Stock."
+        },
         widget=forms.NumberInput(
             attrs={
                 "placeholder": "Stock",
                 "class": "number-only",
-                "min": "0",
+                "min": "1",
                 "step": "1",
             }
         ),
     )
-    stock.invalid_feedback = "Por favor ingresa un numero valido."
+    stock.invalid_feedback = "Se debe ingresar un valor válido en el campo de Stock."
 
     precio = forms.DecimalField(
         label="",

@@ -72,11 +72,26 @@ class ProductoCRUDTests(TestCase):
         self.assertEqual(len(tabla.page.object_list), 10)
         self.assertTrue(tabla.page.has_next())
 
+    def test_hu5_tc03_stock_minimo_invalido(self):
+        """Prueba HU5-TC03: El formulario debe ser inválido si el stock es menor a 1."""
+        from app_productos.forms import ProductoForm
+
+        data = {"nombre": "Marcador Rojo", "stock": 0, "precio": 1500}
+        form = ProductoForm(data=data)
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("stock", form.errors)
+        self.assertEqual(
+            form.errors["stock"][0],
+            "Se debe ingresar un valor válido en el campo de Stock.",
+        )
+
     def test_post_formulario_invalido(self):
         """Verifica que el sistema maneje los errores si el formulario POST es inválido."""
-        # Enviamos un formulario incompleto (falta precio y stock)
+        # Enviamos un formulario incompleto (falta precio y stock inválido)
         data = {
             "nombre": "Producto Incompleto",
+            "stock": 0,
         }
         response = self.client.post(self.url, data)
         self.assertRedirects(response, self.url)
