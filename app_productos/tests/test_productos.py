@@ -57,17 +57,17 @@ class ProductoCRUDTests(TestCase):
         """Prueba CA-02: Renderizado de vista y paginación a 10 registros."""
         for i in range(11):
             Producto.objects.create(
-                codigo=f"{i:03d}",  # <--- Agregamos un código único formateado a 3 dígitos (ej: 001, 002...)
-                nombre=f"Prod {i}", 
-                precio=1500, 
-                stock=20
+                codigo=f"{i:03d}",
+                nombre=f"Prod {i}",
+                precio=1500,
+                stock=20,
             )
-            
+
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "productos/Gestion_Productos.html")
         self.assertIn("table", response.context)
-        
+
         tabla = response.context["table"]
         self.assertEqual(len(tabla.page.object_list), 10)
         self.assertTrue(tabla.page.has_next())
