@@ -4,7 +4,6 @@ from django.shortcuts import redirect, render
 from django_tables2 import RequestConfig
 
 from app_productos.forms import ProductoForm
-
 from .models import Producto
 from .tables import ProductoTable
 

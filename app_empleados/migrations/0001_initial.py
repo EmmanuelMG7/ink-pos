@@ -15,13 +15,27 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Empleado',
+            name="Empleado",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('telefono', models.CharField(blank=True, max_length=20, null=True)),
-                ('salario', models.DecimalField(decimal_places=2, max_digits=10)),
-                ('es_admin', models.BooleanField(default=False)),
-                ('usuario', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("telefono", models.CharField(blank=True, max_length=20, null=True)),
+                ("salario", models.DecimalField(decimal_places=2, max_digits=10)),
+                ("es_admin", models.BooleanField(default=False)),
+                (
+                    "usuario",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
     ]
