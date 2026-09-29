@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
+
 from app_autenticacion.forms import LoginForm, SetupAdminForm
 from app_empleados.models import Empleado
 

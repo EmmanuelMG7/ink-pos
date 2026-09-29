@@ -1,9 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
+from django_tables2 import RequestConfig
 
 from app_empleados.forms import EmpleadoCrearForm
+
 from .models import Empleado
+from .tables import EmpleadoTable
 
 
 @login_required
@@ -15,7 +18,8 @@ def gestion_empleados_view(request):
             try:
                 empleado = form.save()
                 messages.success(
-                    request, f"Empleado '{empleado.usuario.first_name}' creado correctamente."
+                    request,
+                    f"Empleado '{empleado.usuario.first_name}' creado correctamente.",
                 )
             except Exception as e:
                 messages.error(request, f"Hubo un error al crear el empleado: {str(e)}")
@@ -26,9 +30,17 @@ def gestion_empleados_view(request):
                     messages.error(request, err)
             return redirect("empleados:gestion")
 
-    empleados = Empleado.objects.all().order_by("-id")
+    empleados_queryset = Empleado.objects.all().order_by("-id")
+    tabla_empleados = EmpleadoTable(empleados_queryset)
+
+    # Configuramos la paginación a 10 registros por página
+    RequestConfig(request, paginate={"per_page": 10}).configure(tabla_empleados)
+
     return render(
         request,
         "empleados/Gestion_Empleados.html",
-        {"empleados": empleados, "form": form},
+        {
+            "table": tabla_empleados,
+            "form": form,
+        },
     )
