@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
 from app_empleados.forms import EmpleadoCrearForm
+
 from .models import Empleado
 
 
@@ -15,7 +16,8 @@ def gestion_empleados_view(request):
             try:
                 empleado = form.save()
                 messages.success(
-                    request, f"Empleado '{empleado.usuario.first_name}' creado correctamente."
+                    request,
+                    f"Empleado '{empleado.usuario.first_name}' creado correctamente.",
                 )
             except Exception as e:
                 messages.error(request, f"Hubo un error al crear el empleado: {str(e)}")

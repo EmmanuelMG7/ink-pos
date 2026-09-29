@@ -1,4 +1,5 @@
 from django import forms
+
 from app_common.forms import BootstrapModelForm
 from app_productos.models import Producto
 
@@ -7,19 +8,23 @@ class ProductoForm(BootstrapModelForm):
     codigo = forms.CharField(
         label="",
         required=False,
-        widget=forms.TextInput(attrs={
-            'placeholder': 'Código',
-            'readonly': 'readonly',
-        })
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Código",
+                "readonly": "readonly",
+            }
+        ),
     )
 
     nombre = forms.CharField(
         label="",
         max_length=150,
-        widget=forms.TextInput(attrs={
-            'placeholder': 'Nombre',
-            'class': 'w-75',
-        })
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Nombre",
+                "class": "w-75",
+            }
+        ),
     )
     nombre.invalid_feedback = "Por favor ingresa un nombre valido."
 
@@ -27,14 +32,16 @@ class ProductoForm(BootstrapModelForm):
         label="",
         min_value=1,
         error_messages={
-            'min_value': 'Se debe ingresar un valor válido en el campo de Stock.'
+            "min_value": "Se debe ingresar un valor válido en el campo de Stock."
         },
-        widget=forms.NumberInput(attrs={
-            'placeholder': 'Stock',
-            'class': 'number-only',
-            'min': '1',
-            'step': '1',
-        })
+        widget=forms.NumberInput(
+            attrs={
+                "placeholder": "Stock",
+                "class": "number-only",
+                "min": "1",
+                "step": "1",
+            }
+        ),
     )
     stock.invalid_feedback = "Se debe ingresar un valor válido en el campo de Stock."
 
@@ -43,21 +50,28 @@ class ProductoForm(BootstrapModelForm):
         min_value=0,
         max_digits=10,
         decimal_places=2,
-        widget=forms.NumberInput(attrs={
-            'placeholder': 'Precio',
-            'min': '0',
-            'step': '0.01',
-        })
+        widget=forms.NumberInput(
+            attrs={
+                "placeholder": "Precio",
+                "min": "0",
+                "step": "0.01",
+            }
+        ),
     )
     precio.invalid_feedback = "Por favor ingresa un numero valido."
 
     class Meta:
         model = Producto
-        fields = ['codigo', 'nombre', 'precio', 'stock']
+        fields = ["codigo", "nombre", "precio", "stock"]
 
     def clean_codigo(self):
-        codigo = self.cleaned_data.get('codigo')
-        if not codigo or Producto.objects.filter(codigo=codigo).exclude(pk=self.instance.pk).exists():
+        codigo = self.cleaned_data.get("codigo")
+        if (
+            not codigo
+            or Producto.objects.filter(codigo=codigo)
+            .exclude(pk=self.instance.pk)
+            .exists()
+        ):
             if self.instance and self.instance.pk and self.instance.codigo:
                 return self.instance.codigo
             last_product = Producto.objects.order_by("id").last()
