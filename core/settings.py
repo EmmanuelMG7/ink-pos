@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "app_autenticacion",
     "app_productos",
     "app_ventas",
+    "django_tables2",
 ]
 
 MIDDLEWARE = [

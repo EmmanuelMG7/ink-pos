@@ -85,3 +85,39 @@ class EmpleadoCRUDTests(TestCase):
 
         # Como falló la creación en view, no debería haberse creado el empleado
         self.assertFalse(Empleado.objects.filter(id=1111111111).exists())
+
+    def test_ca01_vista_renderiza_tabla_y_template(self):
+        """Prueba CA-01: Renderizado de la tabla y template correctos mediante GET."""
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "empleados/Gestion_Empleados.html")
+        self.assertIn("table", response.context)
+        self.assertContains(response, "Gestion de Empleados")
+
+    def test_ca02_paginacion_diez_registros(self):
+        """Prueba CA-02: La tabla debe paginar al superar los 10 registros."""
+        # Creamos 11 empleados falsos para forzar la paginación
+        for i in range(11):
+            u = User.objects.create_user(username=f"testu_{i}", password="123")
+            Empleado.objects.create(id=i, usuario=u, telefono="1234567", salario=1000)
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+        table = response.context["table"]
+        # Comprobamos que solo carga 10 en la primera página y que existe un "siguiente"
+        self.assertEqual(len(table.page.object_list), 10)
+        self.assertTrue(table.page.has_next())
+
+    def test_ca06_tabla_vacia_muestra_mensaje(self):
+        """Prueba CA-06: Mensaje empty_text cuando no existen empleados en la BD."""
+        Empleado.objects.all().delete()
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        # El texto debe coincidir exactamente con el de empty_text en tables.py
+        self.assertContains(
+            response,
+            "Nada que mostrar aún. Puedes crear nuevos empleados usando el botón +",
+        )

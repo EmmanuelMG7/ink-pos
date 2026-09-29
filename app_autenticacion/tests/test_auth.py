@@ -52,7 +52,7 @@ class AuthFlowTests(TestCase):
         """Al enviar el formulario de setup se crea el primer usuario y empleado admin."""
         url = reverse("autenticacion:setup")
         data = {
-            "usuario": "admin_test",
+            "usuario": "admintest",  # <--- Cambiado de "admin_test" a "admintest"
             "nombre": "Admin Prueba",
             "telefono": "3001234567",
             "contrasena": "AdminSecret123!",
@@ -63,8 +63,8 @@ class AuthFlowTests(TestCase):
         self.assertRedirects(response, reverse("autenticacion:login"))
 
         # Verificar que el usuario se haya creado
-        self.assertTrue(User.objects.filter(username="admin_test").exists())
-        user = User.objects.get(username="admin_test")
+        self.assertTrue(User.objects.filter(username="admintest").exists())
+        user = User.objects.get(username="admintest")  # <--- Cambiado a "admintest"
         self.assertTrue(user.is_staff)
         self.assertEqual(user.first_name, "Admin Prueba")
         self.assertTrue(user.check_password("AdminSecret123!"))
@@ -73,5 +73,7 @@ class AuthFlowTests(TestCase):
         self.assertTrue(Empleado.objects.filter(usuario=user).exists())
         empleado = Empleado.objects.get(usuario=user)
         self.assertTrue(empleado.es_admin)
-        self.assertEqual(empleado.telefono, "123456789")
+        self.assertEqual(
+            empleado.telefono, "3001234567"
+        )  # <--- Cambiado a "3001234567"
         self.assertEqual(empleado.salario, 0)
