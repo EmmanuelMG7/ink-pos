@@ -1,7 +1,6 @@
 {% load static %}
 <!doctype html>
 <html lang="en" data-bs-theme="dark">
-
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -22,6 +21,7 @@
       crossorigin="anonymous"
     ></script>
   </head>
+  
   <body class="bg-body">
     <div class="d-flex justify-content-center align-items-center min-vh-100">
       <div
@@ -49,16 +49,24 @@
             {% endwith %}
           </div>
           <div class="mb-2 has-validation">
-            {% include 'bootstrap_input_field.html' with field=form.usuario %}
+            {% with field=form.usuario span_icon="bi bi-person-circle" %}
+              {% include 'bootstrap_input_field.html' %}
+            {% endwith %}
           </div>
           <div class="mb-2 has-validation">
-            {% include 'bootstrap_input_field.html' with field=form.nombre %}
+            {% with field=form.nombre span_icon="bi bi-person-vcard-fill" %}
+              {% include 'bootstrap_input_field.html' %}
+            {% endwith %}
           </div>
           <div class="mb-2 has-validation">
-            {% include 'bootstrap_input_field.html' with field=form.telefono %}
+            {% with field=form.telefono span_icon="bi bi-telephone-fill" %}
+              {% include 'bootstrap_input_field.html' %}
+            {% endwith %}
           </div>
           <div class="mb-2 has-validation">
-            {% include 'bootstrap_input_field.html' with field=form.contrasena %}
+            {% with field=form.contrasena span_icon="bi bi-key-fill" %}
+              {% include 'password_input_field.html' %}
+            {% endwith %}
           </div>
 
           <button type="submit" class="btn btn-primary w-100">

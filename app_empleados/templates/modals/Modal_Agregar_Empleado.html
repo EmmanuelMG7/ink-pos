@@ -23,7 +23,9 @@
               {% endwith %}
             </div>
             <div class="col">
-              {% include 'bootstrap_input_field.html' with field=form.nombre %}
+              {% with field=form.nombre span_icon="bi bi-person-vcard-fill" %}
+                {% include 'bootstrap_input_field.html' %}
+              {% endwith %}
             </div>
           </div>
 
@@ -43,7 +45,7 @@
           <div class="row g-2 mb-2 align-items-start">
             <div class="col">
               {% with field=form.contrasena span_icon="bi bi-key-fill" %}
-                {% include 'bootstrap_input_field.html' %}
+                {% include 'password_input_field.html' %}
               {% endwith %}
             </div>
           </div>
@@ -68,3 +70,4 @@
 </div>
 <script src="{% static 'js/FormValidationIntercept.js' %}"></script>
 <script src="{% static 'js/tipo_documento_dropdown.js' %}"></script>
+<script src="{% static 'js/toggle_password.js' %}"></script>
