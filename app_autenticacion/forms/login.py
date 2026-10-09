@@ -1,9 +1,13 @@
 from django import forms
+from django.core.validators import RegexValidator
 
-from app_common.forms import (
-    BootstrapForm,
-    PasswordValidator,
-    UsernameValidator,
+from app_common.forms import BootstrapForm
+from app_common.forms.base import UsernameValidator, validate_password_complexity
+
+# Validador de formato de contraseña con el mensaje específico requerido
+PasswordFormatValidator = RegexValidator(
+    regex=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9\s]).{8,}$",
+    message="La contraseña no cumple con el formato.",
 )
 
 
@@ -17,6 +21,7 @@ class LoginForm(BootstrapForm):
         widget=forms.TextInput(
             attrs={
                 "placeholder": "Usuario",
+                "class": "username-only",
             }
         ),
     )
@@ -24,11 +29,13 @@ class LoginForm(BootstrapForm):
     contrasena = forms.CharField(
         label="",
         min_length=8,
-        validators=[PasswordValidator],
+        validators=[validate_password_complexity],
         widget=forms.PasswordInput(
             render_value=True,
             attrs={
                 "placeholder": "Contraseña",
+                "minlength": "8",
+                "class": "password-complexity",
             },
         ),
     )

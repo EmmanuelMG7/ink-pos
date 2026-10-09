@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "app_ventas",
     "app_caja",
     "app_proveedores",
+    "django_tables2",
 ]
 
 MIDDLEWARE = [
