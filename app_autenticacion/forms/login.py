@@ -2,7 +2,7 @@ from django import forms
 from django.core.validators import RegexValidator
 
 from app_common.forms import BootstrapForm
-from app_common.forms.base import UsernameValidator, validate_password_complexity
+from app_common.forms.validators import UsernameValidator, PasswordValidator
 
 # Validador de formato de contraseña con el mensaje específico requerido
 PasswordFormatValidator = RegexValidator(
@@ -29,7 +29,7 @@ class LoginForm(BootstrapForm):
     contrasena = forms.CharField(
         label="",
         min_length=8,
-        validators=[validate_password_complexity],
+        validators=[PasswordValidator],
         widget=forms.PasswordInput(
             render_value=True,
             attrs={

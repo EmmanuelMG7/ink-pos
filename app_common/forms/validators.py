@@ -27,6 +27,3 @@ PasswordValidator = RegexValidator(
     message="La contraseña debe contener al menos 8 caracteres, una mayúscula,"
     " una minúscula, un número y un símbolo.",
 )
-# Aliases de compatibilidad
-PasswordComplexityValidator = PasswordValidator
-validate_password_complexity = PasswordValidator

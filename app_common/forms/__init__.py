@@ -12,10 +12,8 @@ from .validators import (
     AlphanumericWithSpacesValidator,
     OnlyAlphaNumericValidator,
     OnlyTextValidator,
-    PasswordComplexityValidator,
     PasswordValidator,
     UsernameValidator,
-    validate_password_complexity,
 )
 
 __all__ = [
@@ -26,8 +24,6 @@ __all__ = [
     "BootstrapModelForm",
     "OnlyAlphaNumericValidator",
     "OnlyTextValidator",
-    "PasswordComplexityValidator",
     "PasswordValidator",
     "UsernameValidator",
-    "validate_password_complexity",
 ]

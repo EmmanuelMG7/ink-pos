@@ -6,7 +6,7 @@ from app_common.forms import (
     BootstrapModelForm,
     OnlyTextValidator,
     UsernameValidator,
-    validate_password_complexity,
+    PasswordValidator,
 )
 from app_empleados.models import Empleado
 
@@ -43,7 +43,7 @@ class EmpleadoForm(BootstrapModelForm):
     contrasena = forms.CharField(
         label="",
         min_length=8,
-        validators=[validate_password_complexity],
+        validators=[PasswordValidator],
         widget=forms.PasswordInput(
             render_value=True,
             attrs={

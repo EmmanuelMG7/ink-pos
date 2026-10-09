@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 
 from app_common.forms import BootstrapForm, OnlyTextValidator, UsernameValidator
-from app_common.forms.base import validate_password_complexity
+from app_common.forms.validators import PasswordValidator
 from app_empleados.models import Empleado
 
 
@@ -71,7 +71,7 @@ class SetupAdminForm(BootstrapForm):
     contrasena = forms.CharField(
         label="",
         min_length=8,
-        validators=[validate_password_complexity],
+        validators=[PasswordValidator],
         widget=forms.PasswordInput(
             render_value=True,
             attrs={
