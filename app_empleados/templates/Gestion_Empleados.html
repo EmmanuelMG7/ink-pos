@@ -63,4 +63,16 @@
   });
 </script>
 
+{% if form.errors %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var modalEl = document.getElementById('modal_agregar_empleado');
+      if (modalEl) {
+        var modal = new bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    });
+  </script>
+{% endif %}
+
 {% endblock %}

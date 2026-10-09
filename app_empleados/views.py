@@ -11,9 +11,8 @@ from .tables import EmpleadoTable
 
 @login_required
 def gestion_empleados_view(request):
-    form = EmpleadoForm(request.POST or None)
-
     if request.method == "POST" and "identificacion" in request.POST:
+        form = EmpleadoForm(request.POST)
         if form.is_valid():
             try:
                 empleado = form.save()
@@ -21,14 +20,11 @@ def gestion_empleados_view(request):
                     request,
                     f"Empleado '{empleado.usuario.first_name}' creado correctamente.",
                 )
+                return redirect("empleados:gestion")
             except Exception as e:
                 messages.error(request, f"Hubo un error al crear el empleado: {str(e)}")
-            return redirect("empleados:gestion")
-        else:
-            for error_list in form.errors.values():
-                for err in error_list:
-                    messages.error(request, str(err))
-            return redirect("empleados:gestion")
+    else:
+        form = EmpleadoForm()
 
     empleados_queryset = Empleado.objects.all().order_by("-id")
     tabla_empleados = EmpleadoTable(empleados_queryset)
