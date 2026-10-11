@@ -1,6 +1,8 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
+
+from app_common.constants import RolUsuario
 
 
 class LoginViewTests(TestCase):
@@ -26,7 +28,10 @@ class LoginViewTests(TestCase):
 
     def test_login_post_valido_staff_redirige_a_reportes(self):
         """Login exitoso de administrador redirige a reportes."""
-        User.objects.create_user(username="adminuser", password="AdminPassword123!", is_staff=True)
+        admin = User.objects.create_user(
+            username="adminuser", password="AdminPassword123!", is_staff=True
+        )
+        admin.groups.add(Group.objects.get(name=RolUsuario.ADMINISTRADOR))
         url = reverse("autenticacion:login")
         response = self.client.post(
             url, {"usuario": "adminuser", "contrasena": "AdminPassword123!"}
@@ -36,7 +41,10 @@ class LoginViewTests(TestCase):
     def test_login_post_valido_no_staff_redirige_a_pos(self):
         """Login exitoso de empleado no-admin redirige a pos."""
         User.objects.create_user(username="adminuser", password="AdminPassword123!", is_staff=True)
-        User.objects.create_user(username="cajero", password="CajeroPassword123!", is_staff=False)
+        cajero = User.objects.create_user(
+            username="cajero", password="CajeroPassword123!", is_staff=False
+        )
+        cajero.groups.add(Group.objects.get(name=RolUsuario.CAJERO))
         url = reverse("autenticacion:login")
         response = self.client.post(url, {"usuario": "cajero", "contrasena": "CajeroPassword123!"})
         self.assertRedirects(response, reverse("ventas:pos"))
