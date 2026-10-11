@@ -1,0 +1,167 @@
+{
+  "version": "0.2",
+  "language": "en,es",
+  "import": [
+    "@cspell/dict-es-es/cspell-ext.json"
+  ],
+  "ignorePaths": [
+    "**/__pycache__/**",
+    "**/*.pyc",
+    "**/migrations/**",
+    ".venv/**",
+    "venv/**",
+    "staticfiles/**",
+    "media/**",
+    ".git/**",
+    "db.sqlite3",
+    "requirements.txt",
+    "cspell.json",
+    ".pre-commit-config.yaml",
+    ".flake8",
+    "pyproject.toml",
+    "templates/svg/**"
+  ],
+  "words": [
+    "asgiref",
+    "asgi",
+    "atómicamente",
+    "autogenerado",
+    "autoincremental",
+    "buscable",
+    "buscables",
+    "collectstatic",
+    "contenerizado",
+    "csrf",
+    "cude",
+    "cufe",
+    "deseleccionó",
+    "dian",
+    "django",
+    "entrypoint",
+    "flake8",
+    "formateadores",
+    "gunicorn",
+    "healthcheck",
+    "htmlcov",
+    "htmx",
+    "identiconify",
+    "impoconsumo",
+    "inicialización",
+    "inkpos",
+    "isort",
+    "loguearlo",
+    "makemigrations",
+    "mantenibilidad",
+    "mccabe",
+    "microempresa",
+    "modularizados",
+    "mypy",
+    "netbird",
+    "nitrilo",
+    "noinput",
+    "noqa",
+    "paginación",
+    "papeleriaaj",
+    "pathspec",
+    "pg_isready",
+    "pk",
+    "platformdirs",
+    "postgres",
+    "postgresql",
+    "psycopg",
+    "psycopg2",
+    "pycodestyle",
+    "pyflakes",
+    "pyproject",
+    "pytest",
+    "pytokens",
+    "PYTHONUNBUFFERED",
+    "PYTHONDONTWRITEBYTECODE",
+    "pytz",
+    "queryset",
+    "querysets",
+    "reabastecimiento",
+    "renderice",
+    "retrocompatibilidad",
+    "runserver",
+    "sanitización",
+    "sqlite",
+    "sqlite3",
+    "sqlparse",
+    "staticfiles",
+    "textareas",
+    "tipado",
+    "tipados",
+    "trixie",
+    "tzdata",
+    "vcard",
+    "venv",
+    "wsgi"
+  ],
+  "patterns": [
+    {
+      "name": "django-template-tags",
+      "pattern": "/\\{\\{[\\s\\S]*?\\}\\}|\\{%[\\s\\S]*?%\\}/g"
+    },
+    {
+      "name": "html-technical-attrs",
+      "pattern": "/\\b(?:id|name|for|class|type|value|href|src|action|method|role|tabindex|aria-labelledby|aria-describedby|aria-controls|aria-expanded|aria-hidden|hx-[a-z-]+|data-[a-z-]+)\\s*=\\s*(?:\"[^\"]*\"|'[^']*')/gi"
+    },
+    {
+      "name": "py-comments-and-strings",
+      "pattern": "/#.*|\"\"\"[\\s\\S]*?\"\"\"|'''[\\s\\S]*?'''|\"(?:\\\\.|[^\"\\\\\\n])*\"|'(?:\\\\.|[^'\\\\\\n])*'/g"
+    },
+    {
+      "name": "js-comments-and-strings",
+      "pattern": "/\\/\\/.*|\\/\\*[\\s\\S]*?\\*\\/|\"(?:\\\\.|[^\"\\\\\\n])*\"|'(?:\\\\.|[^'\\\\\\n])*'|`[\\s\\S]*?`/g"
+    },
+    {
+      "name": "fstring-interpolation",
+      "pattern": "/\\{[a-zA-Z0-9_.\\[\\]()'\":!-]+\\}/g"
+    },
+    {
+      "name": "py-raw-regex",
+      "pattern": "/\\br(?:\"(?:\\\\.|[^\"\\\\\\n])*\"|'(?:\\\\.|[^'\\\\\\n])*')/g"
+    },
+    {
+      "name": "technical-single-token-strings",
+      "pattern": "/\"[a-z0-9_.:/#-]+\"|'[a-z0-9_.:/#-]+'|\"[A-Z0-9_]+\"|'[A-Z0-9_]+'/g"
+    },
+    {
+      "name": "file-path-strings",
+      "pattern": "/\"[^\"\\n]*\\.(?:html|py|js|css|svg|png|jpg|json)\"|'[^'\\n]*\\.(?:html|py|js|css|svg|png|jpg|json)'/gi"
+    }
+  ],
+  "overrides": [
+    {
+      "filename": "**/*.html",
+      "ignoreRegExpList": [
+        "django-template-tags",
+        "html-technical-attrs"
+      ]
+    },
+    {
+      "filename": "**/*.py",
+      "includeRegExpList": [
+        "py-comments-and-strings"
+      ],
+      "ignoreRegExpList": [
+        "py-raw-regex",
+        "fstring-interpolation",
+        "technical-single-token-strings",
+        "file-path-strings",
+        "/django-insecure-[^\"'\\s]+/g"
+      ]
+    },
+    {
+      "filename": "**/*.js",
+      "includeRegExpList": [
+        "js-comments-and-strings"
+      ],
+      "ignoreRegExpList": [
+        "technical-single-token-strings",
+        "fstring-interpolation"
+      ]
+    }
+  ]
+}
