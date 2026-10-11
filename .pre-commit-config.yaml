@@ -5,13 +5,13 @@ repos:
     rev: 25.1.0
     hooks:
       - id: black
-        args: ["--line-length=100"]
+        args: ["--line-length=100", "--check", "--diff"]
 
   - repo: https://github.com/pycqa/isort
     rev: 6.0.1
     hooks:
       - id: isort
-        args: ["--profile=black", "--line-length=100"]
+        args: ["--profile=black", "--line-length=100", "--check-only", "--diff"]
 
   - repo: https://github.com/PyCQA/flake8
     rev: 7.1.2
@@ -35,4 +35,3 @@ repos:
         types: [python]
         pass_filenames: false
         always_run: true
-
