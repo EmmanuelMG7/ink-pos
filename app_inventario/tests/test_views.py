@@ -1,21 +1,31 @@
 from decimal import Decimal
 from unittest.mock import patch
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.test import TestCase
 from django.urls import reverse
 
+from app_common.constants import RolUsuario
 from app_inventario.models import Marca, Producto
 
 
 class GestionProductosViewTests(TestCase):
     def setUp(self):
-        # Crear un usuario administrador y loguearlo para pasar el @login_required
         self.user = User.objects.create_user(
             username="admin", password="password123", is_staff=True
         )
+        self.user.groups.add(Group.objects.get(name=RolUsuario.ADMINISTRADOR))
         self.client.login(username="admin", password="password123")
         self.url = reverse("inventario:gestion")
+
+    def test_acceso_denegado_para_cajero_sin_permiso_inventario(self):
+        """Un usuario solo con grupo Cajero recibe 403 en inventario."""
+        cajero = User.objects.create_user(username="cajero_inv", password="password123")
+        cajero.groups.add(Group.objects.get(name=RolUsuario.CAJERO))
+        self.client.login(username="cajero_inv", password="password123")
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 403)
+        self.assertTemplateUsed(response, "403.html")
 
     def test_crear_producto_exitosamente(self):
         """Prueba que se pueda crear un producto enviando un POST válido."""

@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import redirect, render
 from django_tables2 import RequestConfig
 
@@ -9,15 +9,14 @@ from .tables import ProductoTable
 
 
 @login_required
+@permission_required("app_inventario.view_producto", raise_exception=True)
 def gestion_productos(request):
     if request.method == "POST" and "nombre" in request.POST:
         form = ProductoForm(request.POST)
         if form.is_valid():
             try:
                 producto = form.save()
-                messages.success(
-                    request, f"Producto '{producto.nombre}' creado correctamente."
-                )
+                messages.success(request, f"Producto '{producto.nombre}' creado correctamente.")
                 return redirect("inventario:gestion")
             except Exception as e:
                 messages.error(request, f"Hubo un error al crear el producto: {str(e)}")
