@@ -130,6 +130,10 @@
     {
       "name": "file-path-strings",
       "pattern": "/\"[^\"\\n]*\\.(?:html|py|js|css|svg|png|jpg|json)\"|'[^'\\n]*\\.(?:html|py|js|css|svg|png|jpg|json)'/gi"
+    },
+    {
+      "name": "regex-strings",
+      "pattern": "/[\"']\\^[^\"'\\n]*\\$[\"']|\\[[^\\]]*áéíóú[^\\]]*\\]/gi"
     }
   ],
   "overrides": [
@@ -147,6 +151,7 @@
       ],
       "ignoreRegExpList": [
         "py-raw-regex",
+        "regex-strings",
         "fstring-interpolation",
         "technical-single-token-strings",
         "file-path-strings",
@@ -159,6 +164,7 @@
         "js-comments-and-strings"
       ],
       "ignoreRegExpList": [
+        "regex-strings",
         "technical-single-token-strings",
         "fstring-interpolation"
       ]
