@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.shortcuts import redirect, render
 from django_tables2 import RequestConfig
 
@@ -10,6 +10,7 @@ from .tables import EmpleadoTable
 
 
 @login_required
+@permission_required("app_empleados.view_empleado", raise_exception=True)
 def gestion_empleados_view(request):
     if request.method == "POST" and "identificacion" in request.POST:
         form = EmpleadoForm(request.POST)

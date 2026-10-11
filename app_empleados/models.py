@@ -1,10 +1,10 @@
 from decimal import Decimal
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from app_common.constants import TipoDocumento
+from app_common.constants import RolUsuario, TipoDocumento
 
 
 class Empleado(models.Model):
@@ -53,6 +53,11 @@ class Empleado(models.Model):
         if not skip_clean:
             self.full_clean()
         super().save(*args, **kwargs)
+        if self.auth_user.id:
+            rol_activo = RolUsuario.ADMINISTRADOR if self.es_admin else RolUsuario.CAJERO
+            rol_inactivo = RolUsuario.CAJERO if self.es_admin else RolUsuario.ADMINISTRADOR
+            self.auth_user.groups.remove(*Group.objects.filter(name=rol_inactivo))
+            self.auth_user.groups.add(*Group.objects.filter(name=rol_activo))
 
     @property
     def es_activo(self) -> bool:
