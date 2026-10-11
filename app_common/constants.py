@@ -25,3 +25,8 @@ class TipoDocumento(models.TextChoices):
     @classmethod
     def get_sigla(cls, value: str) -> str:
         return cls.siglas().get(str(value), str(value))
+
+
+class RolUsuario(models.TextChoices):
+    ADMINISTRADOR = "Administrador", "Administrador"
+    CAJERO = "Cajero", "Cajero"
