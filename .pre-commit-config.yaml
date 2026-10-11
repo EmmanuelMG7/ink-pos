@@ -26,3 +26,13 @@ repos:
           - "@cspell/dict-es-es"
         args: ["--no-progress", "--no-must-find-files"]
 
+  - repo: local
+    hooks:
+      - id: django-test
+        name: django-test
+        entry: python -c "import os, subprocess, sys; py = '.venv/Scripts/python.exe' if os.path.exists('.venv/Scripts/python.exe') else ('.venv/bin/python' if os.path.exists('.venv/bin/python') else sys.executable); sys.exit(subprocess.call([py, 'manage.py', 'test']))"
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+
