@@ -51,7 +51,7 @@ class VentasModelosDetalladosTests(TestCase):
         with self.assertRaises(ValidationError):
             d_nom.clean()
 
-        # Cupon lowercase sanitized to upper
+        # Cupón lowercase sanitized to upper
         d_cupon = Descuento(
             nombre="Promo Verano", codigo_cupon=" verano2026 ", valor=Decimal("10.00")
         )
@@ -98,7 +98,7 @@ class VentasModelosDetalladosTests(TestCase):
         self.assertEqual(str(d_fijo), "Mil (1000.00$)")
 
     def test_resolucion_dian_clean_and_str(self):
-        # Empty numero_resolucion
+        # Empty numero_resolución
         res = ResolucionDIAN(numero_resolucion="   ")
         with self.assertRaises(ValidationError):
             res.clean()
@@ -151,7 +151,7 @@ class VentasModelosDetalladosTests(TestCase):
         self.assertIn("Resolución 999 (PRE) [1-100]", str(res_ok))
 
     def test_factura_clean_and_str(self):
-        # Empty codigo
+        # Empty código
         f_cod = Factura(codigo="   ", cliente=self.cliente, empleado=self.empleado)
         with self.assertRaises(ValidationError):
             f_cod.clean()
@@ -206,7 +206,7 @@ class VentasModelosDetalladosTests(TestCase):
         with self.assertRaises(ValidationError):
             f_caja.clean()
 
-        # Reactivacion de factura anulada
+        # Reactivación de factura anulada
         f_anulada = Factura.objects.create(
             codigo="F-ANULADA",
             cliente=self.cliente,
@@ -273,7 +273,7 @@ class VentasModelosDetalladosTests(TestCase):
         with self.assertRaises(ValidationError):
             d_pre_neg.clean()
 
-        # Costo unitario historico negativo
+        # Costo unitario histórico negativo
         d_cost_neg = DetalleFactura(
             factura=factura,
             producto=self.producto,
@@ -422,7 +422,7 @@ class VentasModelosDetalladosTests(TestCase):
         factura.estado = Factura.EstadoFactura.PAGADA
         factura.save(skip_clean=True)
 
-        # Devolucion motivo vacio
+        # Devolución motivo vacío
         dev_sin_motivo = Devolucion(
             factura=factura,
             sesion_caja=self.sesion_caja,
@@ -433,7 +433,7 @@ class VentasModelosDetalladosTests(TestCase):
         with self.assertRaises(ValidationError):
             dev_sin_motivo.clean()
 
-        # Devolucion total devuelto <= 0
+        # Devolución total devuelto <= 0
         dev_tot_cero = Devolucion(
             factura=factura,
             sesion_caja=self.sesion_caja,
@@ -444,7 +444,7 @@ class VentasModelosDetalladosTests(TestCase):
         with self.assertRaises(ValidationError):
             dev_tot_cero.clean()
 
-        # Devolucion sobre factura no pagada
+        # Devolución sobre factura no pagada
         factura.estado = Factura.EstadoFactura.PENDIENTE_PAGO
         factura.save(skip_clean=True)
         dev_no_pagada = Devolucion(
@@ -460,7 +460,7 @@ class VentasModelosDetalladosTests(TestCase):
         factura.estado = Factura.EstadoFactura.PAGADA
         factura.save(skip_clean=True)
 
-        # Devolucion superior al total facturado
+        # Devolución superior al total facturado
         dev_supera = Devolucion(
             factura=factura,
             sesion_caja=self.sesion_caja,
@@ -471,7 +471,7 @@ class VentasModelosDetalladosTests(TestCase):
         with self.assertRaises(ValidationError):
             dev_supera.clean()
 
-        # Sesion caja cerrada
+        # Devolución sobre sesión con caja cerrada
         caja_cerrada = SesionCaja(empleado=self.empleado, estado=SesionCaja.EstadoCaja.CERRADO)
         dev_caja_cerrada = Devolucion(
             factura=factura,
@@ -483,7 +483,7 @@ class VentasModelosDetalladosTests(TestCase):
         with self.assertRaises(ValidationError):
             dev_caja_cerrada.clean()
 
-        # Devolucion valida
+        # Devolución válida
         devolucion = Devolucion.objects.create(
             factura=factura,
             sesion_caja=self.sesion_caja,
@@ -493,7 +493,7 @@ class VentasModelosDetalladosTests(TestCase):
         )
         self.assertIn("Devolución", str(devolucion))
 
-        # Detalle Devolucion: cantidad <= 0
+        # Detalle Devolución: cantidad <= 0
         det_cant_cero = DetalleDevolucion(
             devolucion=devolucion,
             producto=self.producto,
@@ -503,7 +503,7 @@ class VentasModelosDetalladosTests(TestCase):
         with self.assertRaises(ValidationError):
             det_cant_cero.clean()
 
-        # Detalle Devolucion: precio negativo
+        # Detalle Devolución: precio negativo
         det_pre_neg = DetalleDevolucion(
             devolucion=devolucion,
             producto=self.producto,
@@ -513,7 +513,7 @@ class VentasModelosDetalladosTests(TestCase):
         with self.assertRaises(ValidationError):
             det_pre_neg.clean()
 
-        # Detalle Devolucion: producto no en factura
+        # Detalle Devolución: producto no en factura
         prod_otro = Producto.objects.create(
             nombre="Otro",
             marca=self.marca,
@@ -530,7 +530,7 @@ class VentasModelosDetalladosTests(TestCase):
         with self.assertRaises(ValidationError):
             det_no_fac.clean()
 
-        # Detalle Devolucion: supera cantidad facturada
+        # Detalle Devolución: supera cantidad facturada
         det_excede_cant = DetalleDevolucion(
             devolucion=devolucion,
             producto=self.producto,
@@ -540,7 +540,7 @@ class VentasModelosDetalladosTests(TestCase):
         with self.assertRaises(ValidationError):
             det_excede_cant.clean()
 
-        # Detalle Devolucion valido y reingreso a stock
+        # Detalle Devolución válido y reingreso a stock
         stock_antes = self.producto.stock_actual
         det_ok = DetalleDevolucion.objects.create(
             devolucion=devolucion,
@@ -553,7 +553,7 @@ class VentasModelosDetalladosTests(TestCase):
         self.assertEqual(self.producto.stock_actual, stock_antes + 1)
         self.assertIn("1x Tinta Negra en Devolución", str(det_ok))
 
-        # Validar clean en Devolución y DetalleDevolucion existentes (líneas 573 y 637)
+        # Validar clean en Devolución y DetalleDevolución existentes (líneas 573 y 637)
         devolucion.total_devuelto = Decimal("20000.00")
         devolucion.clean()
         det_ok.cantidad = 1

@@ -34,7 +34,7 @@ class ProductoForm(BootstrapModelForm):
     marca = forms.CharField(
         required=False,
         max_length=50,
-        initial="Generico",
+        initial="Genérico",
         widget=forms.HiddenInput(),
     )
 
@@ -48,8 +48,8 @@ class ProductoForm(BootstrapModelForm):
     class Meta:
         # Modelo de la base de datos enlazado a este formulario
         model = Producto
-        # Campos excluidos del formulario. Se excluyen marca y categoria para evitar
-        # errores de asignacion internos con Django, delegando la asignacion al metodo save()
+        # Campos excluidos del formulario. Se excluyen marca y categoría para evitar
+        # errores de asignación internos con Django, delegando la asignación al método save()
         exclude = ["activo", "marca", "categoria"]
         # Clases de HTML que se inyectan en los campos al crear el formulario
         widgets = {
@@ -79,7 +79,7 @@ class ProductoForm(BootstrapModelForm):
                     "step": "1",
                 }
             ),
-            "stock_minimo": forms.NumberInput(attrs={"placeholder": "Stock Minimo"}),
+            "stock_minimo": forms.NumberInput(attrs={"placeholder": "Stock Mínimo"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -106,7 +106,7 @@ class ProductoForm(BootstrapModelForm):
         Se ejecuta automáticamente durante 'form.is_valid()'.
         Aquí se realizan unicamente validaciones cruzadas entre múltiples campos
         (ej: precio vs costo) y asignaciones de valores por defecto.
-        Para validaciones unicas de campo se debe usar clean_[field]() o delegar
+        Para validaciones únicas de campo se debe usar clean_[field]() o delegar
         a validadores.
         """
         # Obtener los valores limpios y tipados de los campos
@@ -144,13 +144,13 @@ class ProductoForm(BootstrapModelForm):
           en una única transacción atómica para proteger la integridad de los datos.
         """
 
-        # Se requiere usar una trasaccion atomica ya que se podrian crear nuevos registros en
-        # las tablas marca y categoria. De esta manera, si en la posterior creacion del producto
-        # la transaccion falla, los cambios en marca y categoria se revierten.
+        # Se requiere usar una transacción atómica ya que se podrían crear nuevos registros en
+        # las tablas marca y categoría. De esta manera, si en la posterior creación del producto
+        # la transacción falla, los cambios en marca y categoría se revierten.
         with transaction.atomic():
             # Crear la instancia en memoria y asignar valores a los campos
             instance = super().save(commit=False)
-            # Bandera para tomar accion en INSERT vs UPDATE
+            # Bandera para tomar acción en INSERT vs UPDATE
             es_creacion = instance.pk is None
 
             # Resolución de la relación 'marca' por medio del nombre (ForeignKey a Marca)
@@ -161,13 +161,13 @@ class ProductoForm(BootstrapModelForm):
                 marca_obj, _ = Marca.objects.get_or_create(nombre=marca)
                 instance.marca = marca_obj
             elif es_creacion and not instance.marca_id:
-                # Solo en creación asignamos 'Generico' si no se especificó ninguna marca.
+                # Solo en creación asignamos 'Genérico' si no se especificó ninguna marca.
                 # En actualización, respetamos la marca que el producto ya tenía.
-                marca_defecto, _ = Marca.objects.get_or_create(nombre="Generico")
+                marca_defecto, _ = Marca.objects.get_or_create(nombre="Genérico")
                 instance.marca = marca_defecto
 
-            # Resolución de la relación 'categoria' por medio del nombre
-            # (ForeignKey opcional a Categoria)
+            # Resolución de la relación 'categoría' por medio del nombre
+            # (ForeignKey opcional a Categoría)
             categoria = str(self.cleaned_data.get("categoria") or "").strip()
 
             if categoria and categoria.lower() != "ninguna":

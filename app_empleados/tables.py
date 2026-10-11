@@ -27,8 +27,6 @@ class EmpleadoTable(tables.Table):
         model = Empleado
         template_name = "django_tables2/bootstrap5.html"
         fields = ("id", "usuario", "telefono", "es_admin", "acciones")
-        empty_text = (
-            "Nada que mostrar aún. Puedes crear nuevos empleados usando el botón +"
-        )
+        empty_text = "Nada que mostrar aún. Puedes crear nuevos empleados usando el botón +"
 
         orderable = False

@@ -46,7 +46,7 @@ def calcular_cufe_cude(
     Calcula el hash CUFE/CUDE en SHA-384 conforme a la especificación técnica de la DIAN.
 
     :param factura: Instancia del modelo Factura.
-    :param resolucion: Instancia de ResolucionDIAN asociada (contiene la clave técnica).
+    :param resolución: Instancia de ResoluciónDIAN asociada (contiene la clave técnica).
     :param nit_emisor: NIT de la empresa emisora sin dígito de verificación
         (si es None, se toma de settings.NIT_EMISOR).
     :return: Cadena en minúsculas con el hash SHA-384 de 96 caracteres.

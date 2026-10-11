@@ -31,7 +31,7 @@ class ProductoFormTests(TestCase):
     def test_producto_form_precio_menor_al_costo(self):
         data = {
             "nombre": "Regla",
-            "marca": "Generico",
+            "marca": "Genérico",
             "categoria": "CatA",
             "costo_compra": "150.00",
             "precio_venta": "50.00",

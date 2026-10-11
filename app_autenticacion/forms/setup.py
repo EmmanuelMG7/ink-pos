@@ -22,7 +22,7 @@ class SetupAdminForm(BootstrapForm):
 
     identificacion = forms.CharField(
         max_length=20,
-        widget=forms.TextInput(attrs={"placeholder": "Identificacion", "class": "number-only"}),
+        widget=forms.TextInput(attrs={"placeholder": "Identificación", "class": "number-only"}),
     )
 
     usuario = forms.CharField(
@@ -63,7 +63,7 @@ class SetupAdminForm(BootstrapForm):
             attrs={
                 "placeholder": "Teléfono",
                 "class": "number-only",
-                # Sobreescribir el pattern para ajustarse al formato de un telefono
+                # Sobrescribir el pattern para ajustarse al formato de un teléfono
                 "pattern": "^3[0-9]{9}$",
             }
         ),

@@ -469,8 +469,8 @@ class PagoFactura(models.Model):
 
     class MetodoPago(models.TextChoices):
         EFECTIVO = "EFECTIVO", "Efectivo"
-        TARJETA_DEBITO = "TARJETA_DEBITO", "Tarjeta de Debito"
-        TARJETA_CREDITO = "TARJETA_CREDITO", "Tarjeta de Credito"
+        TARJETA_DEBITO = "TARJETA_DEBITO", "Tarjeta de Débito"
+        TARJETA_CREDITO = "TARJETA_CREDITO", "Tarjeta de Crédito"
         TRANSFERENCIA = "TRANSFERENCIA", "Transferencia"
 
     factura = models.ForeignKey(Factura, on_delete=models.CASCADE, related_name="pagos")

@@ -50,7 +50,7 @@ class GestionProductosViewTests(TestCase):
         )
 
         data = {
-            "nombre": "Papel Hectografico",
+            "nombre": "Papel opalina",
             "stock_actual": 100,
             "precio_venta": 2000,
             "costo_compra": Decimal("0.00"),
@@ -58,8 +58,8 @@ class GestionProductosViewTests(TestCase):
         }
         self.client.post(self.url, data)
 
-        self.assertTrue(Producto.objects.filter(nombre="Papel Hectografico").exists())
-        producto2 = Producto.objects.get(nombre="Papel Hectografico")
+        self.assertTrue(Producto.objects.filter(nombre="Papel opalina").exists())
+        producto2 = Producto.objects.get(nombre="Papel opalina")
 
         # El nuevo código debe corresponder al ID asignado (que será el ID del previo + 1)
         expected_codigo = f"{(producto_previo.pk + 1):05d}"
@@ -86,7 +86,7 @@ class GestionProductosViewTests(TestCase):
         self.assertEqual(prod.categoria.nombre, "Agujas")
 
     def test_crear_producto_marca_defecto_generico(self):
-        """Prueba que si no se envía marca, se asigne 'Generico' por defecto."""
+        """Prueba que si no se envía marca, se asigne 'Genérico' por defecto."""
         data = {
             "nombre": "Guantes Nitrilo",
             "stock_actual": 100,
@@ -98,7 +98,7 @@ class GestionProductosViewTests(TestCase):
         self.assertRedirects(response, self.url)
 
         prod = Producto.objects.get(nombre="Guantes Nitrilo")
-        self.assertEqual(prod.marca.nombre, "Generico")
+        self.assertEqual(prod.marca.nombre, "Genérico")
 
     def test_render_modal_dropdowns_marca_y_categoria(self):
         """Prueba que el modal renderice los componentes modularizados de dropdown."""
@@ -109,9 +109,9 @@ class GestionProductosViewTests(TestCase):
         # Verificar contenedores e inputs generados por search_and_create_dropdown.html
         self.assertIn('id="dropdown_marca_container"', content)
         self.assertIn('id="input_marca_nombre"', content)
-        self.assertIn('value="Generico"', content)
+        self.assertIn('value="Genérico"', content)
         self.assertIn("Marca", content)
-        self.assertIn("Generico", content)
+        self.assertIn("Genérico", content)
 
         self.assertIn('id="dropdown_categoria_container"', content)
         self.assertIn('id="input_categoria_nombre"', content)

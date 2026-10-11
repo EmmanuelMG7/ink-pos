@@ -35,7 +35,7 @@ class DummyForm(BootstrapForm):
         required=False,
     )
     campo_regex_con_msg = forms.CharField(
-        validators=[RegexValidator(r"^[a-z]+$", message="Solo minusculas.")],
+        validators=[RegexValidator(r"^[a-z]+$", message="Solo minúsculas.")],
         required=False,
     )
     campo_password = forms.CharField(
@@ -91,7 +91,7 @@ class BootstrapFormTests(TestCase):
         self.assertIn("username-only", form.fields["campo_user"].widget.attrs["class"])
         self.assertEqual(
             form.fields["campo_regex_con_msg"].widget.attrs.get("data-invalid-feedback"),
-            "Solo minusculas.",
+            "Solo minúsculas.",
         )
         self.assertIn(
             "data-invalid-feedback",
@@ -135,8 +135,7 @@ class BootstrapFormTests(TestCase):
         self.assertIsInstance(f.fields["custom"].widget, forms.TextInput)
 
     def test_bootstrap_form_validator_sin_mensaje(self):
-        val = RegexValidator(r"^[0-9]+$")
-        val.message = None
+        val = RegexValidator(r"^[0-9]+$", message=None)
 
         class FormRegexSinMsg(BootstrapForm):
             campo = forms.CharField(validators=[val], required=False)

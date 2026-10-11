@@ -9,7 +9,7 @@ from app_empleados.models import Empleado
 
 class GestionEmpleadosViewTests(TestCase):
     def setUp(self):
-        # Crear un usuario administrador y loguearlo para acceder a gestion_empleados
+        # Crear un usuario administrador y loguearlo para acceder a gestión_empleados
         self.user = User.objects.create_user(
             username="admin", password="password123", is_staff=True
         )
@@ -53,7 +53,7 @@ class GestionEmpleadosViewTests(TestCase):
             "nombre": "Ana Gomez",
             "usuario": "anag",
             "telefono": "3119876543",
-            "contrasena": "Adminpass123!",
+            "contrasena": "AdminPass123!",
             "admin_checkbox": "true",
         }
         response = self.client.post(self.url, data)
@@ -80,7 +80,7 @@ class GestionEmpleadosViewTests(TestCase):
             "nombre": "Usuario Duplicado",
             "usuario": "usuario_existente",
             "telefono": "3333333333",
-            "contrasena": "Adminpass123!",
+            "contrasena": "AdminPass123!",
         }
         response = self.client.post(self.url, data)
         self.assertRedirects(response, self.url)
@@ -89,7 +89,7 @@ class GestionEmpleadosViewTests(TestCase):
         self.assertFalse(Empleado.objects.filter(identificacion="1111111111").exists())
 
     def test_gestion_empleados_view_exception_handling(self):
-        """Prueba manejo de excepción en gestion_empleados_view."""
+        """Prueba manejo de excepción en gestión_empleados_view."""
         data = {
             "tipo_documento": Empleado.TipoDocumento.CEDULA,
             "identificacion": "5566778899",

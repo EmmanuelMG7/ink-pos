@@ -15,9 +15,7 @@ def gestion_productos(request):
         if form.is_valid():
             try:
                 producto = form.save()
-                messages.success(
-                    request, f"Producto '{producto.nombre}' creado correctamente."
-                )
+                messages.success(request, f"Producto '{producto.nombre}' creado correctamente.")
                 return redirect("inventario:gestion")
             except Exception as e:
                 messages.error(request, f"Hubo un error al crear el producto: {str(e)}")

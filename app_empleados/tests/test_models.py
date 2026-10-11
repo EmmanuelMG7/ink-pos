@@ -8,7 +8,7 @@ class EmpleadoModelTests(TestCase):
     def test_empleado_model_properties_and_str(self):
         """Prueba propiedades es_activo (getter/setter) y __str__."""
         user = User.objects.create_user(
-            username="empleadox",
+            username="empleado",
             first_name="Carlos",
             last_name="Gomez",
         )
@@ -28,4 +28,4 @@ class EmpleadoModelTests(TestCase):
         user.first_name = ""
         user.last_name = ""
         user.save()
-        self.assertEqual(str(empleado), "empleadox (77889900)")
+        self.assertEqual(str(empleado), "empleado (77889900)")

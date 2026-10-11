@@ -26,7 +26,7 @@ class InventarioModelosTests(TestCase):
         self.marca = Marca.objects.create(nombre="MarcaTest")
         self.categoria = Categoria.objects.create(nombre="CatTest")
         self.producto = Producto.objects.create(
-            nombre="Lapiz",
+            nombre="Lápiz",
             marca=self.marca,
             categoria=self.categoria,
             costo_compra=Decimal("100.00"),
@@ -53,7 +53,7 @@ class InventarioModelosTests(TestCase):
         with self.assertRaises(ValidationError):
             imp_sin_nom.clean()
 
-        # Empty codigo tributario
+        # Empty código tributario
         imp_sin_cod = Impuesto(nombre="IVA", codigo_tributario="   ", tarifa=Decimal("19.00"))
         with self.assertRaises(ValidationError):
             imp_sin_cod.clean()
@@ -118,7 +118,7 @@ class InventarioModelosTests(TestCase):
         mov_merma.clean()
         self.assertEqual(mov_merma.stock_posterior, 7)
 
-        # COMPRA o DEVOLUCION
+        # COMPRA o DEVOLUCIÓN
         mov_compra = MovimientoInventario(
             producto=self.producto,
             tipo_movimiento=MovimientoInventario.TipoMovimiento.COMPRA,
@@ -165,7 +165,7 @@ class InventarioModelosTests(TestCase):
             mov_post_neg.clean()
 
     def test_movimiento_inventario_save_y_str(self):
-        # Save compra auto-calcula posterior e incrementa stock del producto
+        # Guardar compra auto-calcula posterior e incrementa stock del producto
         mov_compra = MovimientoInventario(
             producto=self.producto,
             empleado=self.empleado,
@@ -177,7 +177,7 @@ class InventarioModelosTests(TestCase):
         self.assertEqual(self.producto.stock_actual, 15)
         self.assertEqual(mov_compra.stock_posterior, 15)
 
-        # Save venta auto-calcula posterior y descuenta
+        # Guardar venta auto-calcula posterior y descuenta
         mov_venta = MovimientoInventario(
             producto=self.producto,
             empleado=self.empleado,
@@ -188,7 +188,7 @@ class InventarioModelosTests(TestCase):
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock_actual, 11)
 
-        # Save devolucion
+        # Guardar devolución
         mov_dev = MovimientoInventario(
             producto=self.producto,
             empleado=self.empleado,
@@ -199,7 +199,7 @@ class InventarioModelosTests(TestCase):
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock_actual, 13)
 
-        # Save ajuste
+        # Guardar ajuste
         mov_ajuste = MovimientoInventario(
             producto=self.producto,
             empleado=self.empleado,
@@ -209,7 +209,7 @@ class InventarioModelosTests(TestCase):
         mov_ajuste.save()
 
         # __str__
-        self.assertIn("COMPRA: 5 de Lapiz", str(mov_compra))
+        self.assertIn("COMPRA: 5 de Lápiz", str(mov_compra))
 
     def test_movimiento_inventario_tipo_desconocido(self):
         mov_otro = MovimientoInventario(

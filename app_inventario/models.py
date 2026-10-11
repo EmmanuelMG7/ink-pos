@@ -169,12 +169,12 @@ class Producto(models.Model):
                 condition=models.Q(stock_actual__gte=0),
                 name="chk_producto_stock_actual_gte_0",
             ),
-            # stock_minimo >= 0
+            # stock_mínimo >= 0
             models.CheckConstraint(
                 condition=models.Q(stock_minimo__gte=0),
                 name="chk_producto_stock_minimo_gte_0",
             ),
-            # nombre no puede estar vacio
+            # nombre no puede estar vacío
             models.CheckConstraint(
                 condition=~models.Q(nombre=""),
                 name="chk_producto_nombre_no_vacio",
@@ -182,14 +182,14 @@ class Producto(models.Model):
         ]
 
     def save(self, *args, skip_clean=False, **kwargs):
-        """Funcion llamada para hacer INSERT o UPDATE en la base de datos, se encarga de que se
-        llamen a las funciones de validacion de campos usando `self.full_clean()` y permite
+        """Función llamada para hacer INSERT o UPDATE en la base de datos, se encarga de que se
+        llamen a las funciones de validación de campos usando `self.full_clean()` y permite
         saltarse las validaciones para testing de base de datos"""
         if not skip_clean:
             self.full_clean()
         super().save(*args, **kwargs)
 
-    # Formatear automaticamente el id del producto a 5 digitos
+    # Formatear automáticamente el id del producto a 5 dígitos
     @property
     def codigo(self) -> str:
         return f"{self.pk:05d}" if self.pk else ""

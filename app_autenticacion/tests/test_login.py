@@ -46,7 +46,7 @@ class LoginViewTests(TestCase):
         User.objects.create_user(username="adminuser", password="AdminPassword123!", is_staff=True)
         url = reverse("autenticacion:login")
         response = self.client.post(
-            url, {"usuario": "adminuser", "contrasena": "PasswordErroneo123!"}
+            url, {"usuario": "adminuser", "contrasena": "PasswordError123!"}
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("error", response.context)

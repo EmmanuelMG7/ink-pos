@@ -5,8 +5,8 @@ from django.db import transaction
 from app_common.forms import (
     BootstrapModelForm,
     OnlyTextValidator,
-    UsernameValidator,
     PasswordValidator,
+    UsernameValidator,
 )
 from app_empleados.models import Empleado
 

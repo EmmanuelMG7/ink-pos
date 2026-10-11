@@ -2,7 +2,7 @@ from django import forms
 from django.core.validators import RegexValidator
 
 from app_common.forms import BootstrapForm
-from app_common.forms.validators import UsernameValidator, PasswordValidator
+from app_common.forms.validators import PasswordValidator, UsernameValidator
 
 # Validador de formato de contraseña con el mensaje específico requerido
 PasswordFormatValidator = RegexValidator(
