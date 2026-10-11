@@ -31,6 +31,8 @@ class SetupViewAndFormTests(TestCase):
         """Al enviar el formulario de setup se crea el primer usuario y empleado admin."""
         url = reverse("autenticacion:setup")
         data = {
+            "tipo_documento": Empleado.TipoDocumento.CEDULA,
+            "identificacion": "1234567890",
             "usuario": "admintest",
             "nombre": "Admin Prueba",
             "telefono": "3001234567",

@@ -83,7 +83,7 @@ class GestionEmpleadosViewTests(TestCase):
             "contrasena": "AdminPass123!",
         }
         response = self.client.post(self.url, data)
-        self.assertRedirects(response, self.url)
+        self.assertEqual(response.status_code, 200)
 
         # Como falló la creación en view, no debería haberse creado el empleado
         self.assertFalse(Empleado.objects.filter(identificacion="1111111111").exists())
@@ -103,4 +103,4 @@ class GestionEmpleadosViewTests(TestCase):
             side_effect=Exception("Fallo en BD"),
         ):
             response = self.client.post(self.url, data)
-            self.assertRedirects(response, self.url)
+            self.assertEqual(response.status_code, 200)
