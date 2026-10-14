@@ -62,6 +62,9 @@ class ProductoForm(BootstrapModelForm):
             "stock_actual": {
                 "invalid": "Ingrese un stock válido.",
             },
+            "nombre": {
+                "unique": "Ya existe un producto con este nombre.",
+            }
         }
 
         # Clases de HTML que se inyectan en los campos al crear el formulario
