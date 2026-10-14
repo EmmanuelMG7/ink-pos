@@ -1,34 +1,18 @@
 function initValidation() {
     'use strict';
 
-    // Asignar patterns por defecto al cargar o enfocar
+    // Asignar patterns universalmente provenientes de Django via data-regex
     const assignPattern = function (input) {
-        if (!input || !input.classList) return;
+        if (!input) return;
 
-        // 1. Patrón universal proveniente de Django via data-regex
         const dataRegex = input.getAttribute('data-regex');
         if (dataRegex && !input.hasAttribute('pattern')) {
             const cleanPattern = dataRegex.replace(/^\^/, '').replace(/\$$/, '');
             input.setAttribute('pattern', cleanPattern);
         }
-
-        // 2. Retrocompatibilidad para inputs con clases tradicionales
-        if (input.classList.contains('text-only') && !input.hasAttribute('pattern')) {
-            input.setAttribute('pattern', '^[a-zA-ZáéíóúÁÉÍÓÚñÑ\\s]+$');
-        } else if (input.classList.contains('number-only') && !input.hasAttribute('pattern')) {
-            input.setAttribute('pattern', '^[0-9]+$');
-        } else if (input.classList.contains('username-only') && !input.hasAttribute('pattern')) {
-            input.setAttribute('pattern', '^[a-zA-Z0-9]+$');
-        } else if ((input.classList.contains('alphanumeric-only') || input.classList.contains('alphanumeric-spaces')) && !input.hasAttribute('pattern')) {
-            input.setAttribute('pattern', '^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\\s]+$');
-        } else if (input.classList.contains('password-complexity') && !input.hasAttribute('pattern')) {
-            input.setAttribute('pattern', '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z0-9\\s]).{8,}$');
-        }
     };
 
-    document.querySelectorAll(
-        'input[data-regex], input.text-only, input.number-only, input.username-only, input.alphanumeric-only, input.alphanumeric-spaces, input.password-complexity'
-    ).forEach(assignPattern);
+    document.querySelectorAll('input[data-regex]').forEach(assignPattern);
 
     const actualizarFeedback = function (input) {
         if (!input || !input.checkValidity) return;
@@ -46,8 +30,17 @@ function initValidation() {
 
         // Feedback de error agnóstico al tipo de error
         if (invalidFeedback && !input.checkValidity()) {
-            const errorMsg = input.getAttribute('data-error-message') ||
+            let errorMsg = input.getAttribute('data-error-message');
+            if (!errorMsg) {
+                if (input.validity && input.validity.valueMissing) {
+                    errorMsg = input.getAttribute('data-required-feedback');
+                } else {
+                    errorMsg = input.getAttribute('data-invalid-feedback');
+                }
+            }
+            errorMsg = errorMsg ||
                 input.getAttribute('data-invalid-feedback') ||
+                input.getAttribute('data-required-feedback') ||
                 input.validationMessage ||
                 '';
             if (errorMsg) {
@@ -66,8 +59,7 @@ function initValidation() {
 
             // A. Campos de contraseña o complejidad: validación de reglas en tiempo real (NO borra caracteres)
             const isComplexity = input.type === 'password' ||
-                input.getAttribute('data-validation-type') === 'complexity' ||
-                input.classList.contains('password-complexity');
+                input.getAttribute('data-validation-type') === 'complexity';
 
             if (isComplexity && input.hasAttribute('pattern')) {
                 if (input.value.length === 0) {
@@ -83,25 +75,14 @@ function initValidation() {
             }
 
             // B. Sanitización universal de caracteres permitidos (Whitelist)
-            const dataRegex = input.getAttribute('data-regex');
-            if (dataRegex) {
-                const match = dataRegex.match(/^\^\[(.*?)\]\+\$?$/);
+            const regexSource = input.getAttribute('data-regex') || input.getAttribute('pattern');
+            if (regexSource) {
+                const match = regexSource.match(/^\^?\[(.*?)\]\+?\$?$/);
                 if (match) {
                     const stripRegex = new RegExp(`[^${match[1]}]`, 'g');
                     input.value = input.value.replace(stripRegex, '');
                     return;
                 }
-            }
-
-            // C. Fallback por clases CSS tradicionales
-            if (input.classList.contains('text-only')) {
-                input.value = input.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
-            } else if (input.classList.contains('number-only')) {
-                input.value = input.value.replace(/\D/g, '');
-            } else if (input.classList.contains('username-only')) {
-                input.value = input.value.replace(/[^a-zA-Z0-9]/g, '');
-            } else if (input.classList.contains('alphanumeric-only') || input.classList.contains('alphanumeric-spaces')) {
-                input.value = input.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
             }
             actualizarFeedback(input);
         });
