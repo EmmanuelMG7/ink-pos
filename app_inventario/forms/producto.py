@@ -51,6 +51,19 @@ class ProductoForm(BootstrapModelForm):
         # Campos excluidos del formulario. Se excluyen marca y categoria para evitar
         # errores de asignacion internos con Django, delegando la asignacion al metodo save()
         exclude = ["activo", "marca", "categoria"]
+
+        error_messages = {
+            "precio_venta": {
+                "invalid": "Ingrese un precio válido.",
+            },
+            "costo_compra": {
+                "invalid": "Ingrese un costo válido.",
+            },
+            "stock_actual": {
+                "invalid": "Ingrese un stock válido.",
+            },
+        }
+
         # Clases de HTML que se inyectan en los campos al crear el formulario
         widgets = {
             "nombre": forms.TextInput(
@@ -61,21 +74,21 @@ class ProductoForm(BootstrapModelForm):
             "precio_venta": forms.NumberInput(
                 attrs={
                     "placeholder": "Precio",
-                    "min": "0",
+                    "min": "0.01",
                     "step": "0.01",
                 }
             ),
             "costo_compra": forms.NumberInput(
                 attrs={
                     "placeholder": "Costo",
-                    "min": "0",
+                    "min": "0.01",
                     "step": "0.01",
                 }
             ),
             "stock_actual": forms.NumberInput(
                 attrs={
                     "placeholder": "Stock Actual",
-                    "min": "0",
+                    "min": "1",
                     "step": "1",
                 }
             ),
