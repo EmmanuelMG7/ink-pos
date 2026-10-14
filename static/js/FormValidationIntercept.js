@@ -30,53 +30,6 @@ function initValidation() {
         'input[data-regex], input.text-only, input.number-only, input.username-only, input.alphanumeric-only, input.alphanumeric-spaces, input.password-complexity'
     ).forEach(assignPattern);
 
-    // Interceptor global de eventos 'input' (funciona en tiempo real para escribir y pegar)
-    document.addEventListener('input', function (event) {
-        const input = event.target;
-        if (!input || input.tagName !== 'INPUT') return;
-
-        // A. Campos de contraseña o complejidad: validación de reglas en tiempo real (NO borra caracteres)
-        const isComplexity = input.type === 'password' ||
-            input.getAttribute('data-validation-type') === 'complexity' ||
-            input.classList.contains('password-complexity');
-
-        if (isComplexity && input.hasAttribute('pattern')) {
-            if (input.value.length === 0) {
-                input.classList.remove('is-valid', 'is-invalid');
-            } else if (input.checkValidity()) {
-                input.classList.remove('is-invalid');
-                input.classList.add('is-valid');
-            } else {
-                input.classList.remove('is-valid');
-                input.classList.add('is-invalid');
-            }
-            return;
-        }
-
-        // B. Sanitización universal de caracteres permitidos (Whitelist)
-        const dataRegex = input.getAttribute('data-regex');
-        if (dataRegex) {
-            const match = dataRegex.match(/^\^\[(.*?)\]\+\$?$/);
-            if (match) {
-                const stripRegex = new RegExp(`[^${match[1]}]`, 'g');
-                input.value = input.value.replace(stripRegex, '');
-                return;
-            }
-        }
-
-        // C. Fallback por clases CSS tradicionales
-        if (input.classList.contains('text-only')) {
-            input.value = input.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
-        } else if (input.classList.contains('number-only')) {
-            input.value = input.value.replace(/\D/g, '');
-        } else if (input.classList.contains('username-only')) {
-            input.value = input.value.replace(/[^a-zA-Z0-9]/g, '');
-        } else if (input.classList.contains('alphanumeric-only') || input.classList.contains('alphanumeric-spaces')) {
-            input.value = input.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
-        }
-        actualizarFeedback(input);
-    });
-
     const actualizarFeedback = function (input) {
         if (!input || !input.checkValidity) return;
         const container = input.closest('.has-validation, .input-group, .mb-2, .mb-3, .form-group') || input.parentElement;
@@ -103,16 +56,70 @@ function initValidation() {
         }
     };
 
-    // Escuchar cambios en campos de formulario (select, textarea, inputs no tecleados)
-    document.addEventListener('change', function (event) {
-        const target = event.target;
-        if (target && (target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.tagName === 'INPUT')) {
-            actualizarFeedback(target);
-        }
-    });
+    if (!window.__formValidationDocEventsAttached) {
+        window.__formValidationDocEventsAttached = true;
 
-    // Interceptor del submit para Bootstrap 5 (needs-validation)
+        // Interceptor global de eventos 'input' (funciona en tiempo real para escribir y pegar)
+        document.addEventListener('input', function (event) {
+            const input = event.target;
+            if (!input || input.tagName !== 'INPUT') return;
+
+            // A. Campos de contraseña o complejidad: validación de reglas en tiempo real (NO borra caracteres)
+            const isComplexity = input.type === 'password' ||
+                input.getAttribute('data-validation-type') === 'complexity' ||
+                input.classList.contains('password-complexity');
+
+            if (isComplexity && input.hasAttribute('pattern')) {
+                if (input.value.length === 0) {
+                    input.classList.remove('is-valid', 'is-invalid');
+                } else if (input.checkValidity()) {
+                    input.classList.remove('is-invalid');
+                    input.classList.add('is-valid');
+                } else {
+                    input.classList.remove('is-valid');
+                    input.classList.add('is-invalid');
+                }
+                return;
+            }
+
+            // B. Sanitización universal de caracteres permitidos (Whitelist)
+            const dataRegex = input.getAttribute('data-regex');
+            if (dataRegex) {
+                const match = dataRegex.match(/^\^\[(.*?)\]\+\$?$/);
+                if (match) {
+                    const stripRegex = new RegExp(`[^${match[1]}]`, 'g');
+                    input.value = input.value.replace(stripRegex, '');
+                    return;
+                }
+            }
+
+            // C. Fallback por clases CSS tradicionales
+            if (input.classList.contains('text-only')) {
+                input.value = input.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+            } else if (input.classList.contains('number-only')) {
+                input.value = input.value.replace(/\D/g, '');
+            } else if (input.classList.contains('username-only')) {
+                input.value = input.value.replace(/[^a-zA-Z0-9]/g, '');
+            } else if (input.classList.contains('alphanumeric-only') || input.classList.contains('alphanumeric-spaces')) {
+                input.value = input.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+            }
+            actualizarFeedback(input);
+        });
+
+        // Escuchar cambios en campos de formulario (select, textarea, inputs no tecleados)
+        document.addEventListener('change', function (event) {
+            const target = event.target;
+            if (target && (target.tagName === 'SELECT' || target.tagName === 'TEXTAREA' || target.tagName === 'INPUT')) {
+                actualizarFeedback(target);
+            }
+        });
+    }
+
+    // Interceptor del submit y reset para Bootstrap 5 (needs-validation)
     document.querySelectorAll('.needs-validation').forEach(function (form) {
+        if (form.dataset.validationInitialized === 'true') return;
+        form.dataset.validationInitialized = 'true';
+
         form.addEventListener('submit', function (event) {
             form.querySelectorAll('input, select, textarea').forEach(actualizarFeedback);
 
@@ -123,12 +130,89 @@ function initValidation() {
             form.classList.add('was-validated');
         }, false);
 
-        form.addEventListener('reset', function () {
+        const limpiarFormulario = function () {
             form.classList.remove('was-validated');
+
+            // 1. Eliminar clases de validación de Bootstrap
             form.querySelectorAll('.is-valid, .is-invalid').forEach(function (el) {
                 el.classList.remove('is-valid', 'is-invalid');
             });
+
+            // 2. Ocultar mensajes de feedback forzados por el backend (ej: d-block)
+            form.querySelectorAll('.invalid-feedback.d-block').forEach(function (el) {
+                el.classList.remove('d-block');
+            });
+
+            // 3. Limpiar valores de los controles del formulario
+            form.querySelectorAll('input, select, textarea').forEach(function (el) {
+                const tag = el.tagName.toLowerCase();
+                const type = (el.type || '').toLowerCase();
+                const name = el.name || '';
+
+                // Proteger tokens de seguridad CSRF
+                if (name.toLowerCase().includes('csrf')) return;
+
+                // Ignorar botones
+                if (type === 'submit' || type === 'reset' || type === 'button') return;
+
+                // Ignorar campos hidden generales (los componentes custom manejan sus propios hidden)
+                if (type === 'hidden') return;
+
+                if (type === 'checkbox' || type === 'radio') {
+                    el.checked = false;
+                    el.defaultChecked = false;
+                } else if (tag === 'select') {
+                    el.selectedIndex = 0;
+                } else {
+                    el.value = '';
+                    el.defaultValue = '';
+                }
+            });
+
+            // 4. Restaurar inputs de tipo contraseña que hayan sido conmutados a texto visible
+            form.querySelectorAll('.toggle-password-btn, #togglePassword').forEach(function (toggleBtn) {
+                const container = toggleBtn.closest('.input-group') || toggleBtn.parentElement;
+                if (container) {
+                    const passInput = container.querySelector('input');
+                    if (passInput) passInput.type = 'password';
+                    const icon = toggleBtn.querySelector('i, svg');
+                    if (icon) {
+                        icon.classList.remove('bi-eye-slash-fill', 'bi-eye-slash');
+                        icon.classList.add('bi-eye-fill');
+                    }
+                }
+            });
+
+            // 5. Restaurar componentes personalizados dentro del formulario
+            form.querySelectorAll('.searchable-dropdown-container').forEach(function (container) {
+                if (typeof container.resetToDefault === 'function') {
+                    container.resetToDefault();
+                }
+            });
+
+            form.querySelectorAll('.tipo-doc-container').forEach(function (container) {
+                if (typeof container.resetToDefault === 'function') {
+                    container.resetToDefault();
+                }
+            });
+        };
+
+        // Exponer función de limpieza en el formulario
+        form.limpiarFormulario = limpiarFormulario;
+
+        // Interceptar el evento reset del formulario
+        form.addEventListener('reset', function (event) {
+            event.preventDefault();
+            limpiarFormulario();
         }, false);
+
+        // Interceptar clic en botones reset para garantizar limpieza inmediata
+        form.querySelectorAll('button[type="reset"], input[type="reset"]').forEach(function (btn) {
+            btn.addEventListener('click', function (event) {
+                event.preventDefault();
+                limpiarFormulario();
+            });
+        });
     });
 }
 
@@ -138,4 +222,6 @@ if (document.readyState === 'loading') {
 } else {
     initValidation();
 }
+
+window.initValidation = initValidation;
 
