@@ -76,7 +76,7 @@ El proyecto está desarrollado sobre **Django 6.1** siguiendo una arquitectura m
 ```text
 ink-pos/
 ├── core/                       # Configuración global del proyecto (settings, urls, wsgi)
-├── app_autenticacion/          # Login, logout y asistente inicial de configuración (Setup)
+├── app_autenticación/          # Login, logout y asistente inicial de configuración (Setup)
 ├── app_productos/              # Catálogo, formularios, ordenamiento y control de stock
 ├── app_ventas/                 # Punto de venta (POS), facturación, detalles y devoluciones
 ├── app_empleados/              # Gestión de usuarios, perfiles de empleados y salarios

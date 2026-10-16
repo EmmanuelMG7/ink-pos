@@ -46,8 +46,10 @@ INSTALLED_APPS = [
     "app_clientes",
     "app_empleados",
     "app_autenticacion",
-    "app_productos",
+    "app_inventario",
     "app_ventas",
+    "app_caja",
+    "app_proveedores",
     "django_tables2",
 ]
 
@@ -73,6 +75,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "app_common.permissions.menu_navegacion",
             ],
         },
     },
@@ -175,3 +178,6 @@ if DEBUG is False:
     ]
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     USE_X_FORWARDED_HOST = True
+
+# Configuración DIAN / Facturación Electrónica
+NIT_EMISOR = os.environ.get("NIT_EMISOR", "")

@@ -19,16 +19,9 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        {% if user.is_staff %}
-        {% include 'common/nav_item.html' with url_name='ventas:reportes' label='Reportes' %}
-        {% include 'common/nav_item.html' with url_name='productos:gestion' label='Productos' %}
-        {% include 'common/nav_item.html' with url_name='ventas:gestion_facturas' label='Facturas' %}
-        {% include 'common/nav_item.html' with url_name='empleados:gestion' label='Empleados' %}
-        {% else %}
-        {% include 'common/nav_item.html' with url_name='ventas:pos' label='Ventas' %}
-        {% include 'common/nav_item.html' with url_name='ventas:facturas' label='Facturas' %}
-        {% include 'common/nav_item.html' with url_name='ventas:devoluciones' label='Devoluciones' %}
-        {% endif %}
+        {% for item in nav_items %}
+        {% include 'nav_item.html' with url_name=item.url_name label=item.label %}
+        {% endfor %}
       </ul>
       <div class="d-flex align-items-center gap-2">
         <span class="mb-0 fw-medium">{{ user.username }}</span>

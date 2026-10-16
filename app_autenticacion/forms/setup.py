@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 
 from app_common.forms import BootstrapForm, OnlyTextValidator, UsernameValidator
-from app_common.forms.base import validate_password_complexity
+from app_common.forms.validators import PasswordValidator
 from app_empleados.models import Empleado
 
 
@@ -13,6 +13,17 @@ class SetupAdminForm(BootstrapForm):
     Crea el primer usuario administrador y su perfil de Empleado
     asociado dentro de una transacción atómica.
     """
+
+    tipo_documento = forms.ChoiceField(
+        choices=Empleado.TipoDocumento,
+        initial=Empleado.TipoDocumento.CEDULA,
+        widget=forms.HiddenInput(),
+    )
+
+    identificacion = forms.CharField(
+        max_length=20,
+        widget=forms.TextInput(attrs={"placeholder": "Identificación", "class": "number-only"}),
+    )
 
     usuario = forms.CharField(
         label="",
@@ -52,7 +63,7 @@ class SetupAdminForm(BootstrapForm):
             attrs={
                 "placeholder": "Teléfono",
                 "class": "number-only",
-                # Sobreescribir el pattern para ajustarse al formato de un telefono
+                # Sobrescribir el pattern para ajustarse al formato de un teléfono
                 "pattern": "^3[0-9]{9}$",
             }
         ),
@@ -60,7 +71,7 @@ class SetupAdminForm(BootstrapForm):
     contrasena = forms.CharField(
         label="",
         min_length=8,
-        validators=[validate_password_complexity],
+        validators=[PasswordValidator],
         widget=forms.PasswordInput(
             render_value=True,
             attrs={
@@ -70,9 +81,11 @@ class SetupAdminForm(BootstrapForm):
             },
         ),
     )
-    contrasena.invalid_feedback = (
+    setattr(
+        contrasena,
+        "invalid_feedback",
         "La contraseña debe contener al menos 8 caracteres, "
-        "una mayúscula, una minúscula, un número y un símbolo."
+        "una mayúscula, una minúscula, un número y un símbolo.",
     )
 
     def clean_usuario(self):
@@ -95,7 +108,14 @@ class SetupAdminForm(BootstrapForm):
             user.save()
 
             empleado = Empleado.objects.create(
-                usuario=user, telefono=datos.get("telefono"), salario=0, es_admin=True
+                auth_user=user,
+                tipo_documento=datos.get("tipo_documento"),
+                identificacion=datos.get("identificacion"),
+                telefono=(
+                    str(datos.get("telefono")) if datos.get("telefono") is not None else None
+                ),
+                salario=0,
+                es_admin=True,
             )
 
         return empleado

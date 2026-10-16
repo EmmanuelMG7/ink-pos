@@ -1,0 +1,39 @@
+exclude: '(\.git|\.venv|venv|__pycache__|migrations|staticfiles|db\.sqlite3)'
+
+repos:
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        args: ["--line-length=100", "--check", "--diff"]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 6.0.1
+    hooks:
+      - id: isort
+        args: ["--profile=black", "--line-length=100", "--check-only", "--diff"]
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.1.2
+    hooks:
+      - id: flake8
+
+  - repo: https://github.com/streetsidesoftware/cspell-cli
+    rev: v8.17.3
+    hooks:
+      - id: cspell
+        additional_dependencies:
+          - "@cspell/dict-es-es"
+        args: ["--no-progress", "--no-must-find-files"]
+
+  - repo: local
+    hooks:
+      - id: django-test
+        name: django-test
+        entry: python -c "import os, subprocess, sys; py = '.venv/Scripts/python.exe' if os.path.exists('.venv/Scripts/python.exe') else ('.venv/bin/python' if os.path.exists('.venv/bin/python') else sys.executable); sys.exit(subprocess.call([py, 'manage.py', 'test']))"
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
