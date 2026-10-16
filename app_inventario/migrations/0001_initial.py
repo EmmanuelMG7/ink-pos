@@ -115,7 +115,7 @@ class Migration(migrations.Migration):
                         auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
                     ),
                 ),
-                ("nombre", models.CharField(max_length=150)),
+                ("nombre", models.CharField(max_length=150, unique=True)),
                 (
                     "costo_compra",
                     models.DecimalField(decimal_places=2, default=Decimal("0.00"), max_digits=10),

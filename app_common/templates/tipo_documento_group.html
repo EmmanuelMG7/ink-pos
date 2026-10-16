@@ -6,7 +6,7 @@
 {#   - group_class: (Opcional) Clases adicionales para el input-group     #}
 {#   - span_icon: (Opcional) Icono adicional (ej: 'bi bi-person-badge')   #}
 {#   - span_text: (Opcional) Texto adicional para el addon                #}
-<div class="tipo-doc-container">
+<div class="tipo-doc-container" data-default-value="13">
   {{ doc_field }}
   <div class="input-group has-validation {{ group_class|default:'' }}">
     {% if span_icon or span_text %}

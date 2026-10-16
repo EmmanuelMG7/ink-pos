@@ -143,3 +143,22 @@ class BootstrapFormTests(TestCase):
 
         f = FormRegexSinMsg()
         self.assertIn("data-invalid-feedback", f.fields["campo"].widget.attrs)
+
+    def test_bootstrap_form_meta_error_messages(self):
+        class FormConMetaErrors(BootstrapForm):
+            nombre = forms.CharField()
+
+            class Meta:
+                error_messages = {
+                    "nombre": {
+                        "required": "El nombre es obligatorio.",
+                    }
+                }
+
+        f = FormConMetaErrors(data={"nombre": ""})
+        self.assertFalse(f.is_valid())
+        self.assertEqual(f.errors["nombre"], ["El nombre es obligatorio."])
+        self.assertEqual(
+            f.fields["nombre"].widget.attrs.get("data-required-feedback"),
+            "El nombre es obligatorio.",
+        )
