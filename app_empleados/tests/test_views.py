@@ -116,3 +116,23 @@ class GestionEmpleadosViewTests(TestCase):
         ):
             response = self.client.post(self.url, data)
             self.assertRedirects(response, self.url)
+
+    def test_tabla_empleados_paginacion_10_items(self):
+        """Prueba que la tabla de empleados pagine a 10 items por página."""
+        for i in range(15):
+            u = User.objects.create_user(username=f"emp_{i}", password="password123")
+            Empleado.objects.create(
+                auth_user=u,
+                tipo_documento=Empleado.TipoDocumento.CEDULA,
+                identificacion=f"1000000{i:02d}",
+                telefono="3000000000",
+                es_admin=False,
+                salario=0,
+            )
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        table = response.context["table"]
+        self.assertEqual(table.paginator.per_page, 10)
+        self.assertEqual(table.paginator.num_pages, 2)
+        self.assertEqual(len(table.page.object_list), 10)

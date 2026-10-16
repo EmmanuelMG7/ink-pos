@@ -46,6 +46,7 @@
       const textoAMostrar = (display !== undefined && display !== null ? display : valor) || '';
       const finalValor = valor !== undefined && valor !== null ? valor : textoAMostrar;
       hiddenInput.value = finalValor;
+      hiddenInput.defaultValue = finalValor;
       labelSpan.textContent = prefix ? (prefix + (textoAMostrar || 'Ninguna')) : (textoAMostrar || 'Ninguna');
 
       if (finalValor && finalValor.toLowerCase() !== 'ninguna') {
@@ -55,14 +56,25 @@
       }
 
       // Actualizar estado activo en la lista
+      let matched = false;
       itemsList.querySelectorAll('.searchable-item, .dropdown-item').forEach(function (btn) {
         if (btn === crearItem) return;
         if (btn.getAttribute('data-valor') === valor) {
           btn.classList.add('active');
+          matched = true;
         } else {
           btn.classList.remove('active');
         }
       });
+
+      if (!matched && valor) {
+        const nuevoBtn = document.createElement('button');
+        nuevoBtn.type = 'button';
+        nuevoBtn.className = 'dropdown-item py-1 rounded ' + (container.dataset.id || '') + '-item searchable-item active';
+        nuevoBtn.setAttribute('data-valor', valor);
+        nuevoBtn.textContent = textoAMostrar;
+        itemsList.insertBefore(nuevoBtn, itemsList.firstChild);
+      }
 
       // Disparar evento change en el input oculto
       hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
@@ -147,6 +159,10 @@
     // Restaurar valor por defecto
     container.resetToDefault = function () {
       const defaultVal = container.dataset.defaultValue || '';
+      if (searchInput) {
+        searchInput.value = '';
+        filtrarOpciones('');
+      }
       seleccionarValor(defaultVal, defaultVal);
     };
   }

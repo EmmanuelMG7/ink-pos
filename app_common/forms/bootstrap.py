@@ -28,6 +28,14 @@ class BootstrapFormMixin:
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # Soportar Meta.error_messages en formularios basados en Form (no solo ModelForm)
+        meta = getattr(self, "Meta", None)
+        meta_error_messages = getattr(meta, "error_messages", {}) if meta else {}
+        for field_name, extra_msgs in meta_error_messages.items():
+            if field_name in self.fields and isinstance(extra_msgs, dict):
+                self.fields[field_name].error_messages.update(extra_msgs)
+
         for field_name, field in self.fields.items():
             if isinstance(field.widget, type):
                 field.widget = field.widget()

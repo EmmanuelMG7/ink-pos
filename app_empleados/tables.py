@@ -32,3 +32,4 @@ class EmpleadoTable(tables.Table):
         )
 
         orderable = False
+        per_page = 10

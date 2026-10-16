@@ -147,3 +147,23 @@ class GestionProductosViewTests(TestCase):
         ):
             response = self.client.post(self.url, data)
             self.assertEqual(response.status_code, 200)
+
+    def test_tabla_productos_paginacion_10_items(self):
+        """Prueba que la tabla de productos pagine a 10 items por página."""
+        marca = Marca.objects.create(nombre="Marca Test")
+        for i in range(15):
+            Producto.objects.create(
+                nombre=f"Producto {i}",
+                marca=marca,
+                stock_actual=10,
+                precio_venta=1000,
+                costo_compra=Decimal("500.00"),
+                stock_minimo=1,
+            )
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        table = response.context["table"]
+        self.assertEqual(table.paginator.per_page, 10)
+        self.assertEqual(table.paginator.num_pages, 2)
+        self.assertEqual(len(table.page.object_list), 10)
