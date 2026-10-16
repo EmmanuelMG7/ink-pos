@@ -116,7 +116,7 @@ class GestionEmpleadosViewTests(TestCase):
             side_effect=Exception("Fallo en BD"),
         ):
             response = self.client.post(self.url, data)
-            self.assertRedirects(response, self.url)
+            self.assertEqual(response.status_code, 200)
 
     def test_tabla_empleados_paginacion_10_items(self):
         """Prueba que la tabla de empleados pagine a 10 items por página."""

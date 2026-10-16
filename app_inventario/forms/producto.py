@@ -64,7 +64,7 @@ class ProductoForm(BootstrapModelForm):
             },
             "nombre": {
                 "unique": "Ya existe un producto con este nombre.",
-            }
+            },
         }
 
         # Clases de HTML que se inyectan en los campos al crear el formulario

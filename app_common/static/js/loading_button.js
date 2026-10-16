@@ -5,7 +5,7 @@
  * Uso:
  * Agrega `data-loading-button` a cualquier <button>:
  * <button type="submit" class="btn btn-primary" data-loading-button>
- *   Iniciar Sesion
+ *   Iniciar Sesión
  * </button>
  *
  * El script crea, posiciona y gestiona automáticamente el spinner nativo
@@ -53,7 +53,7 @@
   }
 
   /**
-   * Activa o desactiva el estado de carga (spinner y deshabilitación) en un botón.
+   * Activa o desactiva el estado de carga (spinner y enabled) en un botón.
    * @param {HTMLElement} btn - Botón a modificar.
    * @param {boolean} isLoading - true para activar carga, false para restaurar.
    */
@@ -143,7 +143,7 @@
     false
   );
 
-  // Restaurar botones si el formulario se resetea
+  // Restaurar botones si el formulario se reinicia (reset)
   document.addEventListener('reset', function (event) {
     const form = event.target;
     if (!form || form.tagName !== 'FORM') return;
