@@ -48,4 +48,4 @@ def gestion_productos(request):
             "categorias": categorias,
             "form": form,
         },
-    )
+    )

@@ -34,6 +34,7 @@ class ProductoTable(tables.Table):
         empty_text = (
             "Nada que mostrar aún. Puedes crear nuevos productos usando el botón +"
         )
+        per_page = 10
 
     # Opcional: agrega el signo de pesos al precio
     def render_precio(self, value):
