@@ -12,6 +12,7 @@
 {#   - button_class: (Opcional) Clases adicionales para el botón toggle #}
 
 {% firstof id "dropdown" as field_id %}
+{% firstof default_value "Ninguna" as initial_default %}
 {% firstof value default_value "Ninguna" as current_val %}
 
 <div class="dropdown searchable-dropdown-container w-100 {{ container_class|default:'' }}"
@@ -19,7 +20,7 @@
      style="flex: 1 1 0; min-width: 0;"
      data-searchable-dropdown="true"
      data-id="{{ field_id }}"
-     data-default-value="{{ current_val }}">
+     data-default-value="{{ initial_default }}">
 
   <input 
     type="hidden" 
@@ -72,6 +73,14 @@
       {% endwith %}
 
       <div id="lista_{{ field_id }}_items" class="searchable-items-list">
+        {% if initial_default == 'Ninguna' and current_val != 'Ninguna' %}
+          <button
+            type="button"
+            class="dropdown-item py-1 rounded {{ field_id }}-item searchable-item"
+            data-valor="Ninguna">
+            Ninguna
+          </button>
+        {% endif %}
         {% if current_val and current_val != 'Ninguna' %}
           <button
             type="button"
@@ -80,7 +89,7 @@
             {{ current_val }}
           </button>
           {% for item in items %}
-            {% if item.nombre != current_val %}
+            {% if item.nombre != current_val and item.nombre != 'Ninguna' %}
               <button
                 type="button"
                 class="dropdown-item py-1 rounded {{ field_id }}-item searchable-item"

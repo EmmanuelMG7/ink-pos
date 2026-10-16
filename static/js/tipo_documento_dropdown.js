@@ -87,8 +87,33 @@
       item.classList.add('active');
     });
 
+    function resetTipoDocumento(container) {
+      if (!container) return;
+      const defaultVal = container.getAttribute('data-default-value') || '13';
+      const hiddenInput = container.querySelector('input[type="hidden"], select');
+      if (hiddenInput) {
+        hiddenInput.value = defaultVal;
+        hiddenInput.defaultValue = defaultVal;
+        hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+
+      const item = container.querySelector(`.tipo-doc-item[data-value="${defaultVal}"]`);
+      actualizarBoton(container, defaultVal, item ? item.textContent : '');
+
+      container.querySelectorAll('.tipo-doc-item').forEach(function (el) {
+        el.classList.remove('active');
+      });
+      if (item) {
+        item.classList.add('active');
+      }
+    }
+
     // Sincronizar todos los dropdowns al cargar la vista
     document.querySelectorAll('.tipo-doc-container').forEach(function (container) {
+      container.resetToDefault = function () {
+        resetTipoDocumento(container);
+      };
+
       const hiddenInput = container.querySelector('input[type="hidden"], select');
       const val = hiddenInput ? hiddenInput.value : null;
 
@@ -108,6 +133,15 @@
         item ? item.textContent : ''
       );
     });
+
+    // Soporte para reset automático en formularios
+    document.addEventListener('reset', function (e) {
+      setTimeout(function () {
+        if (e.target && e.target.querySelectorAll) {
+          e.target.querySelectorAll('.tipo-doc-container').forEach(resetTipoDocumento);
+        }
+      }, 0);
+    });
   }
 
   if (document.readyState === 'loading') {
@@ -115,4 +149,6 @@
   } else {
     initTipoDocumento();
   }
+
+  window.initTipoDocumento = initTipoDocumento;
 })();

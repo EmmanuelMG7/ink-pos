@@ -32,6 +32,7 @@ class ProductoTable(tables.Table):
         template_name = "django_tables2/bootstrap5.html"
         fields = ("id", "nombre", "stock_actual", "precio_venta", "acciones")
         empty_text = "Nada que mostrar aún. Puedes crear nuevos productos usando el botón +"
+        per_page = 10
 
     # Opcional: agrega el signo de pesos al precio
     def render_precio(self, value):

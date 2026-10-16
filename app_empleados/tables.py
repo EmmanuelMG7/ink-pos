@@ -30,3 +30,4 @@ class EmpleadoTable(tables.Table):
         empty_text = "Nada que mostrar aún. Puedes crear nuevos empleados usando el botón +"
 
         orderable = False
+        per_page = 10
