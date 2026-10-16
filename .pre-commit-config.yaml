@@ -35,3 +35,5 @@ repos:
         types: [python]
         pass_filenames: false
         always_run: true
+        stages: [pre-push]
+
