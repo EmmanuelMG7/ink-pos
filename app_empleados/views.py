@@ -1,8 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.sessions.models import Session
 from django.db import transaction
-from django.db.models import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
 
@@ -10,6 +11,18 @@ from app_empleados.forms import EmpleadoForm
 
 from .models import Empleado
 from .tables import EmpleadoTable
+
+
+def invalidar_sesiones_usuario(user):
+    """Invalida todas las sesiones activas asociadas al usuario."""
+    sesiones_activas = Session.objects.filter(expire_date__gte=timezone.now())
+    for sesion in sesiones_activas:
+        try:
+            data = sesion.get_decoded()
+            if data.get("_auth_user_id") == str(user.id):
+                sesion.delete()
+        except Exception:
+            pass
 
 
 @login_required
@@ -62,7 +75,7 @@ def eliminar_empleado_view(request, empleado_id=None):
     empleado = get_object_or_404(Empleado, id=id_a_eliminar)
 
     if empleado.auth_user == request.user:
-        messages.error(request, "No puedes desactivar tu propia cuenta.")
+        messages.warning(request, "Un usuario no puede eliminarse ni bloquearse a sí mismo.")
         return redirect("empleados:gestion")
 
     nombre = empleado.usuario.get_full_name() or empleado.usuario.username
@@ -70,18 +83,14 @@ def eliminar_empleado_view(request, empleado_id=None):
 
     try:
         with transaction.atomic():
-            empleado.delete()
-            user.delete()
-        messages.success(request, f"Empleado '{nombre}' eliminado correctamente.")
-    except ProtectedError:
-        empleado.es_activo = False
-        user.is_active = False
-        if not user.username.endswith(f"_inactivo_{user.id}"):
-            user.username = f"{user.username}_inactivo_{user.id}"
-        user.save()
+            empleado.es_activo = False
+            user.is_active = False
+            user.save(update_fields=["is_active"])
+            empleado.save()
+            invalidar_sesiones_usuario(user)
         messages.success(
             request,
-            f"Empleado '{nombre}' desactivado correctamente (se conservan sus registros históricos).",
+            f"El acceso del empleado '{nombre}' ha sido bloqueado correctamente.",
         )
     except Exception as e:
         messages.error(request, f"Hubo un error al eliminar el empleado: {str(e)}")
