@@ -16,13 +16,32 @@
         </div>
 
         <div class="modal-body">
-          <p class="mb-1">¿Está seguro de eliminar al empleado <strong id="modal_eliminar_nombre">este empleado</strong>?</p>
-          <p class="text-danger small mb-0">El empleado perderá acceso al sistema.</p>
+          <p class="mb-2">¿Está seguro de que desea eliminar al siguiente empleado?</p>
+          <ul class="list-group mb-3">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span class="text-muted">Nombre:</span>
+              <strong id="modal_eliminar_nombre">-</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span class="text-muted">Usuario:</span>
+              <strong id="modal_eliminar_usuario">-</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span class="text-muted">Identificación:</span>
+              <strong id="modal_eliminar_identificacion">-</strong>
+            </li>
+          </ul>
+          <div class="alert alert-warning d-flex align-items-center mb-0" role="alert">
+            <div>
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              <strong>Advertencia:</strong> Esta acción bloqueará el acceso del empleado al sistema desactivando su cuenta.
+            </div>
+          </div>
         </div>
 
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-          <button type="submit" class="btn btn-danger">Eliminar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger" id="btn_confirmar_eliminar">Eliminar</button>
         </div>
       </form>
     </div>
@@ -38,44 +57,28 @@
         if (button) {
           var empleadoId = button.getAttribute('data-empleado-id');
           var empleadoNombre = button.getAttribute('data-empleado-nombre');
+          var empleadoUsuario = button.getAttribute('data-empleado-usuario');
+          var empleadoIdentificacion = button.getAttribute('data-empleado-identificacion');
 
           var inputId = modalEliminar.querySelector('#eliminar_empleado_id');
           var spanNombre = modalEliminar.querySelector('#modal_eliminar_nombre');
+          var spanUsuario = modalEliminar.querySelector('#modal_eliminar_usuario');
+          var spanIdentificacion = modalEliminar.querySelector('#modal_eliminar_identificacion');
 
           if (inputId) {
             inputId.value = empleadoId || '';
           }
           if (spanNombre) {
-            spanNombre.textContent = empleadoNombre ? empleadoNombre : 'este empleado';
+            spanNombre.textContent = empleadoNombre || 'este empleado';
+          }
+          if (spanUsuario) {
+            spanUsuario.textContent = empleadoUsuario || '-';
+          }
+          if (spanIdentificacion) {
+            spanIdentificacion.textContent = empleadoIdentificacion || '-';
           }
         }
       });
     }
   });
 </script>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    var modalEliminar = document.getElementById('modal_eliminar_empleado');
-    if (modalEliminar) {
-      modalEliminar.addEventListener('show.bs.modal', function (event) {
-        var button = event.relatedTarget;
-        if (button) {
-          var empleadoId = button.getAttribute('data-empleado-id');
-          var empleadoNombre = button.getAttribute('data-empleado-nombre');
-
-          var inputId = modalEliminar.querySelector('#eliminar_empleado_id');
-          var spanNombre = modalEliminar.querySelector('#modal_eliminar_nombre');
-
-          if (inputId) {
-            inputId.value = empleadoId || '';
-          }
-          if (spanNombre) {
-            spanNombre.textContent = empleadoNombre ? empleadoNombre : 'este empleado';
-          }
-        }
-      });
-    }
-  });
-</script>
-

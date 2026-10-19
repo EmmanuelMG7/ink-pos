@@ -110,11 +110,14 @@ class EmpleadoForm(BootstrapModelForm):
         if identificacion:
             identificacion = str(identificacion).strip()
             # Validar solo contra empleados activos
-            query = Empleado.objects.filter(identificacion=identificacion, auth_user__is_active=True)
+            query = Empleado.objects.filter(
+                identificacion=identificacion, auth_user__is_active=True
+            )
             if self.instance and self.instance.pk:
                 query = query.exclude(pk=self.instance.pk)
             if query.exists():
-                raise forms.ValidationError(f"Ya existe un empleado con la identificación '{identificacion}'.")
+                msg = f"Ya existe un empleado con la identificación '{identificacion}'."
+                raise forms.ValidationError(msg)
             return identificacion
         return identificacion
 
@@ -170,7 +173,9 @@ class EmpleadoForm(BootstrapModelForm):
                                 emp_asociado.delete()
                             user_inactivo.delete()
                     except ProtectedError:
-                        user_inactivo.username = f"{user_inactivo.username}_inactivo_{user_inactivo.pk}"
+                        user_inactivo.username = (
+                            f"{user_inactivo.username}_inactivo_{user_inactivo.pk}"
+                        )
                         user_inactivo.save()
 
             # 2. Si existe un empleado inactivo con esa identificación, liberarlo/eliminarlo
