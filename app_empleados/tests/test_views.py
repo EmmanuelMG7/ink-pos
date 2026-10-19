@@ -1,11 +1,21 @@
+import time
+from decimal import Decimal
 from unittest.mock import patch
 
+from django.contrib.auth import SESSION_KEY
 from django.contrib.auth.models import Group, User
-from django.test import TestCase
+from django.contrib.messages import get_messages
+from django.contrib.sessions.backends.db import SessionStore
+from django.contrib.sessions.models import Session
+from django.test import Client, TestCase
 from django.urls import reverse
 
+from app_caja.models import SesionCaja
+from app_clientes.models import Cliente
 from app_common.constants import RolUsuario
 from app_empleados.models import Empleado
+from app_inventario.models import Marca, MovimientoInventario, Producto
+from app_ventas.models import Factura
 
 
 class GestionEmpleadosViewTests(TestCase):
@@ -15,6 +25,13 @@ class GestionEmpleadosViewTests(TestCase):
             username="admin", password="password123", is_staff=True
         )
         self.user.groups.add(Group.objects.get(name=RolUsuario.ADMINISTRADOR))
+        self.admin_empleado = Empleado.objects.create(
+            auth_user=self.user,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="99999999",
+            telefono="3000000000",
+            es_admin=True,
+        )
         self.client.login(username="admin", password="password123")
         self.url = reverse("empleados:gestion")
 
@@ -36,12 +53,10 @@ class GestionEmpleadosViewTests(TestCase):
             "usuario": "juanp",
             "telefono": "3001234567",
             "contrasena": "Secreta123!",
-            # admin_checkbox no se envía si el checkbox no está marcado
         }
         response = self.client.post(self.url, data)
         self.assertRedirects(response, self.url)
 
-        # Verificar que el usuario se creó correctamente y pertenece al grupo Cajero
         self.assertTrue(User.objects.filter(username="juanp").exists())
         nuevo_user = User.objects.get(username="juanp")
         self.assertFalse(nuevo_user.is_staff)
@@ -49,7 +64,6 @@ class GestionEmpleadosViewTests(TestCase):
         self.assertEqual(nuevo_user.first_name, "Juan Perez")
         self.assertTrue(nuevo_user.check_password("Secreta123!"))
 
-        # Verificar que el empleado asociado se creó correctamente
         self.assertTrue(Empleado.objects.filter(auth_user=nuevo_user).exists())
         empleado = Empleado.objects.get(auth_user=nuevo_user)
         self.assertEqual(empleado.identificacion, "1234567890")
@@ -71,13 +85,11 @@ class GestionEmpleadosViewTests(TestCase):
         response = self.client.post(self.url, data)
         self.assertRedirects(response, self.url)
 
-        # Verificar que el usuario se creó correctamente y pertenece al grupo Administrador
         self.assertTrue(User.objects.filter(username="anag").exists())
         nuevo_user = User.objects.get(username="anag")
         self.assertTrue(nuevo_user.is_staff)
         self.assertTrue(nuevo_user.groups.filter(name=RolUsuario.ADMINISTRADOR).exists())
 
-        # Verificar que el empleado asociado se creó correctamente y es_admin es True
         self.assertTrue(Empleado.objects.filter(auth_user=nuevo_user).exists())
         empleado = Empleado.objects.get(auth_user=nuevo_user)
         self.assertEqual(empleado.identificacion, "9876543210")
@@ -97,8 +109,6 @@ class GestionEmpleadosViewTests(TestCase):
         }
         response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, 200)
-
-        # Como falló la creación en view, no debería haberse creado el empleado
         self.assertFalse(Empleado.objects.filter(identificacion="1111111111").exists())
 
     def test_gestion_empleados_view_exception_handling(self):
@@ -138,43 +148,29 @@ class GestionEmpleadosViewTests(TestCase):
         self.assertEqual(table.paginator.num_pages, 2)
         self.assertEqual(len(table.page.object_list), 10)
 
-    def test_eliminar_empleado_exitosamente_via_post(self):
-        """Prueba que un empleado sin relaciones protegidas sea eliminado físicamente vía POST."""
-        user_a_eliminar = User.objects.create_user(username="empleado_baja", password="password123")
-        empleado = Empleado.objects.create(
-            auth_user=user_a_eliminar,
-            tipo_documento=Empleado.TipoDocumento.CEDULA,
-            identificacion="10102020",
-            telefono="3001112233",
-        )
-        self.assertTrue(empleado.es_activo)
-
+    def test_eliminar_empleado_metodo_get_no_permitido(self):
+        """Prueba que una petición GET a la vista eliminar retorne 405 Method Not Allowed."""
         url_eliminar = reverse("empleados:eliminar")
-        response = self.client.post(url_eliminar, {"empleado_id": empleado.pk})
-        self.assertRedirects(response, self.url)
+        response = self.client.get(url_eliminar)
+        self.assertEqual(response.status_code, 405)
 
-        self.assertFalse(User.objects.filter(id=user_a_eliminar.pk).exists())
-        self.assertFalse(Empleado.objects.filter(id=empleado.pk).exists())
-
-    def test_eliminar_empleado_por_id_en_url(self):
-        """Prueba que un empleado sin relaciones protegidas sea eliminado vía URL con ID."""
-        user_a_eliminar = User.objects.create_user(username="empleado_baja_url", password="password123")
-        empleado = Empleado.objects.create(
-            auth_user=user_a_eliminar,
-            tipo_documento=Empleado.TipoDocumento.CEDULA,
-            identificacion="30304040",
-            telefono="3004445566",
+    def test_empleado_desactivado_no_aparece_en_tabla_gestion(self):
+        """Prueba que empleados inactivos no aparezcan en la tabla de gestión de empleados."""
+        user_inactivo = User.objects.create_user(
+            username="inactivo_emp", password="password123", is_active=False
         )
-        url_eliminar = reverse("empleados:eliminar_por_id", kwargs={"empleado_id": empleado.pk})
-        response = self.client.post(url_eliminar)
-        self.assertRedirects(response, self.url)
-
-        self.assertFalse(User.objects.filter(id=user_a_eliminar.pk).exists())
-        self.assertFalse(Empleado.objects.filter(id=empleado.pk).exists())
+        Empleado.objects.create(
+            auth_user=user_inactivo,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="55554444",
+        )
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        table = response.context["table"]
+        self.assertFalse(any(row.record.auth_user.username == "inactivo_emp" for row in table.rows))
 
     def test_recrear_empleado_con_mismo_username_eliminado(self):
-        """Prueba que si se elimina un empleado, se pueda volver a crear otro con el mismo username."""
-        # 1. Crear el empleado inicial
+        """Prueba que si se desactiva un empleado, se pueda crear otro con el mismo username."""
         data = {
             "tipo_documento": Empleado.TipoDocumento.CEDULA,
             "identificacion": "77788899",
@@ -187,12 +183,10 @@ class GestionEmpleadosViewTests(TestCase):
         self.assertRedirects(res_crear, self.url)
         emp = Empleado.objects.get(identificacion="77788899")
 
-        # 2. Eliminar el empleado
         url_eliminar = reverse("empleados:eliminar")
         res_eliminar = self.client.post(url_eliminar, {"empleado_id": emp.pk})
         self.assertRedirects(res_eliminar, self.url)
 
-        # 3. Volver a crear con el mismo username
         data2 = {
             "tipo_documento": Empleado.TipoDocumento.CEDULA,
             "identificacion": "77788899",
@@ -204,74 +198,315 @@ class GestionEmpleadosViewTests(TestCase):
         res_crear2 = self.client.post(self.url, data2)
         self.assertRedirects(res_crear2, self.url)
 
-        # Verificar que el nuevo empleado está activo y fue creado exitosamente
         nuevo_user = User.objects.get(username="Sebas")
         self.assertTrue(nuevo_user.is_active)
         self.assertEqual(nuevo_user.first_name, "Sebastian Nuevo")
 
-    def test_no_permitir_auto_desactivacion(self):
-        """Prueba que un usuario no pueda desactivarse a sí mismo."""
-        admin_empleado = Empleado.objects.create(
-            auth_user=self.user,
-            tipo_documento=Empleado.TipoDocumento.CEDULA,
-            identificacion="99999999",
-            telefono="3000000000",
-            es_admin=True,
-        )
-        url_eliminar = reverse("empleados:eliminar")
-        response = self.client.post(url_eliminar, {"empleado_id": admin_empleado.pk})
-        self.assertRedirects(response, self.url)
+    # =========================================================================
+    # CRITERIOS DE ACEPTACIÓN PARA LA ELIMINACIÓN DE EMPLEADOS
+    # =========================================================================
 
-        self.user.refresh_from_db()
-        self.assertTrue(self.user.is_active)
-
-    def test_eliminar_empleado_metodo_get_no_permitido(self):
-        """Prueba que una petición GET a la vista eliminar retorne 405 Method Not Allowed."""
-        url_eliminar = reverse("empleados:eliminar")
-        response = self.client.get(url_eliminar)
-        self.assertEqual(response.status_code, 405)
-
-    def test_eliminar_empleado_sin_permiso_retorna_403(self):
-        """Un usuario cajero sin permisos no puede eliminar empleados."""
-        cajero = User.objects.create_user(username="cajero_no_elimina", password="password123")
+    def test_criterio_2_usuario_sin_privilegios_recibe_403_y_no_se_altera_empleado(self):
+        """
+        Criterio 2: Usuario sin privilegios intenta eliminar vía POST y es rechazado
+        con HTTP 403 Prohibido impidiendo cualquier alteración.
+        """
+        cajero = User.objects.create_user(username="cajero_sin_priv", password="password123")
         cajero.groups.add(Group.objects.get(name=RolUsuario.CAJERO))
-        self.client.login(username="cajero_no_elimina", password="password123")
+        self.client.login(username="cajero_sin_priv", password="password123")
 
-        otro_user = User.objects.create_user(username="otro_emp", password="password123")
-        otro_empleado = Empleado.objects.create(
+        otro_user = User.objects.create_user(username="otro_emp_activo", password="password123")
+        otro_emp = Empleado.objects.create(
             auth_user=otro_user,
             tipo_documento=Empleado.TipoDocumento.CEDULA,
             identificacion="88887777",
         )
 
         url_eliminar = reverse("empleados:eliminar")
-        response = self.client.post(url_eliminar, {"empleado_id": otro_empleado.pk})
+        response = self.client.post(url_eliminar, {"empleado_id": otro_emp.pk})
         self.assertEqual(response.status_code, 403)
 
-    def test_empleado_desactivado_no_aparece_en_tabla_gestion(self):
-        """Prueba que empleados inactivos no aparezcan en la tabla de gestión de empleados."""
-        user_inactivo = User.objects.create_user(username="inactivo_emp", password="password123", is_active=False)
-        Empleado.objects.create(
-            auth_user=user_inactivo,
-            tipo_documento=Empleado.TipoDocumento.CEDULA,
-            identificacion="55554444",
-        )
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, 200)
-        table = response.context["table"]
-        self.assertFalse(any(row.record.auth_user.username == "inactivo_emp" for row in table.rows))
+        url_eliminar_id = reverse("empleados:eliminar_por_id", kwargs={"empleado_id": otro_emp.pk})
+        response_id = self.client.post(url_eliminar_id)
+        self.assertEqual(response_id.status_code, 403)
 
-    def test_modal_eliminar_renderizado_en_template(self):
-        """Prueba que el modal de eliminar y sus atributos de activación estén en el HTML."""
-        user_emp = User.objects.create_user(username="emp_render", password="password123")
+        otro_user.refresh_from_db()
+        otro_emp.refresh_from_db()
+        self.assertTrue(otro_user.is_active)
+        self.assertTrue(otro_emp.es_activo)
+
+    def test_criterio_3_modal_confirmacion_muestra_datos_y_advertencia(self):
+        """
+        Criterio 3: Modal de confirmación muestra nombre, usuario e identificación
+        del empleado junto con la advertencia sobre el bloqueo de acceso.
+        """
+        user_emp = User.objects.create_user(
+            username="carlosm",
+            first_name="Carlos Mendoza",
+            password="password123",
+        )
         empleado = Empleado.objects.create(
             auth_user=user_emp,
             tipo_documento=Empleado.TipoDocumento.CEDULA,
-            identificacion="12121212",
+            identificacion="52525252",
         )
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         content = response.content.decode("utf-8")
+
         self.assertIn('id="modal_eliminar_empleado"', content)
-        self.assertIn('data-bs-target="#modal_eliminar_empleado"', content)
+        self.assertIn('id="modal_eliminar_nombre"', content)
+        self.assertIn('id="modal_eliminar_usuario"', content)
+        self.assertIn('id="modal_eliminar_identificacion"', content)
+        self.assertIn("bloqueará el acceso del empleado al sistema", content)
+
         self.assertIn(f'data-empleado-id="{empleado.pk}"', content)
+        self.assertIn('data-empleado-nombre="Carlos Mendoza"', content)
+        self.assertIn('data-empleado-usuario="carlosm"', content)
+        self.assertIn('data-empleado-identificacion="52525252"', content)
+
+    def test_criterio_5_confirmar_eliminacion_ejecuta_borrado_logico_y_muestra_toast(self):
+        """
+        Criterio 5: Al confirmar la eliminación en el modal, se ejecuta borrado lógico
+        (auth_user.is_active = False, es_activo = False) y se muestra Toast confirmando bloqueo.
+        """
+        user_emp = User.objects.create_user(
+            username="emp_baja_logica",
+            first_name="Pedro Picapiedra",
+            password="password123",
+        )
+        empleado = Empleado.objects.create(
+            auth_user=user_emp,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="78787878",
+        )
+        url_eliminar = reverse("empleados:eliminar")
+        response = self.client.post(url_eliminar, {"empleado_id": empleado.pk}, follow=True)
+        self.assertRedirects(response, self.url)
+
+        user_emp.refresh_from_db()
+        empleado.refresh_from_db()
+        self.assertFalse(user_emp.is_active)
+        self.assertFalse(empleado.es_activo)
+        self.assertTrue(Empleado.objects.filter(id=empleado.pk).exists())
+
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(
+            any("bloqueado" in m.message.lower() for m in messages),
+            "El mensaje toast debe confirmar que el acceso del empleado ha sido bloqueado.",
+        )
+        self.assertContains(response, "ha sido bloqueado correctamente")
+
+    def test_criterio_6_empleado_desactivado_intenta_login_muestra_mensaje_inactiva(self):
+        """
+        Criterio 6: Empleado desactivado que intenta iniciar sesión con sus credenciales habituales
+        es rechazado mostrando mensaje indicando que la cuenta está inactiva o deshabilitada.
+        """
+        user_emp = User.objects.create_user(
+            username="cajero_inactivo_login",
+            password="PasswordHabitual123!",
+            is_active=False,
+        )
+        Empleado.objects.create(
+            auth_user=user_emp,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="91919191",
+        )
+        client_auth = Client()
+        url_login = reverse("autenticacion:login")
+        response = client_auth.post(
+            url_login,
+            {
+                "usuario": "cajero_inactivo_login",
+                "contrasena": "PasswordHabitual123!",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("error", response.context)
+        self.assertEqual(
+            response.context["error"],
+            "La cuenta se encuentra inactiva o deshabilitada.",
+        )
+        self.assertContains(response, "La cuenta se encuentra inactiva o deshabilitada.")
+
+    def test_criterio_7_invalida_sesiones_activas_del_usuario_eliminado(self):
+        """
+        Criterio 7: Si el empleado tiene una sesión activa abierta en otra terminal,
+        al eliminarse se invalidan sus sesiones activas desconectándolo inmediatamente.
+        """
+        user_cajero = User.objects.create_user(
+            username="cajero_remoto",
+            password="password123",
+        )
+        user_cajero.groups.add(Group.objects.get(name=RolUsuario.CAJERO))
+        empleado = Empleado.objects.create(
+            auth_user=user_cajero,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="62626262",
+        )
+
+        session_store = SessionStore()
+        session_store[SESSION_KEY] = str(user_cajero.pk)
+        session_store.save()
+        session_key = session_store.session_key
+        self.assertIsNotNone(session_key)
+        assert session_key is not None
+        self.assertTrue(Session.objects.filter(session_key=session_key).exists())
+
+        cajero_client = Client()
+        cajero_client.cookies["sessionid"] = session_key
+
+        url_eliminar = reverse("empleados:eliminar")
+        response = self.client.post(url_eliminar, {"empleado_id": empleado.pk})
+        self.assertRedirects(response, self.url)
+
+        self.assertFalse(Session.objects.filter(session_key=session_key).exists())
+
+        res_cajero = cajero_client.get(reverse("ventas:pos"))
+        self.assertRedirects(
+            res_cajero,
+            f"{reverse('autenticacion:login')}?next={reverse('ventas:pos')}",
+        )
+
+    def test_criterio_8_admin_no_puede_eliminarse_a_si_mismo(self):
+        """
+        Criterio 8: Administrador visualiza acción deshabilitada en su propio registro
+        y si intenta eliminar su propia cuenta, se rechaza con advertencia de que no
+        puede eliminarse ni bloquearse a sí mismo.
+        """
+        response = self.client.get(self.url)
+        content = response.content.decode("utf-8")
+        self.assertIn("No puedes eliminarte ni bloquearte a ti mismo", content)
+        self.assertIn("disabled", content)
+
+        url_eliminar = reverse("empleados:eliminar")
+        res_post = self.client.post(
+            url_eliminar,
+            {"empleado_id": self.admin_empleado.pk},
+            follow=True,
+        )
+        self.assertRedirects(res_post, self.url)
+
+        self.user.refresh_from_db()
+        self.admin_empleado.refresh_from_db()
+        self.assertTrue(self.user.is_active)
+        self.assertTrue(self.admin_empleado.es_activo)
+
+        messages = list(get_messages(res_post.wsgi_request))
+        self.assertTrue(
+            any(
+                "no puede eliminarse ni bloquearse a sí mismo" in m.message.lower()
+                for m in messages
+            )
+        )
+
+    def test_criterio_9_integridad_referencial_factura_caja_inventario(self):
+        """
+        Criterio 9: Empleado con registros vinculados en Factura, SesionCaja y MovimientoInventario
+        garantiza integridad referencial (models.PROTECT) aplicando la baja lógica sin borrar
+        los registros históricos.
+        """
+        user_cajero = User.objects.create_user(username="cajero_historico", password="password123")
+        empleado = Empleado.objects.create(
+            auth_user=user_cajero,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="81818181",
+        )
+
+        sesion_caja = SesionCaja.objects.create(
+            empleado=empleado,
+            monto_inicial=Decimal("50000.00"),
+        )
+        cliente = Cliente.objects.create(
+            identificacion="12345678",
+            nombre="Cliente Prueba",
+        )
+        factura = Factura.objects.create(
+            codigo="FAC-CRIT-9",
+            sesion_caja=sesion_caja,
+            cliente=cliente,
+            empleado=empleado,
+            subtotal=Decimal("10000.00"),
+            total=Decimal("10000.00"),
+        )
+        marca = Marca.objects.create(nombre="Marca Test")
+        producto = Producto.objects.create(
+            nombre="Producto Test",
+            marca=marca,
+            costo_compra=Decimal("1000.00"),
+            precio_venta=Decimal("2000.00"),
+            stock_actual=10,
+        )
+        movimiento = MovimientoInventario.objects.create(
+            producto=producto,
+            tipo_movimiento=MovimientoInventario.TipoMovimiento.AJUSTE,
+            cantidad=5,
+            stock_anterior=10,
+            stock_posterior=15,
+            empleado=empleado,
+        )
+
+        url_eliminar = reverse("empleados:eliminar")
+        response = self.client.post(url_eliminar, {"empleado_id": empleado.pk})
+        self.assertRedirects(response, self.url)
+
+        user_cajero.refresh_from_db()
+        empleado.refresh_from_db()
+        self.assertFalse(user_cajero.is_active)
+        self.assertFalse(empleado.es_activo)
+
+        self.assertTrue(SesionCaja.objects.filter(pk=sesion_caja.pk, empleado=empleado).exists())
+        self.assertTrue(Factura.objects.filter(pk=factura.pk, empleado=empleado).exists())
+        self.assertTrue(
+            MovimientoInventario.objects.filter(pk=movimiento.pk, empleado=empleado).exists()
+        )
+
+    def test_criterio_10_operacion_dentro_de_transaction_atomic_garantiza_consistencia(self):
+        """
+        Criterio 10: Toda la operación se ejecuta dentro de transaction.atomic()
+        asegurando consistencia total en caso de fallo.
+        """
+        user_cajero = User.objects.create_user(username="cajero_atomic", password="password123")
+        empleado = Empleado.objects.create(
+            auth_user=user_cajero,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="94949494",
+        )
+
+        with patch(
+            "app_empleados.views.invalidar_sesiones_usuario",
+            side_effect=RuntimeError("Error simulado"),
+        ):
+            url_eliminar = reverse("empleados:eliminar")
+            response = self.client.post(url_eliminar, {"empleado_id": empleado.pk})
+            self.assertRedirects(response, self.url)
+
+        user_cajero.refresh_from_db()
+        empleado.refresh_from_db()
+        self.assertTrue(user_cajero.is_active)
+        self.assertTrue(empleado.es_activo)
+
+    def test_criterio_11_tiempo_de_respuesta_menor_a_un_segundo(self):
+        """
+        Criterio 11: Administrador confirma la eliminación y refresco de tabla;
+        el tiempo de respuesta total no supera 1 segundo en entorno de red local.
+        """
+        user_cajero = User.objects.create_user(username="cajero_speed", password="password123")
+        empleado = Empleado.objects.create(
+            auth_user=user_cajero,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="95959595",
+        )
+
+        url_eliminar = reverse("empleados:eliminar")
+        inicio = time.perf_counter()
+        response_post = self.client.post(url_eliminar, {"empleado_id": empleado.pk})
+        response_get = self.client.get(self.url)
+        fin = time.perf_counter()
+
+        tiempo_total = fin - inicio
+        self.assertRedirects(response_post, self.url)
+        self.assertEqual(response_get.status_code, 200)
+        self.assertLess(
+            tiempo_total, 1.0, f"Tiempo de respuesta {tiempo_total:.4f}s superó 1 segundo."
+        )
