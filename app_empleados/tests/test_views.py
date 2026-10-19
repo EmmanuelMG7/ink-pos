@@ -137,3 +137,141 @@ class GestionEmpleadosViewTests(TestCase):
         self.assertEqual(table.paginator.per_page, 10)
         self.assertEqual(table.paginator.num_pages, 2)
         self.assertEqual(len(table.page.object_list), 10)
+
+    def test_eliminar_empleado_exitosamente_via_post(self):
+        """Prueba que un empleado sin relaciones protegidas sea eliminado físicamente vía POST."""
+        user_a_eliminar = User.objects.create_user(username="empleado_baja", password="password123")
+        empleado = Empleado.objects.create(
+            auth_user=user_a_eliminar,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="10102020",
+            telefono="3001112233",
+        )
+        self.assertTrue(empleado.es_activo)
+
+        url_eliminar = reverse("empleados:eliminar")
+        response = self.client.post(url_eliminar, {"empleado_id": empleado.pk})
+        self.assertRedirects(response, self.url)
+
+        self.assertFalse(User.objects.filter(id=user_a_eliminar.pk).exists())
+        self.assertFalse(Empleado.objects.filter(id=empleado.pk).exists())
+
+    def test_eliminar_empleado_por_id_en_url(self):
+        """Prueba que un empleado sin relaciones protegidas sea eliminado vía URL con ID."""
+        user_a_eliminar = User.objects.create_user(username="empleado_baja_url", password="password123")
+        empleado = Empleado.objects.create(
+            auth_user=user_a_eliminar,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="30304040",
+            telefono="3004445566",
+        )
+        url_eliminar = reverse("empleados:eliminar_por_id", kwargs={"empleado_id": empleado.pk})
+        response = self.client.post(url_eliminar)
+        self.assertRedirects(response, self.url)
+
+        self.assertFalse(User.objects.filter(id=user_a_eliminar.pk).exists())
+        self.assertFalse(Empleado.objects.filter(id=empleado.pk).exists())
+
+    def test_recrear_empleado_con_mismo_username_eliminado(self):
+        """Prueba que si se elimina un empleado, se pueda volver a crear otro con el mismo username."""
+        # 1. Crear el empleado inicial
+        data = {
+            "tipo_documento": Empleado.TipoDocumento.CEDULA,
+            "identificacion": "77788899",
+            "nombre": "Sebastian Inicial",
+            "usuario": "Sebas",
+            "telefono": "3001234567",
+            "contrasena": "Password123!",
+        }
+        res_crear = self.client.post(self.url, data)
+        self.assertRedirects(res_crear, self.url)
+        emp = Empleado.objects.get(identificacion="77788899")
+
+        # 2. Eliminar el empleado
+        url_eliminar = reverse("empleados:eliminar")
+        res_eliminar = self.client.post(url_eliminar, {"empleado_id": emp.pk})
+        self.assertRedirects(res_eliminar, self.url)
+
+        # 3. Volver a crear con el mismo username
+        data2 = {
+            "tipo_documento": Empleado.TipoDocumento.CEDULA,
+            "identificacion": "77788899",
+            "nombre": "Sebastian Nuevo",
+            "usuario": "Sebas",
+            "telefono": "3009876543",
+            "contrasena": "Password123!",
+        }
+        res_crear2 = self.client.post(self.url, data2)
+        self.assertRedirects(res_crear2, self.url)
+
+        # Verificar que el nuevo empleado está activo y fue creado exitosamente
+        nuevo_user = User.objects.get(username="Sebas")
+        self.assertTrue(nuevo_user.is_active)
+        self.assertEqual(nuevo_user.first_name, "Sebastian Nuevo")
+
+    def test_no_permitir_auto_desactivacion(self):
+        """Prueba que un usuario no pueda desactivarse a sí mismo."""
+        admin_empleado = Empleado.objects.create(
+            auth_user=self.user,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="99999999",
+            telefono="3000000000",
+            es_admin=True,
+        )
+        url_eliminar = reverse("empleados:eliminar")
+        response = self.client.post(url_eliminar, {"empleado_id": admin_empleado.pk})
+        self.assertRedirects(response, self.url)
+
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_active)
+
+    def test_eliminar_empleado_metodo_get_no_permitido(self):
+        """Prueba que una petición GET a la vista eliminar retorne 405 Method Not Allowed."""
+        url_eliminar = reverse("empleados:eliminar")
+        response = self.client.get(url_eliminar)
+        self.assertEqual(response.status_code, 405)
+
+    def test_eliminar_empleado_sin_permiso_retorna_403(self):
+        """Un usuario cajero sin permisos no puede eliminar empleados."""
+        cajero = User.objects.create_user(username="cajero_no_elimina", password="password123")
+        cajero.groups.add(Group.objects.get(name=RolUsuario.CAJERO))
+        self.client.login(username="cajero_no_elimina", password="password123")
+
+        otro_user = User.objects.create_user(username="otro_emp", password="password123")
+        otro_empleado = Empleado.objects.create(
+            auth_user=otro_user,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="88887777",
+        )
+
+        url_eliminar = reverse("empleados:eliminar")
+        response = self.client.post(url_eliminar, {"empleado_id": otro_empleado.pk})
+        self.assertEqual(response.status_code, 403)
+
+    def test_empleado_desactivado_no_aparece_en_tabla_gestion(self):
+        """Prueba que empleados inactivos no aparezcan en la tabla de gestión de empleados."""
+        user_inactivo = User.objects.create_user(username="inactivo_emp", password="password123", is_active=False)
+        Empleado.objects.create(
+            auth_user=user_inactivo,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="55554444",
+        )
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        table = response.context["table"]
+        self.assertFalse(any(row.record.auth_user.username == "inactivo_emp" for row in table.rows))
+
+    def test_modal_eliminar_renderizado_en_template(self):
+        """Prueba que el modal de eliminar y sus atributos de activación estén en el HTML."""
+        user_emp = User.objects.create_user(username="emp_render", password="password123")
+        empleado = Empleado.objects.create(
+            auth_user=user_emp,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="12121212",
+        )
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn('id="modal_eliminar_empleado"', content)
+        self.assertIn('data-bs-target="#modal_eliminar_empleado"', content)
+        self.assertIn(f'data-empleado-id="{empleado.pk}"', content)

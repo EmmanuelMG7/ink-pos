@@ -1,0 +1,81 @@
+<div class="modal fade" tabindex="-1" id="modal_eliminar_empleado" aria-labelledby="modalEliminarLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'empleados:eliminar' %}" id="form_eliminar_empleado">
+        {% csrf_token %}
+        <input type="hidden" name="empleado_id" id="eliminar_empleado_id" value="">
+
+        <div class="modal-header">
+          <h4 class="modal-title" id="modalEliminarLabel">¿Seguro de Eliminar?</h4>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+
+        <div class="modal-body">
+          <p class="mb-1">¿Está seguro de eliminar al empleado <strong id="modal_eliminar_nombre">este empleado</strong>?</p>
+          <p class="text-danger small mb-0">El empleado perderá acceso al sistema.</p>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-danger">Eliminar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var modalEliminar = document.getElementById('modal_eliminar_empleado');
+    if (modalEliminar) {
+      modalEliminar.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        if (button) {
+          var empleadoId = button.getAttribute('data-empleado-id');
+          var empleadoNombre = button.getAttribute('data-empleado-nombre');
+
+          var inputId = modalEliminar.querySelector('#eliminar_empleado_id');
+          var spanNombre = modalEliminar.querySelector('#modal_eliminar_nombre');
+
+          if (inputId) {
+            inputId.value = empleadoId || '';
+          }
+          if (spanNombre) {
+            spanNombre.textContent = empleadoNombre ? empleadoNombre : 'este empleado';
+          }
+        }
+      });
+    }
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var modalEliminar = document.getElementById('modal_eliminar_empleado');
+    if (modalEliminar) {
+      modalEliminar.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        if (button) {
+          var empleadoId = button.getAttribute('data-empleado-id');
+          var empleadoNombre = button.getAttribute('data-empleado-nombre');
+
+          var inputId = modalEliminar.querySelector('#eliminar_empleado_id');
+          var spanNombre = modalEliminar.querySelector('#modal_eliminar_nombre');
+
+          if (inputId) {
+            inputId.value = empleadoId || '';
+          }
+          if (spanNombre) {
+            spanNombre.textContent = empleadoNombre ? empleadoNombre : 'este empleado';
+          }
+        }
+      });
+    }
+  });
+</script>
+

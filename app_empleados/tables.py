@@ -12,9 +12,10 @@ class EmpleadoTable(tables.Table):
             "#modal_modificar_{{ record.id }}">
                 <i class="bi bi-pencil-square"></i>
             </button>
-            <button type="button" class="btn btn-sm btn-outline-danger"
-            title="Eliminar" data-bs-toggle="modal" data-bs-target=
-            "#modal_eliminar_{{ record.id }}">
+            <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-empleado"
+            title="Eliminar" data-bs-toggle="modal" data-bs-target="#modal_eliminar_empleado"
+            data-empleado-id="{{ record.id }}"
+            data-empleado-nombre="{{ record.usuario.get_full_name|default:record.usuario.username }}">
                 <i class="bi bi-trash"></i>
             </button>
         </div>
