@@ -7,6 +7,8 @@
 {% block content %}
 
 {% include "modals/Modal_Agregar_Producto.html" %}
+<!-- NUEVO: Incluir el modal de edición -->
+{% include "Form_Modificar_Producto.html" %}
 
 <div class="d-flex flex-column h-100 overflow-hidden">
   <div class="d-flex p-2 gap-2 flex-shrink-0">
@@ -68,11 +70,62 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    // 1. Lógica de Toasts (Existente)
     var toastElList = [].slice.call(document.querySelectorAll('.toast'))
     var toastList = toastElList.map(function (toastEl) {
       return new bootstrap.Toast(toastEl, {delay: 3000})
     })
     toastList.forEach(toast => toast.show())
+
+    // 2. NUEVO: Lógica AJAX para el modal de Edición (HU7)
+    const formEditar = document.getElementById('form_editar_producto');
+    if (formEditar) {
+        // Escuchar clics en cualquier botón de editar en la tabla
+        document.body.addEventListener('click', function(e) {
+            const btnEditar = e.target.closest('.btn-editar-producto');
+            if (!btnEditar) return;
+
+            const productoId = btnEditar.getAttribute('data-producto-id');
+            
+            // Apuntar el formulario a la URL de actualización correcta
+            formEditar.action = `/inventario/editar/${productoId}/`;
+
+            // Consultar los datos al backend (rápido y asíncrono)
+            fetch(`/inventario/obtener/${productoId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    // Precarga de campos de texto y números
+                    formEditar.querySelector('[name="codigo"]').value = data.codigo;
+                    formEditar.querySelector('[name="nombre"]').value = data.nombre;
+                    formEditar.querySelector('[name="precio_venta"]').value = data.precio_venta;
+                    formEditar.querySelector('[name="costo_compra"]').value = data.costo_compra;
+                    formEditar.querySelector('[name="stock_actual"]').value = data.stock_actual;
+                    formEditar.querySelector('[name="stock_minimo"]').value = data.stock_minimo;
+                    
+                    // Precarga de las etiquetas ocultas de Marca y Categorías
+                    const inputMarca = formEditar.querySelector('[name="marca"]');
+                    const inputCategorias = formEditar.querySelector('[name="categorias"]');
+                    if (inputMarca) inputMarca.value = data.marca;
+                    if (inputCategorias) inputCategorias.value = data.categorias;
+
+                    // NOTA: Disparar eventos si tu archivo 'search_and_create_dropdown.js' necesita 
+                    // actualizar la UI visual de las etiquetas al detectar cambios.
+                    if (inputCategorias) inputCategorias.dispatchEvent(new Event('change'));
+                    if (inputMarca) inputMarca.dispatchEvent(new Event('change'));
+                })
+                .catch(error => console.error('Error al obtener datos del producto:', error));
+        });
+
+        // 3. NUEVO: Cancelación de la edición (Criterio de Aceptación)
+        const modalEditarEl = document.getElementById('modal_editar_producto');
+        modalEditarEl.addEventListener('hidden.bs.modal', function () {
+            formEditar.reset(); // Limpia el formulario a su estado original
+            formEditar.action = ""; // Resetea la URL
+            
+            // Remueve las alertas visuales rojas (is-invalid) si el usuario había cometido un error
+            formEditar.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        });
+    }
   });
 </script>
 
