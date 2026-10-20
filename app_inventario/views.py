@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.shortcuts import redirect, render
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django_tables2 import RequestConfig
 
 from .forms import ProductoForm
@@ -48,3 +49,50 @@ def gestion_productos(request):
             "form": form,
         },
     )
+
+
+# Edicion de productos
+@login_required
+@permission_required("app_inventario.change_producto", raise_exception=True)
+def editar_producto(request, pk):
+    """
+    Procesa la peticion POST para actualizar los datos de un producto.
+    Si el usuario no tiene permisos, raise_exception=True bloquea y devuelve HTTP 403
+    """
+    producto = get_object_or_404(Producto, pk=pk)
+
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, instance=producto)
+        if form.is_valid():
+            # Actualizacion exitosa
+            producto_actualizado = form.save()
+            messages.success(request, f"Producto '{producto_actualizado.nombre}' actualizado correctamente")
+        else:
+            # Si falla la validacion en backend, extrae los errores
+            for field, err_list in form.error.items():
+                for err in err_list:
+                    messages.error(request, f"Error de validacion ({field}): {err}")
+
+    return redirect("inventario:gestion")
+
+@login_required
+@permission_required("app_inventario.change_producto", raise_exception=True)
+def obtener_producto(request, pk):
+    """
+    Devuelve los datos de un producto existente en JSON para precargar el modal de creacion
+    """
+    producto = get_object_or_404(Producto, pk=pk)
+
+    # Convertimos decimal a string para evitar errores de serializacion en JSON
+    data = {
+        "codigo": producto.codigo,
+        "nombre": producto.nombre,
+        "marca": producto.marca.nombre if producto.marca else "Genérico",
+        "categorias": ",".join([c.nombre for c in producto.categorias.all()]),
+        "costo_compra": str(producto.costo_compra),
+        "precio_venta": str(producto.precio_venta),
+        "stock_actual": producto.stock_actual,
+        "stock_minimo": producto.stock_minimo,
+    }
+
+    return JsonResponse(data)
