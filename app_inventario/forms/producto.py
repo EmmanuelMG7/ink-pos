@@ -8,11 +8,9 @@ from app_common.forms import BootstrapModelForm
 from app_inventario.models import Categoria, Marca, Producto
 
 
-class MultipleCategoriasField(forms.Field):
+class MultipleHiddenWidget(forms.Widget):
     """
-    Campo personalizado para gestionar la entrada de múltiples categorías.
-    Soporta listas directas (de QueryDict o dict), cadenas separadas por coma,
-    y listas en formato JSON, eliminando duplicados de forma insensible a mayúsculas.
+    Widget para extraer listas de valores desde QueryDict (múltiples inputs con el mismo nombre).
     """
 
     def value_from_datadict(self, data, files, name):
@@ -24,6 +22,19 @@ class MultipleCategoriasField(forms.Field):
                 return val[0]
             return []
         return data.get(name, [])
+
+    def render(self, name, value, attrs=None, renderer=None):
+        return ""
+
+
+class MultipleCategoriasField(forms.Field):
+    """
+    Campo personalizado para gestionar la entrada de múltiples categorías.
+    Soporta listas directas (de QueryDict o dict), cadenas separadas por coma,
+    y listas en formato JSON, eliminando duplicados de forma insensible a mayúsculas.
+    """
+
+    widget = MultipleHiddenWidget
 
     def to_python(self, value):
         if not value:
@@ -98,7 +109,7 @@ class ProductoForm(BootstrapModelForm):
 
     categorias = MultipleCategoriasField(
         required=False,
-        widget=forms.HiddenInput(),
+        widget=MultipleHiddenWidget(),
     )
 
     class Meta:

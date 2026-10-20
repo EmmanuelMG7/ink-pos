@@ -2,6 +2,7 @@ from decimal import Decimal
 from unittest.mock import patch
 
 from django import forms as dj_forms
+from django.http import QueryDict
 from django.test import TestCase
 
 from app_inventario.forms import ProductoForm
@@ -72,6 +73,25 @@ class ProductoFormTests(TestCase):
         self.assertTrue(form.is_valid())
         prod = form.save()
         self.assertEqual(list(prod.categorias.values_list("nombre", flat=True)), ["CatA"])
+
+    def test_guardar_producto_querydict_multiples_categorias_mismo_nombre(self):
+        """Prueba que múltiples inputs con el mismo nombre en un QueryDict se preserven todos."""
+        q = QueryDict("", mutable=True)
+        q["nombre"] = "Lapicero Test QD"
+        q["precio_venta"] = "20.00"
+        q["costo_compra"] = "10.00"
+        q["stock_actual"] = "10"
+        q["stock_minimo"] = "2"
+        q["marca"] = "MarcaA"
+        q.setlist("categorias", ["Cat1", "Cat2", "Cat3"])
+
+        form = ProductoForm(q)
+        self.assertTrue(form.is_valid(), form.errors)
+        prod = form.save()
+        self.assertEqual(
+            set(prod.categorias.values_list("nombre", flat=True)),
+            {"Cat1", "Cat2", "Cat3"},
+        )
 
     def test_guardar_producto_multiples_categorias(self):
         """Criterio 4: Guardar con dos o más categorías distintas."""
