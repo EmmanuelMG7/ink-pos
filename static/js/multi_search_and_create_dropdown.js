@@ -68,7 +68,17 @@
     }
 
     function addTag(nombre) {
-      const limpio = (nombre || '').trim();
+      if (!nombre) return;
+
+      // Soporte para múltiples categorías separadas por coma
+      if (typeof nombre === 'string' && nombre.includes(',')) {
+        nombre.split(',').forEach(function (part) {
+          addTag(part);
+        });
+        return;
+      }
+
+      const limpio = String(nombre).trim();
       if (!limpio || limpio.toLowerCase() === 'ninguna') return;
 
       const key = limpio.toLowerCase();
@@ -113,7 +123,24 @@
       hiddenInput.setAttribute('data-chip-val', key);
       hiddenInputsContainer.appendChild(hiddenInput);
 
-      // 3. Actualizar estado de opciones y label
+      // 3. Si la categoría es nueva, agregarla a la lista de opciones
+      let existeEnLista = false;
+      itemsList.querySelectorAll('.multi-searchable-item').forEach(function (btn) {
+        if ((btn.getAttribute('data-valor') || '').trim().toLowerCase() === key) {
+          existeEnLista = true;
+        }
+      });
+
+      if (!existeEnLista) {
+        const nuevoBtn = document.createElement('button');
+        nuevoBtn.type = 'button';
+        nuevoBtn.className = 'dropdown-item py-1 rounded multi-searchable-item d-flex align-items-center justify-content-between active';
+        nuevoBtn.setAttribute('data-valor', limpio);
+        nuevoBtn.innerHTML = '<span><i class="bi bi-tag me-1 text-muted"></i> ' + limpio + '</span><i class="bi bi-check-lg text-primary item-check-icon"></i>';
+        itemsList.insertBefore(nuevoBtn, itemsList.firstChild);
+      }
+
+      // 4. Actualizar estado de opciones y label
       syncDropdownItemsState();
       updateCounterLabel();
 
@@ -226,6 +253,21 @@
           addTag(nuevo);
         }
       });
+    }
+
+    // Auto-agregar categoría pendiente si se cierra el dropdown o se envía el formulario
+    function confirmarCategoriaPendiente() {
+      const txt = searchInput.value.trim();
+      if (txt) {
+        addTag(txt);
+      }
+    }
+
+    btnDropdown.addEventListener('hide.bs.dropdown', confirmarCategoriaPendiente);
+
+    const parentForm = container.closest('form');
+    if (parentForm) {
+      parentForm.addEventListener('submit', confirmarCategoriaPendiente);
     }
 
     container.addTag = addTag;
