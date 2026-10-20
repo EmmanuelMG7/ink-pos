@@ -49,10 +49,10 @@ class MultipleCategoriasField(forms.Field):
         result = []
         vistos = set()
         for item in raw:
-            if hasattr(item, "nombre"):
-                name = str(item.nombre).strip()
+            if isinstance(item, str):
+                name = item.strip()
             else:
-                name = str(item).strip()
+                name = str(getattr(item, "nombre", item)).strip()
 
             if not name or name.lower() == "ninguna":
                 continue
