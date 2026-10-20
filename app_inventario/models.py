@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 
 from app_empleados.models import Empleado
@@ -132,15 +133,18 @@ class Impuesto(models.Model):
 class Producto(models.Model):
     nombre = models.CharField(max_length=150, unique=True)
     marca = models.ForeignKey(Marca, on_delete=models.PROTECT, related_name="productos")
-    categoria = models.ForeignKey(
+    
+    # Categorías M2M (blank=True permite dejarlo vacío en el form para asignar "Genérico")
+    categorias = models.ManyToManyField(
         Categoria,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name="productos",
     )
-    costo_compra = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
-    precio_venta = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    # Validaciones para evitar valores negativos
+    costo_compra = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"), validators=[MinValueValidator(0)])
+    precio_venta = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
+    
     impuesto = models.ForeignKey(
         Impuesto,
         on_delete=models.SET_NULL,
@@ -148,9 +152,15 @@ class Producto(models.Model):
         blank=True,
         related_name="productos",
     )
-    stock_actual = models.IntegerField(default=0)
-    stock_minimo = models.IntegerField(default=5)
+    
+    # Validaciones para evitar valores negativos
+    stock_actual = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    stock_minimo = models.IntegerField(default=5, validators=[MinValueValidator(0)])
     activo = models.BooleanField(default=True)
+
+    # Preparación para lógica de e-commerce institucional
+    es_institucional = models.BooleanField(default=False)
+    precio_institucional = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
 
     class Meta:
         constraints = [
