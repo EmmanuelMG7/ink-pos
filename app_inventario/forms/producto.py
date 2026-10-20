@@ -1,3 +1,4 @@
+import json
 from decimal import Decimal
 
 from django import forms
@@ -38,19 +39,17 @@ class ProductoForm(BootstrapModelForm):
         widget=forms.HiddenInput(),
     )
 
-    categoria = forms.CharField(
+    categorias = forms.CharField(
         required=False,
-        max_length=50,
-        initial="",
         widget=forms.HiddenInput(),
     )
 
     class Meta:
         # Modelo de la base de datos enlazado a este formulario
         model = Producto
-        # Campos excluidos del formulario. Se excluyen marca y categoría para evitar
+        # Campos excluidos del formulario. Se excluyen marca y categorías para evitar
         # errores de asignación internos con Django, delegando la asignación al método save()
-        exclude = ["activo", "marca", "categoria"]
+        exclude = ["activo", "marca", "categorias"]
 
         error_messages = {
             "precio_venta": {
@@ -103,18 +102,72 @@ class ProductoForm(BootstrapModelForm):
         Al inicializar el formulario. Si estamos editando (self.instance.pk existe),
         poblamos los campos con los valores guardados.
         """
-        # Inicializar la instancia padre de este formulario
         super().__init__(*args, **kwargs)
 
-        # Si el formulario está ligado a un producto existente y no es un POST con datos
-        # se deben rellenar manualmente los campos excluidos o personalizados
         if self.instance and self.instance.pk and not self.is_bound:
             if "codigo" in self.fields:
                 self.fields["codigo"].initial = self.instance.codigo
             if "marca" in self.fields and self.instance.marca:
                 self.fields["marca"].initial = self.instance.marca.nombre
-            if "categoria" in self.fields and self.instance.categoria:
-                self.fields["categoria"].initial = self.instance.categoria.nombre
+            if "categorias" in self.fields:
+                self.fields["categorias"].initial = list(
+                    self.instance.categorias.values_list("nombre", flat=True)
+                )
+
+    def clean_categorias(self):
+        """
+        Limpia y valida las categorías asociadas al producto.
+        Soporta múltiples fuentes de datos:
+        - Lista de valores via request.POST.getlist('categorias')
+        - Cadena de nombres separados por coma
+        - Lista codificada en JSON
+        - Instancias de categorías directas
+        Elimina vacíos, normaliza espacios y descarta duplicados manteniendo una única referencia.
+        """
+        raw_list = []
+        if hasattr(self.data, "getlist"):
+            raw_list = self.data.getlist("categorias")
+
+        if not raw_list:
+            val = self.cleaned_data.get("categorias")
+            if isinstance(val, list):
+                raw_list = val
+            elif isinstance(val, str) and val.strip():
+                try:
+                    parsed = json.loads(val)
+                    if isinstance(parsed, list):
+                        raw_list = parsed
+                    else:
+                        raw_list = [val]
+                except Exception:
+                    raw_list = [val]
+
+        categorias_limpias = []
+        vistos = set()
+
+        for item in raw_list:
+            if isinstance(item, (list, tuple)):
+                subitems = item
+            elif isinstance(item, str) and "," in item:
+                subitems = item.split(",")
+            else:
+                subitems = [item]
+
+            for sub in subitems:
+                if hasattr(sub, "nombre"):
+                    nombre = str(sub.nombre).strip()
+                else:
+                    nombre = str(sub).strip()
+
+                if not nombre or nombre.lower() == "ninguna":
+                    continue
+
+                nombre_lower = nombre.lower()
+                if nombre_lower not in vistos:
+                    vistos.add(nombre_lower)
+                    categorias_limpias.append(nombre)
+
+        return categorias_limpias
 
     def clean(self):
         """
@@ -122,10 +175,7 @@ class ProductoForm(BootstrapModelForm):
         Se ejecuta automáticamente durante 'form.is_valid()'.
         Aquí se realizan unicamente validaciones cruzadas entre múltiples campos
         (ej: precio vs costo) y asignaciones de valores por defecto.
-        Para validaciones únicas de campo se debe usar clean_[field]() o delegar
-        a validadores.
         """
-        # Obtener los valores limpios y tipados de los campos
         cleaned_data = super().clean()
         if cleaned_data is None:
             cleaned_data = {}
@@ -145,56 +195,38 @@ class ProductoForm(BootstrapModelForm):
                 )
         return cleaned_data
 
+    def save_m2m(self):
+        """
+        Persiste las relaciones ManyToMany (categorías) asociadas al producto dentro de
+        una transacción atómica. Crea las categorías inexistentes al vuelo.
+        """
+        with transaction.atomic():
+            categorias_nombres = self.cleaned_data.get("categorias", [])
+            cat_objs = []
+            for cat_nombre in categorias_nombres:
+                cat_obj, _ = Categoria.objects.get_or_create(nombre=cat_nombre)
+                cat_objs.append(cat_obj)
+            self.instance.categorias.set(cat_objs)
+
     def save(self, commit=True):
         """
-        Persiste el producto y sus relaciones asociadas en la base de datos.
-
-        Patrones clave de ModelForm en este método:
-        - super().save(commit=False): Crea la instancia en memoria con los campos de Meta.fields
-          sin ejecutar el INSERT/UPDATE en la BD todavía.
-        - self.instance.pk: Permite saber si estamos CREANDO (pk es None) o ACTUALIZANDO
-          (pk ya existe).
-        - self.cleaned_data: NUNCA se debe volver a llamar a self.clean() aquí; los datos limpios
-          ya están disponibles en este diccionario tras ejecutar form.is_valid().
-        - transaction.atomic(): Asegura que la creación de Marca, Categoría y Producto ocurra
-          en una única transacción atómica para proteger la integridad de los datos.
+        Persiste el producto y sus relaciones asociadas en la base de datos de forma atómica.
         """
-
-        # Se requiere usar una transacción atómica ya que se podrían crear nuevos registros en
-        # las tablas marca y categoría. De esta manera, si en la posterior creación del producto
-        # la transacción falla, los cambios en marca y categoría se revierten.
         with transaction.atomic():
-            # Crear la instancia en memoria y asignar valores a los campos
             instance = super().save(commit=False)
-            # Bandera para tomar acción en INSERT vs UPDATE
             es_creacion = instance.pk is None
 
-            # Resolución de la relación 'marca' por medio del nombre (ForeignKey a Marca)
+            # Resolución de marca
             marca = str(self.cleaned_data.get("marca") or "").strip()
-
             if marca:
-                # Obtiene la marca si existe, o la crea al vuelo si es nueva
                 marca_obj, _ = Marca.objects.get_or_create(nombre=marca)
                 instance.marca = marca_obj
             elif es_creacion and not instance.marca_id:
-                # Solo en creación asignamos 'Genérico' si no se especificó ninguna marca.
-                # En actualización, respetamos la marca que el producto ya tenía.
                 marca_defecto, _ = Marca.objects.get_or_create(nombre="Genérico")
                 instance.marca = marca_defecto
 
-            # Resolución de la relación 'categoría' por medio del nombre
-            # (ForeignKey opcional a Categoría)
-            categoria = str(self.cleaned_data.get("categoria") or "").strip()
-
-            if categoria and categoria.lower() != "ninguna":
-                cat_obj, _ = Categoria.objects.get_or_create(nombre=categoria)
-                instance.categoria = cat_obj
-            # Si en edición el usuario deseleccionó explícitamente la categoría
-            elif not es_creacion and ("categoria" in self.cleaned_data) and not categoria:
-                instance.categoria = None
-
-            # Guardar en base de datos si commit=True
             if commit:
                 instance.save()
+                self.save_m2m()
 
             return instance

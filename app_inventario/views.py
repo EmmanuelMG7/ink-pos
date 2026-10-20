@@ -30,8 +30,12 @@ def gestion_productos(request):
     marcas = Marca.objects.all().order_by("nombre")
     categorias = Categoria.objects.all().order_by("nombre")
 
-    # Consultar productos
-    productos_queryset = Producto.objects.all().order_by("-id")
+    # Consultar productos optimizado con prefetch_related para categorías
+    productos_queryset = (
+        Producto.objects.select_related("marca", "impuesto")
+        .prefetch_related("categorias")
+        .order_by("-id")
+    )
     tabla_productos = ProductoTable(productos_queryset)
 
     # Configurar paginación a 10 registros por página
