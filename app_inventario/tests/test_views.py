@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from app_common.constants import RolUsuario
-from app_inventario.models import Marca, Producto
+from app_inventario.models import Categoria, Marca, Producto
 
 
 class GestionProductosViewTests(TestCase):
@@ -84,7 +84,7 @@ class GestionProductosViewTests(TestCase):
             "costo_compra": Decimal("0.00"),
             "stock_minimo": 5,
             "marca": "Precision Needles",
-            "categoria": "Agujas",
+            "categorias": ["Agujas"],
         }
         response = self.client.post(self.url, data)
         self.assertRedirects(response, self.url)
@@ -92,8 +92,7 @@ class GestionProductosViewTests(TestCase):
         self.assertTrue(Producto.objects.filter(nombre="Agujas 3RL").exists())
         prod = Producto.objects.get(nombre="Agujas 3RL")
         self.assertEqual(prod.marca.nombre, "Precision Needles")
-        self.assertIsNotNone(prod.categoria)
-        self.assertEqual(prod.categoria.nombre, "Agujas")
+        self.assertEqual(list(prod.categorias.values_list("nombre", flat=True)), ["Agujas"])
 
     def test_crear_producto_marca_defecto_generico(self):
         """Prueba que si no se envía marca, se asigne 'Genérico' por defecto."""
@@ -111,31 +110,33 @@ class GestionProductosViewTests(TestCase):
         self.assertEqual(prod.marca.nombre, "Genérico")
 
     def test_render_modal_dropdowns_marca_y_categoria(self):
-        """Prueba que el modal renderice los componentes modularizados de dropdown."""
+        """Criterio 1: Prueba que el modal renderice los controles modularizados y paginados."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
 
         content = response.content.decode("utf-8")
-        # Verificar contenedores e inputs generados por search_and_create_dropdown.html
         self.assertIn('id="dropdown_marca_container"', content)
-        self.assertIn('id="input_marca_nombre"', content)
-        self.assertIn('value="Genérico"', content)
         self.assertIn("Marca", content)
-        self.assertIn("Genérico", content)
 
-        self.assertIn('id="dropdown_categoria_container"', content)
-        self.assertIn('id="input_categoria_nombre"', content)
-        self.assertIn("Categoría", content)
-        self.assertIn("Ninguna", content)
+        # Criterio 1: Control de asignación múltiple habilitado
+        self.assertIn('id="dropdown_categorias_container"', content)
+        self.assertIn('id="chips_categorias_container"', content)
+        self.assertIn("Categorías", content)
 
-        # Verificar inclusión del script modular
+        # Inclusión de scripts modulares
         self.assertIn("search_and_create_dropdown.js", content)
+        self.assertIn("multi_search_and_create_dropdown.js", content)
+
+        # Paginación y barra de progreso
+        self.assertIn('id="modal_producto_progress"', content)
+        self.assertIn('id="modal_producto_page_1"', content)
+        self.assertIn('id="modal_producto_page_2"', content)
 
     def test_gestion_productos_view_exception_handling(self):
         data = {
             "nombre": "Nuevo Prod",
             "marca": "MarcaA",
-            "categoria": "CatA",
+            "categorias": ["CatA"],
             "costo_compra": "10.00",
             "precio_venta": "20.00",
             "stock_actual": "5",
@@ -167,3 +168,45 @@ class GestionProductosViewTests(TestCase):
         self.assertEqual(table.paginator.per_page, 10)
         self.assertEqual(table.paginator.num_pages, 2)
         self.assertEqual(len(table.page.object_list), 10)
+
+    def test_consulta_productos_usa_prefetch_related_categorias(self):
+        """Criterio 12: Garantiza número constante y óptimo de consultas usando prefetch_related."""
+        marca = Marca.objects.create(nombre="Marca Prefetch")
+        cat1 = Categoria.objects.create(nombre="Cat A")
+        cat2 = Categoria.objects.create(nombre="Cat B")
+        for i in range(5):
+            p = Producto.objects.create(
+                nombre=f"Prod Prefetch {i}",
+                marca=marca,
+                stock_actual=10,
+                precio_venta=1000,
+                costo_compra=Decimal("100.00"),
+            )
+            p.categorias.set([cat1, cat2])
+
+        # Verifica que la consulta a la vista cargue las categorías sin consultas N+1
+        with self.assertNumQueries(11):
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, 200)
+
+    def test_rendimiento_creacion_producto_hasta_diez_categorias(self):
+        """Criterio 14: Registro con hasta 10 categorías y recarga en menos de 1 segundo."""
+        import time
+
+        diez_categorias = [f"PerfCat_{i}" for i in range(10)]
+        data = {
+            "nombre": "Producto Diez Categorías",
+            "stock_actual": 20,
+            "precio_venta": 50000,
+            "costo_compra": Decimal("20000.00"),
+            "stock_minimo": 2,
+            "marca": "Marca Rendimiento",
+            "categorias": diez_categorias,
+        }
+        inicio = time.perf_counter()
+        post_resp = self.client.post(self.url, data)
+        self.assertRedirects(post_resp, self.url)
+        get_resp = self.client.get(self.url)
+        self.assertEqual(get_resp.status_code, 200)
+        duracion = time.perf_counter() - inicio
+        self.assertLess(duracion, 1.0, f"El tiempo total {duracion:.3f}s supera 1 segundo")

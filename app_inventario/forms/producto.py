@@ -8,6 +8,63 @@ from app_common.forms import BootstrapModelForm
 from app_inventario.models import Categoria, Marca, Producto
 
 
+class MultipleCategoriasField(forms.Field):
+    """
+    Campo personalizado para gestionar la entrada de múltiples categorías.
+    Soporta listas directas (de QueryDict o dict), cadenas separadas por coma,
+    y listas en formato JSON, eliminando duplicados de forma insensible a mayúsculas.
+    """
+
+    def value_from_datadict(self, data, files, name):
+        if hasattr(data, "getlist"):
+            val = data.getlist(name)
+            if len(val) > 1:
+                return val
+            if len(val) == 1:
+                return val[0]
+            return []
+        return data.get(name, [])
+
+    def to_python(self, value):
+        if not value:
+            return []
+
+        if isinstance(value, (list, tuple)):
+            raw = value
+        elif isinstance(value, str):
+            s = value.strip()
+            if not s:
+                return []
+            try:
+                parsed = json.loads(s)
+                if isinstance(parsed, list):
+                    raw = parsed
+                else:
+                    raw = [s]
+            except Exception:
+                raw = s.split(",")
+        else:
+            raw = [value]
+
+        result = []
+        vistos = set()
+        for item in raw:
+            if hasattr(item, "nombre"):
+                name = str(item.nombre).strip()
+            else:
+                name = str(item).strip()
+
+            if not name or name.lower() == "ninguna":
+                continue
+
+            name_lower = name.lower()
+            if name_lower not in vistos:
+                vistos.add(name_lower)
+                result.append(name)
+
+        return result
+
+
 class ProductoForm(BootstrapModelForm):
     """
     Formulario para la creación y edición de Productos.
@@ -39,7 +96,7 @@ class ProductoForm(BootstrapModelForm):
         widget=forms.HiddenInput(),
     )
 
-    categorias = forms.CharField(
+    categorias = MultipleCategoriasField(
         required=False,
         widget=forms.HiddenInput(),
     )
@@ -114,61 +171,6 @@ class ProductoForm(BootstrapModelForm):
                     self.instance.categorias.values_list("nombre", flat=True)
                 )
 
-    def clean_categorias(self):
-        """
-        Limpia y valida las categorías asociadas al producto.
-        Soporta múltiples fuentes de datos:
-        - Lista de valores via request.POST.getlist('categorias')
-        - Cadena de nombres separados por coma
-        - Lista codificada en JSON
-        - Instancias de categorías directas
-        Elimina vacíos, normaliza espacios y descarta duplicados manteniendo una única referencia.
-        """
-        raw_list = []
-        if hasattr(self.data, "getlist"):
-            raw_list = self.data.getlist("categorias")
-
-        if not raw_list:
-            val = self.cleaned_data.get("categorias")
-            if isinstance(val, list):
-                raw_list = val
-            elif isinstance(val, str) and val.strip():
-                try:
-                    parsed = json.loads(val)
-                    if isinstance(parsed, list):
-                        raw_list = parsed
-                    else:
-                        raw_list = [val]
-                except Exception:
-                    raw_list = [val]
-
-        categorias_limpias = []
-        vistos = set()
-
-        for item in raw_list:
-            if isinstance(item, (list, tuple)):
-                subitems = item
-            elif isinstance(item, str) and "," in item:
-                subitems = item.split(",")
-            else:
-                subitems = [item]
-
-            for sub in subitems:
-                if hasattr(sub, "nombre"):
-                    nombre = str(sub.nombre).strip()
-                else:
-                    nombre = str(sub).strip()
-
-                if not nombre or nombre.lower() == "ninguna":
-                    continue
-
-                nombre_lower = nombre.lower()
-                if nombre_lower not in vistos:
-                    vistos.add(nombre_lower)
-                    categorias_limpias.append(nombre)
-
-        return categorias_limpias
-
     def clean(self):
         """
         Validación general a nivel de formulario.
@@ -195,18 +197,24 @@ class ProductoForm(BootstrapModelForm):
                 )
         return cleaned_data
 
-    def save_m2m(self):
+    def _save_categorias(self):
         """
         Persiste las relaciones ManyToMany (categorías) asociadas al producto dentro de
         una transacción atómica. Crea las categorías inexistentes al vuelo.
         """
+        categorias_nombres = self.cleaned_data.get("categorias", [])
+        cat_objs = []
+        for cat_nombre in categorias_nombres:
+            cat_obj, _ = Categoria.objects.get_or_create(nombre=cat_nombre)
+            cat_objs.append(cat_obj)
+        self.instance.categorias.set(cat_objs)
+
+    def save_m2m(self):
+        """
+        Método auxiliar para sincronizar relaciones M2M si se guardó con commit=False.
+        """
         with transaction.atomic():
-            categorias_nombres = self.cleaned_data.get("categorias", [])
-            cat_objs = []
-            for cat_nombre in categorias_nombres:
-                cat_obj, _ = Categoria.objects.get_or_create(nombre=cat_nombre)
-                cat_objs.append(cat_obj)
-            self.instance.categorias.set(cat_objs)
+            self._save_categorias()
 
     def save(self, commit=True):
         """
@@ -227,6 +235,6 @@ class ProductoForm(BootstrapModelForm):
 
             if commit:
                 instance.save()
-                self.save_m2m()
+                self._save_categorias()
 
             return instance

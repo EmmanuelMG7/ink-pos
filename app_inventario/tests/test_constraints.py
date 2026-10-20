@@ -38,7 +38,6 @@ class InventarioBoundaryTests(TestCase):
         prod = Producto.objects.create(
             nombre="Tinta Limite",
             marca=self.marca,
-            categoria=self.categoria,
             costo_compra=Decimal("15000.00"),
             precio_venta=Decimal("15000.00"),  # Límite exacto
             stock_actual=10,
