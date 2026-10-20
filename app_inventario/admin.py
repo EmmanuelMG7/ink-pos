@@ -1,3 +1,4 @@
+# cspell:disable
 from django.contrib import admin
 
 from .models import Categoria, Impuesto, Marca, MovimientoInventario, Producto

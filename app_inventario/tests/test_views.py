@@ -106,7 +106,9 @@ class GestionProductosViewTests(TestCase):
             "stock_actual": "5",
             "stock_minimo": "1",
         }
-        with patch("app_inventario.views.ProductoForm.save", side_effect=Exception("Fallo al guardar")):
+        with patch(
+            "app_inventario.views.ProductoForm.save", side_effect=Exception("Fallo al guardar")
+        ):
             response = self.client.post(self.url, data)
             self.assertEqual(response.status_code, 200)
 
@@ -136,7 +138,9 @@ class EdicionProductosViewTests(TestCase):
         self.admin_user.user_permissions.add(perm_view, perm_change)
 
         # Usuario Empleado (solo ver)
-        self.empleado_user = User.objects.create_user(username="empleado_edit", password="password123")
+        self.empleado_user = User.objects.create_user(
+            username="empleado_edit", password="password123"
+        )
         self.empleado_user.user_permissions.add(perm_view)
 
         self.marca = Marca.objects.create(nombre="MarcaEdit")
@@ -170,7 +174,7 @@ class EdicionProductosViewTests(TestCase):
         }
         response = self.client.post(self.url_editar, data)
         self.assertRedirects(response, reverse("inventario:gestion"))
-        
+
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.nombre, "Producto Actualizado")
         self.assertEqual(self.producto.categorias.first().nombre, "Oficina")
@@ -184,6 +188,6 @@ class EdicionProductosViewTests(TestCase):
         response = self.client.get(self.url_obtener)
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        
+
         self.assertEqual(data["nombre"], "Producto a Editar")
         self.assertEqual(data["categorias"], "TestCat")
