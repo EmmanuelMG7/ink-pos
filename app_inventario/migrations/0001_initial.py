@@ -125,11 +125,9 @@ class Migration(migrations.Migration):
                 ("stock_minimo", models.IntegerField(default=5)),
                 ("activo", models.BooleanField(default=True)),
                 (
-                    "categoria",
-                    models.ForeignKey(
+                    "categorias",
+                    models.ManyToManyField(
                         blank=True,
-                        null=True,
-                        on_delete=django.db.models.deletion.SET_NULL,
                         related_name="productos",
                         to="app_inventario.categoria",
                     ),
