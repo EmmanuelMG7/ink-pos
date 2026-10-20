@@ -52,6 +52,7 @@
       id="btn_dropdown_{{ field_id }}" 
       data-bs-toggle="dropdown" 
       data-bs-auto-close="outside"
+      data-bs-reference="parent"
       aria-expanded="false"
       style="min-width: 0;">
       <span id="label_{{ field_id }}_counter"
@@ -62,13 +63,14 @@
     </button>
 
     <div class="dropdown-menu p-2 shadow w-100"
-      style="max-height: 250px; overflow-y: auto;"
+      style="max-height: 250px; overflow-y: auto; box-sizing: border-box;"
       aria-labelledby="btn_dropdown_{{ field_id }}"
     >
       <input 
         type="text" 
-        class="form-control form-control-sm mb-2 multi-searchable-input" 
+        class="form-control form-control-sm mb-2 multi-searchable-input w-100" 
         id="search_{{ field_id }}_input" 
+        style="box-sizing: border-box;"
         placeholder="{{ placeholder|default:'Buscar o escribir para crear...' }}"
         autocomplete="off" 
       />

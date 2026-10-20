@@ -27,13 +27,13 @@
           <!-- PÁGINA 1: Datos principales del producto y placeholder de imagen -->
           <div id="modal_producto_page_1">
             <div class="row g-3 align-items-stretch">
-              <!-- Placeholder para futura imagen del producto -->
+              <!-- Placeholder para futura imagen del producto con integración en tema oscuro -->
               <div class="col-12 col-md-4">
-                <div class="border rounded bg-light d-flex flex-column align-items-center justify-content-center h-100 p-3 text-secondary text-center" 
+                <div class="border border-secondary-subtle rounded bg-body-tertiary d-flex flex-column align-items-center justify-content-center h-100 p-3 text-body-secondary text-center" 
                      style="min-height: 180px; border-style: dashed !important;">
-                  <i class="bi bi-image fs-1 text-muted mb-2"></i>
-                  <span class="small fw-semibold text-secondary">Imagen del producto</span>
-                  <span class="text-muted" style="font-size: 0.75rem;">(Próximamente)</span>
+                  <i class="bi bi-image fs-1 text-secondary mb-2"></i>
+                  <span class="small fw-semibold text-body-secondary">Imagen del producto</span>
+                  <span class="text-body-tertiary" style="font-size: 0.75rem;">(Próximamente)</span>
                 </div>
               </div>
 
@@ -78,7 +78,7 @@
           <div id="modal_producto_page_2" class="d-none">
             <div class="row g-2 mb-3">
               <div class="col-12">
-                {% with id='marca' label='Marca' default_value='Generico' value=form.marca.value|default:'Generico' items=marcas %}
+                {% with id='marca' name='marca' label='Marca' default_value='Generico' value=form.marca.value|default:'Generico' items=marcas %}
                   {% include 'search_and_create_dropdown.html' %}
                 {% endwith %}
               </div>
@@ -86,7 +86,7 @@
 
             <div class="row g-2 mb-3">
               <div class="col-12">
-                {% with id='categorias' label='Categorías' items=categorias %}
+                {% with id='categorias' name='categorias' label='Categorías' items=categorias %}
                   {% include 'multi_search_and_create_dropdown.html' %}
                 {% endwith %}
               </div>
