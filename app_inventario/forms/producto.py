@@ -38,9 +38,10 @@ class ProductoForm(BootstrapModelForm):
         widget=forms.HiddenInput(),
     )
 
-    categoria = forms.CharField(
+    # Recibirá las etiquetas separadas por comas desde el frontend
+    categorias = forms.CharField(
         required=False,
-        max_length=50,
+        max_length=255,
         initial="",
         widget=forms.HiddenInput(),
     )
@@ -50,7 +51,7 @@ class ProductoForm(BootstrapModelForm):
         model = Producto
         # Campos excluidos del formulario. Se excluyen marca y categoría para evitar
         # errores de asignación internos con Django, delegando la asignación al método save()
-        exclude = ["activo", "marca", "categoria"]
+        exclude = ["activo", "marca", "categorias"]
 
         error_messages = {
             "precio_venta": {
@@ -113,8 +114,11 @@ class ProductoForm(BootstrapModelForm):
                 self.fields["codigo"].initial = self.instance.codigo
             if "marca" in self.fields and self.instance.marca:
                 self.fields["marca"].initial = self.instance.marca.nombre
-            if "categoria" in self.fields and self.instance.categoria:
-                self.fields["categoria"].initial = self.instance.categoria.nombre
+
+            # Precargar las categorías existentes separadas por comas para el frontend
+            if "categorias" in self.field:
+                categorias_actuales = self.instance.categorias.all()
+                self.fields["categorias"].initial = ",".join([c.nombre for c in categorias_actuales])
 
     def clean(self):
         """
@@ -182,19 +186,30 @@ class ProductoForm(BootstrapModelForm):
                 marca_defecto, _ = Marca.objects.get_or_create(nombre="Genérico")
                 instance.marca = marca_defecto
 
-            # Resolución de la relación 'categoría' por medio del nombre
-            # (ForeignKey opcional a Categoría)
-            categoria = str(self.cleaned_data.get("categoria") or "").strip()
-
-            if categoria and categoria.lower() != "ninguna":
-                cat_obj, _ = Categoria.objects.get_or_create(nombre=categoria)
-                instance.categoria = cat_obj
-            # Si en edición el usuario deseleccionó explícitamente la categoría
-            elif not es_creacion and ("categoria" in self.cleaned_data) and not categoria:
-                instance.categoria = None
-
-            # Guardar en base de datos si commit=True
+            # Guardamos la instancia principal primero para poder asignarle relaciones M2M
             if commit:
                 instance.save()
+
+
+            # Solo se procesan las categorías si se llamó a save() con intención de persistir
+            if commit:
+                categorias_input = str(self.cleaned_data.get("categorias") or "").strip()
+
+                # Limpiar categorías actuales para reasignar (Actualización completa)
+                instance.categorias.clear()
+
+                if categorias_input:
+                    # Dividimos por coma, limpiamos espacios y removemos duplicados en la entrada
+                    nombres_categorias = list(set([c.strip() for c in categorias_input.split(",") if c.strip()]))
+
+                    for nombre_cat in nombres_categorias:
+                        # Creacion 'En caliente'
+                        cat_obj, _ = Categoria.objects.get_or_create(nombre=nombre_cat)
+                        instance.categorias.add(cat_obj)
+
+                else:
+                    # Asignacion de Categoria generica por defecto
+                    cat_gen, _ = Categoria.objects.get_or_create(nombre=nombre_cat) 
+                    instance.categorias.add(cat_gen)
 
             return instance
