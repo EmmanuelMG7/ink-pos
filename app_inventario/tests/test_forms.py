@@ -15,24 +15,24 @@ class ProductoFormTests(TestCase):
         self.producto = Producto.objects.create(
             nombre="Borrador",
             marca=self.marca,
-            categoria=self.categoria,
             costo_compra=Decimal("50.00"),
             precio_venta=Decimal("100.00"),
             stock_actual=20,
             stock_minimo=5,
         )
+        self.producto.categorias.add(self.categoria)
 
     def test_producto_form_edicion_unbound(self):
         form = ProductoForm(instance=self.producto)
         self.assertEqual(form.fields["codigo"].initial, self.producto.codigo)
         self.assertEqual(form.fields["marca"].initial, "MarcaA")
-        self.assertEqual(form.fields["categoria"].initial, "CatA")
+        self.assertEqual(form.fields["categorias"].initial, "CatA")
 
     def test_producto_form_precio_menor_al_costo(self):
         data = {
             "nombre": "Regla",
             "marca": "Genérico",
-            "categoria": "CatA",
+            "categorias": "CatA",
             "costo_compra": "150.00",
             "precio_venta": "50.00",
             "stock_actual": "10",
@@ -42,11 +42,12 @@ class ProductoFormTests(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn("precio_venta", form.errors)
 
-    def test_producto_form_edicion_remover_categoria(self):
+    def test_producto_form_edicion_remover_categoria_asigna_generico(self):
+        """Si el campo categorías llega vacío, el formulario debe asignar 'Genérico'."""
         data = {
             "nombre": "Borrador Modificado",
             "marca": "MarcaA",
-            "categoria": "",
+            "categorias": "",
             "costo_compra": "50.00",
             "precio_venta": "120.00",
             "stock_actual": "20",
@@ -55,16 +56,34 @@ class ProductoFormTests(TestCase):
         form = ProductoForm(data=data, instance=self.producto)
         self.assertTrue(form.is_valid())
         prod = form.save()
-        self.assertIsNone(prod.categoria)
+        self.assertEqual(prod.categorias.count(), 1)
+        self.assertEqual(prod.categorias.first().nombre, "Genérico")
+
+    def test_producto_form_crea_categorias_multiples_en_caliente(self):
+        """Debe parsear el string separado por comas y crear categorías inexistentes."""
+        data = {
+            "nombre": "Marcadores Multi",
+            "marca": "MarcaA",
+            "categorias": "Arte, Escolar, Nuevo",
+            "costo_compra": "50.00",
+            "precio_venta": "120.00",
+            "stock_actual": "20",
+            "stock_minimo": "5",
+        }
+        form = ProductoForm(data=data)
+        self.assertTrue(form.is_valid())
+        prod = form.save()
+        nombres = [c.nombre for c in prod.categorias.all()]
+        self.assertEqual(len(nombres), 3)
+        self.assertIn("Arte", nombres)
+        self.assertIn("Nuevo", nombres)
 
     def test_producto_form_clean_edge_cases(self):
         form = ProductoForm()
-        # line 119: cleaned_data is None
         with patch.object(dj_forms.ModelForm, "clean", return_value=None):
             res = form.clean()
             self.assertEqual(res["costo_compra"], Decimal("0.00"))
 
-        # lines 123-124: costo_compra is None
         form2 = ProductoForm()
         form2.cleaned_data = {"precio_venta": Decimal("10.00"), "costo_compra": None}
         res2 = form2.clean()

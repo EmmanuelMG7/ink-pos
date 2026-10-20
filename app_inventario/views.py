@@ -61,12 +61,14 @@ def editar_producto(request, pk):
     """
     producto = get_object_or_404(Producto, pk=pk)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = ProductoForm(request.POST, instance=producto)
         if form.is_valid():
             # Actualizacion exitosa
             producto_actualizado = form.save()
-            messages.success(request, f"Producto '{producto_actualizado.nombre}' actualizado correctamente")
+            messages.success(
+                request, f"Producto '{producto_actualizado.nombre}' actualizado correctamente"
+            )
         else:
             # Si falla la validacion en backend, extrae los errores
             for field, err_list in form.error.items():
@@ -74,6 +76,7 @@ def editar_producto(request, pk):
                     messages.error(request, f"Error de validacion ({field}): {err}")
 
     return redirect("inventario:gestion")
+
 
 @login_required
 @permission_required("app_inventario.change_producto", raise_exception=True)

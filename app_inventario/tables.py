@@ -1,5 +1,7 @@
 import django_tables2 as tables
+
 from .models import Producto
+
 
 class ProductoTable(tables.Table):
     id = tables.Column(verbose_name="# ID")

@@ -116,9 +116,11 @@ class ProductoForm(BootstrapModelForm):
                 self.fields["marca"].initial = self.instance.marca.nombre
 
             # Precargar las categorías existentes separadas por comas para el frontend
-            if "categorias" in self.field:
+            if "categorias" in self.fields:
                 categorias_actuales = self.instance.categorias.all()
-                self.fields["categorias"].initial = ",".join([c.nombre for c in categorias_actuales])
+                self.fields["categorias"].initial = ",".join(
+                    [c.nombre for c in categorias_actuales]
+                )
 
     def clean(self):
         """
@@ -190,7 +192,6 @@ class ProductoForm(BootstrapModelForm):
             if commit:
                 instance.save()
 
-
             # Solo se procesan las categorías si se llamó a save() con intención de persistir
             if commit:
                 categorias_input = str(self.cleaned_data.get("categorias") or "").strip()
@@ -200,7 +201,9 @@ class ProductoForm(BootstrapModelForm):
 
                 if categorias_input:
                     # Dividimos por coma, limpiamos espacios y removemos duplicados en la entrada
-                    nombres_categorias = list(set([c.strip() for c in categorias_input.split(",") if c.strip()]))
+                    nombres_categorias = list(
+                        set([c.strip() for c in categorias_input.split(",") if c.strip()])
+                    )
 
                     for nombre_cat in nombres_categorias:
                         # Creacion 'En caliente'
@@ -209,7 +212,7 @@ class ProductoForm(BootstrapModelForm):
 
                 else:
                     # Asignacion de Categoria generica por defecto
-                    cat_gen, _ = Categoria.objects.get_or_create(nombre=nombre_cat) 
+                    cat_gen, _ = Categoria.objects.get_or_create(nombre="Genérico")
                     instance.categorias.add(cat_gen)
 
             return instance

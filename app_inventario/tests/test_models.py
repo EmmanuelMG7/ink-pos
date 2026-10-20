@@ -28,7 +28,6 @@ class InventarioModelosTests(TestCase):
         self.producto = Producto.objects.create(
             nombre="Lápiz",
             marca=self.marca,
-            categoria=self.categoria,
             costo_compra=Decimal("100.00"),
             precio_venta=Decimal("200.00"),
             stock_actual=10,

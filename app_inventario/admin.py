@@ -45,7 +45,7 @@ class ProductoAdmin(admin.ModelAdmin):
     list_filter = ("marca", "categorias", "activo")
     search_fields = ("nombre",)
 
-    @admin.display(description='Categorías')
+    @admin.display(description="Categorías")
     def obtener_categorias(self, obj):
         """Devuelve una cadena de texto con todas las categorias asociadas separadas por coma"""
         return ", ".join([c.nombre for c in obj.categorias.all()])
