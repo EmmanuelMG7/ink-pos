@@ -257,3 +257,81 @@ class PromocionesVentasIntegracionTests(TestCase):
         self.assertEqual(det_regalo.precio_unitario, self.prod_obsequio.precio_venta)
         self.assertEqual(det_regalo.monto_descuento, self.prod_obsequio.precio_venta)
         self.assertEqual(det_regalo.subtotal, Decimal("0.00"))
+
+    def test_venta_con_descuento_por_volumen_unidades_porcentual_y_monto_fijo(self):
+        # Regla por volumen: compre 3 o más unidades de prod_a, obtiene 10% de descuento
+        regla_vol = ReglaPromocion.objects.create(
+            nombre="Volumen 3+ Tintas 10%",
+            expresion_condicion=(
+                f"{self.prod_a.pk} in cart.cantidades and "
+                f"cart.cantidades[{self.prod_a.pk}] >= 3"
+            ),
+            activo=True,
+            es_acumulable=True,
+        )
+        AccionPromocion.objects.create(
+            regla_promocion=regla_vol,
+            tipo_accion=AccionPromocion.TipoAccion.PORCENTAJE,
+            valor_accion=Decimal("10.00"),
+            alcance_accion=AccionPromocion.AlcanceAccion.PRODUCTO,
+            producto_objetivo=self.prod_a,
+        )
+
+        # Caso 1: Compra 2 unidades (no cumple la cantidad mínima de 3)
+        items_insuficientes = [
+            {
+                "producto_id": self.prod_a.pk,
+                "nombre": self.prod_a.nombre,
+                "precio_unitario": self.prod_a.precio_venta,
+                "cantidad": 2,
+            }
+        ]
+        factura_sin_desc, _ = procesar_venta_con_promociones(
+            sesion_caja=self.caja,
+            empleado=self.empleado,
+            items=items_insuficientes,
+            cliente=self.cliente,
+        )
+        self.assertEqual(factura_sin_desc.monto_descuento, Decimal("0.00"))
+
+        # Caso 2: Compra 3 unidades de prod_a ($60,000 * 3 = $180,000)
+        # 10% de descuento = $18,000
+        items_cumplen = [
+            {
+                "producto_id": self.prod_a.pk,
+                "nombre": self.prod_a.nombre,
+                "precio_unitario": self.prod_a.precio_venta,
+                "cantidad": 3,
+            }
+        ]
+        factura_con_desc, _ = procesar_venta_con_promociones(
+            sesion_caja=self.caja,
+            empleado=self.empleado,
+            items=items_cumplen,
+            cliente=self.cliente,
+        )
+        self.assertEqual(factura_con_desc.subtotal, Decimal("180000.00"))
+        self.assertEqual(factura_con_desc.monto_descuento, Decimal("18000.00"))
+        self.assertEqual(factura_con_desc.total, Decimal("162000.00"))
+        det_a = DetalleFactura.objects.get(factura=factura_con_desc, producto=self.prod_a)
+        self.assertEqual(det_a.monto_descuento, Decimal("18000.00"))
+        self.assertEqual(det_a.subtotal, Decimal("162000.00"))
+
+        # Caso 3: Descuento por volumen de monto fijo por unidad ($5,000 por unidad)
+        regla_vol.acciones.all().delete()
+        AccionPromocion.objects.create(
+            regla_promocion=regla_vol,
+            tipo_accion=AccionPromocion.TipoAccion.MONTO_FIJO,
+            valor_accion=Decimal("5000.00"),  # $5,000 por unidad
+            alcance_accion=AccionPromocion.AlcanceAccion.PRODUCTO,
+            producto_objetivo=self.prod_a,
+        )
+        factura_monto_fijo, _ = procesar_venta_con_promociones(
+            sesion_caja=self.caja,
+            empleado=self.empleado,
+            items=items_cumplen,
+            cliente=self.cliente,
+        )
+        # 3 unidades x $5,000 = $15,000 de descuento total
+        self.assertEqual(factura_monto_fijo.monto_descuento, Decimal("15000.00"))
+        self.assertEqual(factura_monto_fijo.total, Decimal("165000.00"))
