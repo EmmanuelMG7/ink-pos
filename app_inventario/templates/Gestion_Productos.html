@@ -1,3 +1,4 @@
+<!-- cspell:disable -->
 {% extends 'Master.html' %}
 {% load django_tables2 %}
 {% block title %}
@@ -7,6 +8,8 @@
 {% block content %}
 
 {% include "modals/Modal_Agregar_Producto.html" %}
+<!-- NUEVO: Inyectar modal de edición -->
+{% include "Form_Modificar_Producto.html" %}
 
 <div class="d-flex flex-column h-100 overflow-hidden">
   <div class="d-flex p-2 gap-2 flex-shrink-0">
@@ -66,6 +69,63 @@
   {% endif %}
 </div>
 
+<!-- Lógica AJAX de Edición (HU7) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const formEditar = document.getElementById('form_editar_producto');
+    if (formEditar) {
+        document.body.addEventListener('click', function(e) {
+            const btnEditar = e.target.closest('.btn-editar-producto');
+            if (!btnEditar) return;
+
+            const productoId = btnEditar.getAttribute('data-producto-id');
+            formEditar.action = `/inventario/editar/${productoId}/`;
+
+            fetch(`/inventario/obtener/${productoId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    formEditar.querySelector('[name="codigo"]').value = data.codigo;
+                    formEditar.querySelector('[name="nombre"]').value = data.nombre;
+                    formEditar.querySelector('[name="precio_venta"]').value = data.precio_venta;
+                    formEditar.querySelector('[name="costo_compra"]').value = data.costo_compra;
+                    formEditar.querySelector('[name="stock_actual"]').value = data.stock_actual;
+                    formEditar.querySelector('[name="stock_minimo"]').value = data.stock_minimo;
+                    
+                    const selectImpuesto = formEditar.querySelector('[name="impuesto"]');
+                    if (selectImpuesto) selectImpuesto.value = data.impuesto;
+
+                    // Precarga de componentes de Búsqueda (Marca)
+                    const hiddenMarca = document.getElementById('marca_edit');
+                    if(hiddenMarca) {
+                        hiddenMarca.value = data.marca;
+                        const visibleMarca = document.getElementById('marca_edit_search');
+                        if(visibleMarca) visibleMarca.value = data.marca;
+                    }
+
+                    // Precarga de componentes Multi-Select (Categorías) a formato JSON para MultipleTagsField
+                    const hiddenCat = document.getElementById('categorias_edit');
+                    if(hiddenCat) {
+                        hiddenCat.value = JSON.stringify(data.categorias);
+                        // Emitimos evento change para que el script de tu compañero reconstruya los chips visuales
+                        hiddenCat.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                })
+                .catch(error => console.error('Error al cargar datos:', error));
+        });
+
+        // Reseteo de campos y URL al cancelar
+        const modalEditarEl = document.getElementById('modal_editar_producto');
+        if (modalEditarEl) {
+            modalEditarEl.addEventListener('hidden.bs.modal', function () {
+                formEditar.reset();
+                formEditar.action = "";
+                formEditar.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            });
+        }
+    }
+  });
+</script>
+
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     var toastElList = [].slice.call(document.querySelectorAll('.toast'))
@@ -73,7 +133,7 @@
       return new bootstrap.Toast(toastEl, {delay: 3000})
     })
     toastList.forEach(toast => toast.show())
-    // Inicializar popovers de Bootstrap
+    
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
     popoverTriggerList.forEach(function (popoverTriggerEl) {
       new bootstrap.Popover(popoverTriggerEl);
