@@ -64,20 +64,8 @@
   </div>
 </div>
 
-<!-- Modal Placeholder (Se implementará en el siguiente paso) -->
-<div class="modal fade" id="modal_crear_promocion" tabindex="-1" aria-labelledby="modalCrearPromocionLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalCrearPromocionLabel">Nueva Regla de Promoción</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p class="text-muted">El configurador de promociones se cargará aquí.</p>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- Modal de Creación de Promociones (Estilo Modos y Rutinas) -->
+{% include "promociones/modals/Modal_Crear_Promocion.html" %}
 
 <!-- Toast Container -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3">

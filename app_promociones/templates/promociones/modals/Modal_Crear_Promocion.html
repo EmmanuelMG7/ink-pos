@@ -1,0 +1,690 @@
+<div class="modal fade" id="modal_crear_promocion" tabindex="-1" aria-labelledby="modalCrearPromocionLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg">
+      <form id="form_crear_promocion" method="post" action="{% url 'promociones:gestion' %}">
+        {% csrf_token %}
+        <input type="hidden" name="cards_payload" id="cards_payload" value="[]">
+
+        <!-- Top Header estilo Modos y Rutinas -->
+        <div class="modal-header border-bottom bg-body-tertiary px-4 py-3">
+          <div class="d-flex align-items-center gap-3 w-100 me-3">
+            <div class="bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-3 p-2 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+              <i class="bi bi-tags-fill fs-4"></i>
+            </div>
+            <div class="flex-grow-1">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span id="badge_tipo_promocion" class="badge bg-secondary-subtle text-secondary border">Regla Automática</span>
+              </div>
+              <input
+                type="text"
+                name="nombre"
+                id="input_nombre_promocion"
+                class="form-control form-control-lg fw-bold border-0 bg-transparent p-0 fs-5"
+                placeholder="Nombre de la promoción (ej: 15% Descuento en Tintas)..."
+                required
+              >
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <button type="button" class="btn btn-outline-secondary px-3 py-1.5" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary px-4 py-1.5 fw-medium d-flex align-items-center gap-1">
+              <i class="bi bi-check2"></i> Guardar Promoción
+            </button>
+          </div>
+        </div>
+
+        <!-- Barra de Configuración Básica (Cupón y Descripción) -->
+        <div class="px-4 py-2 bg-body border-bottom">
+          <div class="row g-2 align-items-center">
+            <div class="col-md-4">
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" role="switch" name="es_cupon" id="switch_es_cupon" onchange="toggleCupon(this.checked)">
+                <label class="form-check-label small fw-medium" for="switch_es_cupon">¿Es un cupón promocional con código?</label>
+              </div>
+            </div>
+            <div class="col-md-3" id="container_codigo_cupon" style="display: none;">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text"><i class="bi bi-ticket-perforated"></i></span>
+                <input type="text" name="codigo_cupon" id="input_codigo_cupon" class="form-control font-monospace text-uppercase" placeholder="CÓDIGO (ej: BIENVENIDO10)">
+              </div>
+            </div>
+            <div class="col-md-5">
+              <input type="text" name="descripcion" class="form-control form-control-sm" placeholder="Descripción opcional del beneficio para el cliente...">
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Columnas: Si... (Condiciones) | Entonces... (Acciones) | Restricciones... (Límites) -->
+        <div class="modal-body p-4 bg-body-tertiary">
+          <div class="row g-3">
+
+            <!-- COLUMNA 1: SI... (Condiciones) -->
+            <div class="col-lg-4">
+              <div class="card h-100 border-0 shadow-sm bg-body">
+                <div class="card-body d-flex flex-column p-3">
+                  <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="badge rounded-circle bg-primary bg-opacity-10 text-primary p-2 fs-6 lh-1">1</span>
+                      <h6 class="fw-bold mb-0">Si...</h6>
+                    </div>
+                    <span class="small text-secondary">Condiciones de activación</span>
+                  </div>
+
+                  <!-- Contenedor dinámico de tarjetas de condición -->
+                  <div id="conditions_container" class="d-flex flex-column gap-2 mb-3 flex-grow-1" style="min-height: 220px;">
+                    <!-- Tarjeta inicial por defecto: Subtotal Mínimo -->
+                    <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="cond_subtotal" id="card_init_subtotal">
+                      <div class="d-flex align-items-start justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="p-2 rounded-2 bg-primary bg-opacity-10 text-primary lh-1">
+                            <i class="bi bi-cash-coin fs-6"></i>
+                          </div>
+                          <div>
+                            <span class="fw-semibold small d-block">Subtotal en Carrito</span>
+                            <span class="text-secondary" style="font-size: 0.75rem;">Monto mínimo requerido</span>
+                          </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('card_init_subtotal')">
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      </div>
+                      <div class="input-group input-group-sm">
+                        <span class="input-group-text">$</span>
+                        <input type="number" class="form-control font-monospace card-field" data-field="monto" value="50000" min="0" step="1000" oninput="actualizarPreview()">
+                        <span class="input-group-text">COP</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Botón Añadir Condición con Dropdown -->
+                  <div class="dropdown mt-auto">
+                    <button class="btn btn-outline-primary border-dashed w-100 py-2 d-flex align-items-center justify-content-center gap-2 dropdown-toggle small" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <i class="bi bi-plus-circle"></i> Añadir Condición
+                    </button>
+                    <ul class="dropdown-menu w-100 shadow-sm">
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" onclick="agregarTarjetaCondicion('cond_subtotal')">
+                          <i class="bi bi-cash-coin text-primary"></i> Subtotal Mínimo ($)
+                        </button>
+                      </li>
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" onclick="agregarTarjetaCondicion('cond_categoria')">
+                          <i class="bi bi-tags text-success"></i> Categoría Requerida en Carrito
+                        </button>
+                      </li>
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" onclick="agregarTarjetaCondicion('cond_fin_de_semana')">
+                          <i class="bi bi-calendar-event text-info"></i> Fin de Semana (Sáb - Dom)
+                        </button>
+                      </li>
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" onclick="agregarTarjetaCondicion('cond_primera_compra')">
+                          <i class="bi bi-person-badge text-warning"></i> Primera Compra del Cliente
+                        </button>
+                      </li>
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" onclick="agregarTarjetaCondicion('cond_cliente_frecuente')">
+                          <i class="bi bi-person-check text-purple"></i> Cliente Frecuente (N Compras)
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- COLUMNA 2: ENTONCES... (Acciones) -->
+            <div class="col-lg-4">
+              <div class="card h-100 border-0 shadow-sm bg-body">
+                <div class="card-body d-flex flex-column p-3">
+                  <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="badge rounded-circle bg-success bg-opacity-10 text-success p-2 fs-6 lh-1">2</span>
+                      <h6 class="fw-bold mb-0">Entonces...</h6>
+                    </div>
+                    <span class="small text-secondary">Beneficios a otorgar</span>
+                  </div>
+
+                  <!-- Contenedor dinámico de acciones -->
+                  <div id="actions_container" class="d-flex flex-column gap-2 mb-3 flex-grow-1" style="min-height: 220px;">
+                    <!-- Tarjeta inicial por defecto: Descuento Porcentual 10% -->
+                    <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="act_porcentaje" id="card_init_porcentaje">
+                      <div class="d-flex align-items-start justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="p-2 rounded-2 bg-success bg-opacity-10 text-success lh-1">
+                            <i class="bi bi-percent fs-6"></i>
+                          </div>
+                          <div>
+                            <span class="fw-semibold small d-block">Descuento Porcentual</span>
+                            <span class="text-secondary" style="font-size: 0.75rem;">Sobre todo el carrito</span>
+                          </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('card_init_porcentaje')">
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      </div>
+                      <div class="row g-2">
+                        <div class="col-6">
+                          <label class="form-label text-secondary mb-1" style="font-size: 0.7rem;">PORCENTAJE</label>
+                          <div class="input-group input-group-sm">
+                            <input type="number" class="form-control font-monospace card-field" data-field="porcentaje" value="10" min="1" max="100" step="0.5" oninput="actualizarPreview()">
+                            <span class="input-group-text">%</span>
+                          </div>
+                        </div>
+                        <div class="col-6">
+                          <label class="form-label text-secondary mb-1" style="font-size: 0.7rem;">ALCANCE</label>
+                          <select class="form-select form-select-sm card-field" data-field="alcance" onchange="actualizarPreview()">
+                            <option value="CARRITO" selected>Todo el carrito</option>
+                            <option value="ITEM_MAS_BARATO">Ítem más barato</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Botón Añadir Acción con Dropdown -->
+                  <div class="dropdown mt-auto">
+                    <button class="btn btn-outline-success border-dashed w-100 py-2 d-flex align-items-center justify-content-center gap-2 dropdown-toggle small" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <i class="bi bi-plus-circle"></i> Añadir Acción
+                    </button>
+                    <ul class="dropdown-menu w-100 shadow-sm">
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" onclick="agregarTarjetaAccion('act_porcentaje')">
+                          <i class="bi bi-percent text-success"></i> Descuento Porcentual (%)
+                        </button>
+                      </li>
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" onclick="agregarTarjetaAccion('act_monto_fijo')">
+                          <i class="bi bi-currency-dollar text-primary"></i> Descuento de Monto Fijo ($)
+                        </button>
+                      </li>
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" onclick="agregarTarjetaAccion('act_producto_regalo')">
+                          <i class="bi bi-gift text-danger"></i> Producto de Regalo (100% desc)
+                        </button>
+                      </li>
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" onclick="agregarTarjetaAccion('act_item_mas_barato')">
+                          <i class="bi bi-lightning-charge text-warning"></i> Ítem Más Barato (2x1)
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- COLUMNA 3: RESTRICCIONES... (Límites y Acumulación) -->
+            <div class="col-lg-4">
+              <div class="card h-100 border-0 shadow-sm bg-body">
+                <div class="card-body d-flex flex-column p-3">
+                  <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="badge rounded-circle bg-warning bg-opacity-10 text-warning p-2 fs-6 lh-1">3</span>
+                      <h6 class="fw-bold mb-0">Restricciones...</h6>
+                    </div>
+                    <span class="small text-secondary">Contención y límites</span>
+                  </div>
+
+                  <!-- Switch de Acumulable -->
+                  <div class="card border rounded-3 p-3 bg-body-tertiary mb-2 shadow-xs">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="p-2 rounded-2 bg-indigo bg-opacity-10 text-primary lh-1">
+                          <i class="bi bi-layers fs-6"></i>
+                        </div>
+                        <div>
+                          <span class="fw-semibold small d-block">¿Es Acumulable?</span>
+                          <span id="label_acumulable" class="text-success small fw-medium" style="font-size: 0.75rem;">Sí, combina con otras</span>
+                        </div>
+                      </div>
+                      <div class="form-check form-switch m-0">
+                        <input class="form-check-input" type="checkbox" role="switch" name="es_acumulable" id="switch_acumulable" checked onchange="toggleAcumulable(this.checked)">
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Contenedor dinámico de límites -->
+                  <div id="limits_container" class="d-flex flex-column gap-2 mb-3 flex-grow-1" style="min-height: 150px;">
+                    <!-- Las restricciones adicionales se agregarán aquí -->
+                  </div>
+
+                  <!-- Botón Añadir Restricción con Dropdown -->
+                  <div class="dropdown mt-auto">
+                    <button class="btn btn-outline-warning border-dashed w-100 py-2 d-flex align-items-center justify-content-center gap-2 dropdown-toggle small text-dark" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                      <i class="bi bi-plus-circle"></i> Añadir Restricción
+                    </button>
+                    <ul class="dropdown-menu w-100 shadow-sm">
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" onclick="agregarTarjetaLimite('lim_vigencia')">
+                          <i class="bi bi-calendar-range text-primary"></i> Rango de Fechas (Vigencia)
+                        </button>
+                      </li>
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" onclick="agregarTarjetaLimite('lim_usos_totales')">
+                          <i class="bi bi-123 text-purple"></i> Límite Global de Usos (Tienda)
+                        </button>
+                      </li>
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2" onclick="agregarTarjetaLimite('lim_usos_cliente')">
+                          <i class="bi bi-person-lock text-info"></i> Límite de Usos por Cliente
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Live Preview Footer estilo rule-engine -->
+        <div class="modal-footer bg-body border-top px-4 py-2 d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
+            <span class="badge bg-primary bg-opacity-10 text-primary font-monospace flex-shrink-0">AST rule-engine</span>
+            <code id="preview_expresion" class="text-secondary small font-monospace text-truncate" style="max-width: 600px;">
+              cart.subtotal >= 50000.0
+            </code>
+          </div>
+          <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <span class="badge bg-success-subtle text-success border border-success-subtle d-flex align-items-center gap-1">
+              <i class="bi bi-check-circle-fill"></i> Expresión Válida
+            </span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Select Options Cache para JavaScript -->
+<div id="opciones_categorias_cache" style="display: none;">
+  {% for cat in categorias %}
+    <option value="{{ cat.id }}">{{ cat.nombre }}</option>
+  {% endfor %}
+</div>
+
+<div id="opciones_productos_cache" style="display: none;">
+  {% for prod in productos %}
+    <option value="{{ prod.id }}">{{ prod.nombre }} (${{ prod.precio_venta }})</option>
+  {% endfor %}
+</div>
+
+<script>
+  let cardCounter = 100;
+
+  function toggleCupon(isCupon) {
+    const cont = document.getElementById('container_codigo_cupon');
+    const badge = document.getElementById('badge_tipo_promocion');
+    const inputCupon = document.getElementById('input_codigo_cupon');
+    if (isCupon) {
+      cont.style.display = 'block';
+      badge.textContent = 'Cupón Promocional';
+      badge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle';
+      inputCupon.required = true;
+    } else {
+      cont.style.display = 'none';
+      badge.textContent = 'Regla Automática';
+      badge.className = 'badge bg-secondary-subtle text-secondary border';
+      inputCupon.required = false;
+      inputCupon.value = '';
+    }
+  }
+
+  function toggleAcumulable(isAcumulable) {
+    const label = document.getElementById('label_acumulable');
+    if (isAcumulable) {
+      label.textContent = 'Sí, combina con otras';
+      label.className = 'text-success small fw-medium';
+    } else {
+      label.textContent = 'Exclusiva (No acumulable)';
+      label.className = 'text-warning small fw-medium';
+    }
+  }
+
+  function eliminarTarjeta(cardElemId) {
+    const el = document.getElementById(cardElemId);
+    if (el) {
+      el.remove();
+      actualizarPreview();
+    }
+  }
+
+  function getCategoriasOptions() {
+    return document.getElementById('opciones_categorias_cache')?.innerHTML || '<option value="">No hay categorías</option>';
+  }
+
+  function getProductosOptions() {
+    return document.getElementById('opciones_productos_cache')?.innerHTML || '<option value="">No hay productos</option>';
+  }
+
+  function agregarTarjetaCondicion(cardId) {
+    cardCounter++;
+    const elemId = 'card_' + cardId + '_' + cardCounter;
+    const container = document.getElementById('conditions_container');
+    let innerHtml = '';
+
+    if (cardId === 'cond_subtotal') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="cond_subtotal" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <div class="p-2 rounded-2 bg-primary bg-opacity-10 text-primary lh-1"><i class="bi bi-cash-coin fs-6"></i></div>
+              <div>
+                <span class="fw-semibold small d-block">Subtotal en Carrito</span>
+                <span class="text-secondary" style="font-size: 0.75rem;">Monto mínimo requerido</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">$</span>
+            <input type="number" class="form-control font-monospace card-field" data-field="monto" value="100000" min="0" step="1000" oninput="actualizarPreview()">
+            <span class="input-group-text">COP</span>
+          </div>
+        </div>`;
+    } else if (cardId === 'cond_categoria') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="cond_categoria" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <div class="p-2 rounded-2 bg-success bg-opacity-10 text-success lh-1"><i class="bi bi-tags fs-6"></i></div>
+              <div>
+                <span class="fw-semibold small d-block">Categoría Requerida</span>
+                <span class="text-secondary" style="font-size: 0.75rem;">Debe estar en el carrito</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <select class="form-select form-select-sm card-field" data-field="categoria_id" onchange="actualizarPreview()">
+            ${getCategoriasOptions()}
+          </select>
+        </div>`;
+    } else if (cardId === 'cond_fin_de_semana') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="cond_fin_de_semana" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+              <div class="p-2 rounded-2 bg-info bg-opacity-10 text-info lh-1"><i class="bi bi-calendar-event fs-6"></i></div>
+              <div>
+                <span class="fw-semibold small d-block">Fin de Semana</span>
+                <span class="text-secondary" style="font-size: 0.75rem;">Sábados y Domingos</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+        </div>`;
+    } else if (cardId === 'cond_primera_compra') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="cond_primera_compra" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+              <div class="p-2 rounded-2 bg-warning bg-opacity-10 text-warning lh-1"><i class="bi bi-person-badge fs-6"></i></div>
+              <div>
+                <span class="fw-semibold small d-block">Primera Compra</span>
+                <span class="text-secondary" style="font-size: 0.75rem;">Cliente sin historial</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+        </div>`;
+    } else if (cardId === 'cond_cliente_frecuente') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="cond_cliente_frecuente" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <div class="p-2 rounded-2 bg-primary bg-opacity-10 text-primary lh-1"><i class="bi bi-person-check fs-6"></i></div>
+              <div>
+                <span class="fw-semibold small d-block">Cliente Frecuente</span>
+                <span class="text-secondary" style="font-size: 0.75rem;">Historial de compras</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">Mínimo</span>
+            <input type="number" class="form-control card-field" data-field="compras_minimas" value="5" min="1" oninput="actualizarPreview()">
+            <span class="input-group-text">compras</span>
+          </div>
+        </div>`;
+    }
+
+    container.insertAdjacentHTML('beforeend', innerHtml);
+    actualizarPreview();
+  }
+
+  function agregarTarjetaAccion(cardId) {
+    cardCounter++;
+    const elemId = 'card_' + cardId + '_' + cardCounter;
+    const container = document.getElementById('actions_container');
+    let innerHtml = '';
+
+    if (cardId === 'act_porcentaje') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="act_porcentaje" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <div class="p-2 rounded-2 bg-success bg-opacity-10 text-success lh-1"><i class="bi bi-percent fs-6"></i></div>
+              <div>
+                <span class="fw-semibold small d-block">Descuento Porcentual</span>
+                <span class="text-secondary" style="font-size: 0.75rem;">Porcentaje de descuento</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label text-secondary mb-1" style="font-size: 0.7rem;">PORCENTAJE</label>
+              <div class="input-group input-group-sm">
+                <input type="number" class="form-control font-monospace card-field" data-field="porcentaje" value="15" min="1" max="100" step="0.5" oninput="actualizarPreview()">
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-secondary mb-1" style="font-size: 0.7rem;">ALCANCE</label>
+              <select class="form-select form-select-sm card-field" data-field="alcance" onchange="actualizarPreview()">
+                <option value="CARRITO">Todo el carrito</option>
+                <option value="ITEM_MAS_BARATO">Ítem más barato</option>
+              </select>
+            </div>
+          </div>
+        </div>`;
+    } else if (cardId === 'act_monto_fijo') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="act_monto_fijo" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <div class="p-2 rounded-2 bg-primary bg-opacity-10 text-primary lh-1"><i class="bi bi-currency-dollar fs-6"></i></div>
+              <div>
+                <span class="fw-semibold small d-block">Descuento Monto Fijo</span>
+                <span class="text-secondary" style="font-size: 0.75rem;">Valor directo en pesos</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">$</span>
+            <input type="number" class="form-control font-monospace card-field" data-field="monto" value="20000" min="1" step="1000" oninput="actualizarPreview()">
+            <span class="input-group-text">COP</span>
+          </div>
+        </div>`;
+    } else if (cardId === 'act_producto_regalo') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="act_producto_regalo" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <div class="p-2 rounded-2 bg-danger bg-opacity-10 text-danger lh-1"><i class="bi bi-gift fs-6"></i></div>
+              <div>
+                <span class="fw-semibold small d-block">Producto de Regalo</span>
+                <span class="text-secondary" style="font-size: 0.75rem;">100% descuento sujeto a stock</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="row g-2">
+            <div class="col-9">
+              <select class="form-select form-select-sm card-field" data-field="producto_id" onchange="actualizarPreview()">
+                ${getProductosOptions()}
+              </select>
+            </div>
+            <div class="col-3">
+              <input type="number" class="form-control form-control-sm card-field" data-field="cantidad" value="1" min="1" oninput="actualizarPreview()">
+            </div>
+          </div>
+        </div>`;
+    } else if (cardId === 'act_item_mas_barato') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="act_item_mas_barato" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <div class="p-2 rounded-2 bg-warning bg-opacity-10 text-warning lh-1"><i class="bi bi-lightning-charge fs-6"></i></div>
+              <div>
+                <span class="fw-semibold small d-block">Ítem Más Barato (2x1)</span>
+                <span class="text-secondary" style="font-size: 0.75rem;">Descuenta el producto de menor valor</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">Descuento</span>
+            <input type="number" class="form-control font-monospace card-field" data-field="porcentaje" value="100" min="1" max="100" oninput="actualizarPreview()">
+            <span class="input-group-text">%</span>
+          </div>
+        </div>`;
+    }
+
+    container.insertAdjacentHTML('beforeend', innerHtml);
+    actualizarPreview();
+  }
+
+  function agregarTarjetaLimite(cardId) {
+    cardCounter++;
+    const elemId = 'card_' + cardId + '_' + cardCounter;
+    const container = document.getElementById('limits_container');
+    let innerHtml = '';
+
+    if (cardId === 'lim_vigencia') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="lim_vigencia" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <div class="p-2 rounded-2 bg-primary bg-opacity-10 text-primary lh-1"><i class="bi bi-calendar-range fs-6"></i></div>
+              <div>
+                <span class="fw-semibold small d-block">Rango de Vigencia</span>
+                <span class="text-secondary" style="font-size: 0.75rem;">Periodo de validez</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label text-secondary mb-1" style="font-size: 0.7rem;">DESDE</label>
+              <input type="datetime-local" class="form-control form-control-sm card-field" data-field="fecha_inicio">
+            </div>
+            <div class="col-6">
+              <label class="form-label text-secondary mb-1" style="font-size: 0.7rem;">HASTA</label>
+              <input type="datetime-local" class="form-control form-control-sm card-field" data-field="fecha_fin">
+            </div>
+          </div>
+        </div>`;
+    } else if (cardId === 'lim_usos_totales') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="lim_usos_totales" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <div class="p-2 rounded-2 bg-primary bg-opacity-10 text-primary lh-1"><i class="bi bi-123 fs-6"></i></div>
+              <div>
+                <span class="fw-semibold small d-block">Límite Global de Usos</span>
+                <span class="text-secondary" style="font-size: 0.75rem;">Total para la tienda</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control card-field" data-field="limite_usos_total" value="100" min="1">
+            <span class="input-group-text">usos en total</span>
+          </div>
+        </div>`;
+    } else if (cardId === 'lim_usos_cliente') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="lim_usos_cliente" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <div class="p-2 rounded-2 bg-info bg-opacity-10 text-info lh-1"><i class="bi bi-person-lock fs-6"></i></div>
+              <div>
+                <span class="fw-semibold small d-block">Límite por Cliente</span>
+                <span class="text-secondary" style="font-size: 0.75rem;">Máximo de usos por cliente</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="input-group input-group-sm">
+            <input type="number" class="form-control card-field" data-field="limite_usos_por_cliente" value="1" min="1">
+            <span class="input-group-text">por cliente</span>
+          </div>
+        </div>`;
+    }
+
+    container.insertAdjacentHTML('beforeend', innerHtml);
+    actualizarPreview();
+  }
+
+  function serializarTarjetas() {
+    const cards = [];
+    document.querySelectorAll('.card-item').forEach(cardEl => {
+      const cardId = cardEl.getAttribute('data-card-id');
+      const config = {};
+      cardEl.querySelectorAll('.card-field').forEach(fieldEl => {
+        const fieldName = fieldEl.getAttribute('data-field');
+        if (fieldName) {
+          config[fieldName] = fieldEl.value;
+        }
+      });
+      cards.push({ card_id: cardId, ...config });
+    });
+    return cards;
+  }
+
+  function actualizarPreview() {
+    const parts = [];
+    document.querySelectorAll('#conditions_container .card-item').forEach(cardEl => {
+      const cardId = cardEl.getAttribute('data-card-id');
+      if (cardId === 'cond_subtotal') {
+        const val = cardEl.querySelector('[data-field="monto"]')?.value || '0';
+        parts.push(`cart.subtotal >= ${parseFloat(val) || 0}`);
+      } else if (cardId === 'cond_categoria') {
+        const cat = cardEl.querySelector('[data-field="categoria_id"]')?.value || '1';
+        parts.push(`items.exists(categoria_id == ${parseInt(cat) || 1})`);
+      } else if (cardId === 'cond_fin_de_semana') {
+        parts.push('temporal.es_fin_de_semana == true');
+      } else if (cardId === 'cond_primera_compra') {
+        parts.push('cliente.es_primera_compra == true');
+      } else if (cardId === 'cond_cliente_frecuente') {
+        const cmp = cardEl.querySelector('[data-field="compras_minimas"]')?.value || '5';
+        parts.push(`cliente.total_compras_historicas >= ${parseInt(cmp) || 1}`);
+      }
+    });
+
+    const previewEl = document.getElementById('preview_expresion');
+    if (previewEl) {
+      previewEl.textContent = parts.length > 0 ? parts.join(' and ') : 'true';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('form_crear_promocion');
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        const cards = serializarTarjetas();
+        const payloadInput = document.getElementById('cards_payload');
+        if (payloadInput) {
+          payloadInput.value = JSON.stringify(cards);
+        }
+      });
+    }
+  });
+</script>
