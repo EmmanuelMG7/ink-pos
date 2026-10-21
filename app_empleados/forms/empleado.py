@@ -44,6 +44,7 @@ class EmpleadoForm(BootstrapModelForm):
 
     contrasena = forms.CharField(
         label="",
+        required=False,
         min_length=8,
         validators=[PasswordValidator],
         widget=forms.PasswordInput(
@@ -136,6 +137,13 @@ class EmpleadoForm(BootstrapModelForm):
         if query.exists():
             raise forms.ValidationError(f"Ya existe un empleado con el usuario '{usuario}'.")
         return usuario
+
+    def clean_contrasena(self):
+        contrasena = self.cleaned_data.get("contrasena")
+        # Si es un empleado nuevo (no tiene PK) y el campo viene vacío
+        if not self.instance.pk and not contrasena:
+            raise forms.ValidationError("La contraseña es obligatoria para nuevos empleados.")
+        return contrasena
 
     def clean(self):
         cleaned_data = super().clean()
