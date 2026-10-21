@@ -102,6 +102,9 @@ class ProductoForm(BootstrapModelForm):
         """
         super().__init__(*args, **kwargs)
 
+        if "costo_compra" in self.fields:
+            self.fields["costo_compra"].required = False
+
         if self.instance and self.instance.pk and not self.is_bound:
             if "codigo" in self.fields:
                 self.fields["codigo"].initial = self.instance.codigo
@@ -147,6 +150,9 @@ class ProductoForm(BootstrapModelForm):
         if costo_compra is None:
             costo_compra = Decimal("0.00")
             cleaned_data["costo_compra"] = costo_compra
+            # Blindaje: Borrar el error de validación inicial que Django pone por campo vacío
+            if "costo_compra" in self.errors:
+                del self.errors["costo_compra"]
 
         # 2. Obtener precio de venta limpio
         precio_venta = cleaned_data.get("precio_venta")

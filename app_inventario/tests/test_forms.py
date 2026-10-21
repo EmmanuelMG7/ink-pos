@@ -212,7 +212,7 @@ class ProductoFormTests(TestCase):
             "costo_compra": "",  # Vacío
         }
         form = ProductoForm(data)
-        self.assertTrue(form.is_valid())
+        self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data["costo_compra"], Decimal("0.00"))
 
     def test_precio_venta_menor_al_costo_falla_en_formulario(self):

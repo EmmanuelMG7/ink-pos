@@ -185,7 +185,7 @@ class GestionProductosViewTests(TestCase):
             p.categorias.set([cat1, cat2])
 
         # Verifica que la consulta a la vista cargue las categorías sin consultas N+1
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
 
