@@ -1,79 +1,10 @@
-import json
 from decimal import Decimal
 
 from django import forms
 from django.db import transaction
 
-from app_common.forms import BootstrapModelForm
+from app_common.forms import BootstrapModelForm, MultipleTagsField
 from app_inventario.models import Categoria, Marca, Producto
-
-
-class MultipleHiddenWidget(forms.Widget):
-    """
-    Widget para extraer listas de valores desde QueryDict (múltiples inputs con el mismo nombre).
-    """
-
-    def value_from_datadict(self, data, files, name):
-        if hasattr(data, "getlist"):
-            val = data.getlist(name)
-            if len(val) > 1:
-                return val
-            if len(val) == 1:
-                return val[0]
-            return []
-        return data.get(name, [])
-
-    def render(self, name, value, attrs=None, renderer=None):
-        return ""
-
-
-class MultipleCategoriasField(forms.Field):
-    """
-    Campo personalizado para gestionar la entrada de múltiples categorías.
-    Soporta listas directas (de QueryDict o dict), cadenas separadas por coma,
-    y listas en formato JSON, eliminando duplicados de forma insensible a mayúsculas.
-    """
-
-    widget = MultipleHiddenWidget
-
-    def to_python(self, value):
-        if not value:
-            return []
-
-        if isinstance(value, (list, tuple)):
-            raw = value
-        elif isinstance(value, str):
-            s = value.strip()
-            if not s:
-                return []
-            try:
-                parsed = json.loads(s)
-                if isinstance(parsed, list):
-                    raw = parsed
-                else:
-                    raw = [s]
-            except Exception:
-                raw = s.split(",")
-        else:
-            raw = [value]
-
-        result = []
-        vistos = set()
-        for item in raw:
-            if isinstance(item, str):
-                name = item.strip()
-            else:
-                name = str(getattr(item, "nombre", item)).strip()
-
-            if not name or name.lower() == "ninguna":
-                continue
-
-            name_lower = name.lower()
-            if name_lower not in vistos:
-                vistos.add(name_lower)
-                result.append(name)
-
-        return result
 
 
 class ProductoForm(BootstrapModelForm):
@@ -107,9 +38,8 @@ class ProductoForm(BootstrapModelForm):
         widget=forms.HiddenInput(),
     )
 
-    categorias = MultipleCategoriasField(
+    categorias = MultipleTagsField(
         required=False,
-        widget=MultipleHiddenWidget(),
     )
 
     class Meta:
