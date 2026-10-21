@@ -1,3 +1,4 @@
+<!-- cspell:disable -->
 {% extends 'Master.html' %}
 {% load django_tables2 %} 
 {% block title %} 
@@ -7,6 +8,8 @@
 {% block content %}
 
 {% include "modals/Modal_Agregar_Empleado.html" %}
+<!-- NUEVO: Inyectar modal de edición -->
+{% include "Form_Modificar_Empleado.html" %}
 
 <div class="d-flex flex-column h-100 overflow-hidden">
   <div class="d-flex p-2 gap-2 flex-shrink-0">
@@ -55,11 +58,54 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    // 1. Toasts
     var toastElList = [].slice.call(document.querySelectorAll('.toast'))
     var toastList = toastElList.map(function (toastEl) {
       return new bootstrap.Toast(toastEl, {delay: 3000})
     })
     toastList.forEach(toast => toast.show())
+
+    // 2. Lógica AJAX de Edición (HU8)
+    const formEditar = document.getElementById('form_editar_empleado');
+    if (formEditar) {
+        document.body.addEventListener('click', function(e) {
+            const btnEditar = e.target.closest('.btn-editar-empleado');
+            if (!btnEditar) return;
+
+            const empleadoId = btnEditar.getAttribute('data-empleado-id');
+            formEditar.action = `/empleados/editar/${empleadoId}/`;
+
+            fetch(`/empleados/obtener/${empleadoId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    formEditar.querySelector('[name="tipo_documento"]').value = data.tipo_documento;
+                    formEditar.querySelector('[name="identificacion"]').value = data.identificacion;
+                    formEditar.querySelector('[name="nombre"]').value = data.nombre;
+                    formEditar.querySelector('[name="usuario"]').value = data.usuario;
+                    formEditar.querySelector('[name="telefono"]').value = data.telefono;
+                    
+                    const checkboxAdmin = formEditar.querySelector('[name="es_admin"]');
+                    if (checkboxAdmin) {
+                        checkboxAdmin.checked = data.es_admin;
+                    }
+                    
+                    // La contraseña siempre debe estar vacía por seguridad
+                    const inputPassword = formEditar.querySelector('[name="contrasena"]');
+                    if (inputPassword) inputPassword.value = '';
+                })
+                .catch(error => console.error('Error al obtener datos del empleado:', error));
+        });
+
+        // 3. Reseteo automático al cancelar o cerrar el modal
+        const modalEditarEl = document.getElementById('modal_editar_empleado');
+        if (modalEditarEl) {
+            modalEditarEl.addEventListener('hidden.bs.modal', function () {
+                formEditar.reset();
+                formEditar.action = "";
+                formEditar.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            });
+        }
+    }
   });
 </script>
 
