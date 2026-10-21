@@ -10,6 +10,67 @@
 {% include "modals/Modal_Agregar_Producto.html" %}
 <!-- NUEVO: Inyectar modal de edición -->
 {% include "Form_Modificar_Producto.html" %}
+<!-- Modal Único de Confirmación de Eliminación -->
+<div class="modal fade" id="modal_eliminar_producto" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <div class="modal-body text-center mt-3">
+        <p class="fs-5 mb-1">¿Estás seguro de que deseas eliminar este producto?</p>
+        <!-- Elemento dinámico para inyectar el texto mediante AJAX -->
+        <p class="fs-4 fw-bold text-light" id="texto_producto_eliminar">
+        <span class="spinner-border spinner-border-sm text-danger" role="status" aria-hidden="true"></span> Cargando...
+        </p>
+        <div class="alert alert-warning mt-4 text-start small mb-0" role="alert">
+          <strong>Nota:</strong> Esta acción cambiará el estado del producto a <em>descontinuado</em>. No aparecerá en el módulo de ventas, pero se conservará en la base de datos para mantener la integridad de las facturas históricas.
+        </div>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form action="" method="post" class="m-0" id="form_eliminar_producto">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Sí, Eliminar Producto</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lógica Dinámica de Eliminación (HU9) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const modalEliminarEl = document.getElementById('modal_eliminar_producto');
+    if (!modalEliminarEl) return;
+    
+    const modalEliminarObj = new bootstrap.Modal(modalEliminarEl);
+    const formEliminar = document.getElementById('form_eliminar_producto');
+    const textoProducto = document.getElementById('texto_producto_eliminar');
+
+    document.body.addEventListener('click', function(e) {
+        const btnEliminar = e.target.closest('.btn-eliminar-producto');
+        if (!btnEliminar) return;
+
+        // Extraer los datos directamente del botón
+        const productoId = btnEliminar.getAttribute('data-producto-id');
+        const productoCodigo = btnEliminar.getAttribute('data-producto-codigo');
+        const productoNombre = btnEliminar.getAttribute('data-producto-nombre');
+        
+        // Preparar el formulario y el texto (sin guiones extraños ni saltos de línea)
+        formEliminar.action = `/inventario/eliminar/${productoId}/`;
+        textoProducto.textContent = `${productoCodigo} - ${productoNombre}`;
+        
+        // Mostrar el modal
+        modalEliminarObj.show();
+    });
+  });
+</script>
 
 <div class="d-flex flex-column h-100 overflow-hidden">
   <div class="d-flex p-2 gap-2 flex-shrink-0">

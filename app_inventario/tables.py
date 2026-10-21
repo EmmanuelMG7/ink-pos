@@ -27,12 +27,14 @@ class ProductoTable(tables.Table):
             data-producto-id="{{ record.id }}">
                 <i class="bi bi-pencil-square"></i>
             </button>
-            {% endif %}
-            <button type="button" class="btn btn-sm btn-outline-danger"
-            title="Eliminar" data-bs-toggle="modal"
-            data-bs-target="#modal_eliminar_{{ record.id }}">
+            <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-producto"
+            title="Eliminar"
+            data-producto-id="{{ record.id }}"
+            data-producto-codigo="{{ record.codigo }}"
+            data-producto-nombre="{{ record.nombre }}">
                 <i class="bi bi-trash"></i>
             </button>
+            {% endif %}
         </div>
         """,
         orderable=False,

@@ -1,7 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
 
 from .forms import ProductoForm
@@ -33,7 +35,8 @@ def gestion_productos(request):
 
     # Consultar productos optimizado con prefetch_related para categorías
     productos_queryset = (
-        Producto.objects.select_related("marca", "impuesto")
+        Producto.objects.filter(activo=True)
+        .select_related("marca", "impuesto")
         .prefetch_related("categorias")
         .order_by("-id")
     )
@@ -95,3 +98,20 @@ def obtener_producto(request, pk):
         "impuesto": producto.impuesto_id if producto.impuesto else "",
     }
     return JsonResponse(data)
+
+
+@login_required
+@permission_required("app_inventario.delete_producto", raise_exception=True)
+@require_POST
+def eliminar_producto(request, pk):
+    producto = get_object_or_404(Producto, pk=pk)
+    try:
+        with transaction.atomic():
+            producto.activo = False
+            # Se especifica update_fields por rendimiento (HU9)
+            producto.save(update_fields=["activo"], skip_clean=True)
+        messages.success(request, f"Producto '{producto.nombre}' eliminado correctamente.")
+    except Exception as e:
+        messages.error(request, f"Hubo un error al eliminar el producto: {str(e)}")
+
+    return redirect("inventario:gestion")
