@@ -10,7 +10,7 @@ from app_clientes.models import Cliente
 from app_empleados.models import Empleado
 from app_inventario.models import Marca, Producto
 from app_ventas.models import (
-    Descuento,
+    DetalleFactura,
     Devolucion,
     Factura,
     PagoFactura,
@@ -53,18 +53,47 @@ class VentasBoundaryTests(TestCase):
             fecha_fin_vigencia=date.today() + timedelta(days=365),
         )
 
-    def test_descuento_porcentual_limite_cero_y_cien_valido(self):
-        """Descuentos de 0% y 100% son límites válidos."""
-        desc_cero = Descuento.objects.create(nombre="Desc 0%", valor=Decimal("0.00"))
-        desc_cien = Descuento.objects.create(nombre="Desc 100%", valor=Decimal("100.00"))
-        self.assertEqual(desc_cero.valor, Decimal("0.00"))
-        self.assertEqual(desc_cien.valor, Decimal("100.00"))
+    def test_detalle_factura_monto_descuento_limite_valido(self):
+        """Detalle con descuento cero o parcial es válido y afecta el subtotal."""
+        fac = Factura.objects.create(
+            codigo="FAC-0001",
+            sesion_caja=self.sesion_caja,
+            cliente=self.cliente,
+            empleado=self.empleado,
+            subtotal=Decimal("20000.00"),
+            monto_descuento=Decimal("5000.00"),
+            total=Decimal("15000.00"),
+        )
+        det = DetalleFactura.objects.create(
+            factura=fac,
+            producto=self.producto,
+            cantidad=1,
+            precio_unitario=Decimal("25000.00"),
+            monto_descuento=Decimal("5000.00"),
+            subtotal=Decimal("20000.00"),
+        )
+        self.assertEqual(det.monto_descuento, Decimal("5000.00"))
+        self.assertEqual(det.subtotal, Decimal("20000.00"))
 
-    def test_descuento_porcentual_supera_cien_invalido(self):
-        """Descuento porcentual de 100.01% debe fallar."""
-        desc = Descuento(nombre="Desc Ilegal", valor=Decimal("100.01"))
+    def test_detalle_factura_monto_descuento_negativo_invalido(self):
+        """Monto de descuento negativo en detalle factura debe fallar."""
+        fac = Factura.objects.create(
+            codigo="FAC-0002",
+            sesion_caja=self.sesion_caja,
+            cliente=self.cliente,
+            empleado=self.empleado,
+            subtotal=Decimal("25000.00"),
+            total=Decimal("25000.00"),
+        )
+        det = DetalleFactura(
+            factura=fac,
+            producto=self.producto,
+            cantidad=1,
+            precio_unitario=Decimal("25000.00"),
+            monto_descuento=Decimal("-1000.00"),
+        )
         with self.assertRaises(ValidationError):
-            desc.save()
+            det.full_clean()
 
     def test_resolucion_dian_rangos_limite_igual_valido(self):
         """Resolución con rango_desde == rango_hasta (ej: 1 a 1) es límite válido."""

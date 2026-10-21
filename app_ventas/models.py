@@ -3,131 +3,11 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Sum
-from django.utils import timezone
 
 from app_caja.models import SesionCaja
 from app_clientes.models import Cliente
 from app_empleados.models import Empleado
-from app_inventario.models import Categoria, Producto
-
-
-class Descuento(models.Model):
-    class TipoCalculo(models.TextChoices):
-        PORCENTAJE = "PORCENTAJE", "Porcentaje (%)"
-        MONTO_FIJO = "MONTO_FIJO", "Monto Fijo ($)"
-
-    class Alcance(models.TextChoices):
-        GENERAL = "GENERAL", "A toda la factura"
-        PRODUCTO = "PRODUCTO", "A un producto específico"
-        CATEGORIA = "CATEGORIA", "A una categoría específica"
-
-    nombre = models.CharField(max_length=100, default="Descuento")
-    codigo_cupon = models.CharField(max_length=30, blank=True, null=True, unique=True)
-    tipo_calculo = models.CharField(
-        max_length=15,
-        choices=TipoCalculo.choices,
-        default=TipoCalculo.PORCENTAJE,
-    )
-    valor = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
-    alcance = models.CharField(max_length=15, choices=Alcance.choices, default=Alcance.GENERAL)
-
-    fecha_inicio = models.DateTimeField(default=timezone.now)
-    fecha_fin = models.DateTimeField(null=True, blank=True)
-    limite_usos = models.PositiveIntegerField(null=True, blank=True)
-    veces_usado = models.PositiveIntegerField(default=0)
-    activo = models.BooleanField(default=True)
-
-    productos = models.ManyToManyField(
-        Producto,
-        blank=True,
-        related_name="descuentos",
-        help_text="Productos específicos a los que aplica este descuento",
-    )
-    categorias = models.ManyToManyField(
-        Categoria,
-        blank=True,
-        related_name="descuentos",
-        help_text="Categorías completas a las que aplica este descuento",
-    )
-
-    class Meta:
-        verbose_name = "Descuento"
-        verbose_name_plural = "Descuentos"
-        constraints = [
-            models.CheckConstraint(
-                condition=models.Q(valor__gte=0),
-                name="chk_descuento_valor_gte_0",
-            ),
-            models.CheckConstraint(
-                condition=(
-                    models.Q(tipo_calculo="PORCENTAJE", valor__lte=100)
-                    | models.Q(tipo_calculo="MONTO_FIJO")
-                ),
-                name="chk_descuento_porcentaje_max_100",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(veces_usado__gte=0),
-                name="chk_descuento_veces_usado_gte_0",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(limite_usos__isnull=True) | models.Q(limite_usos__gt=0),
-                name="chk_descuento_limite_usos_valido",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(limite_usos__isnull=True)
-                | models.Q(veces_usado__lte=models.F("limite_usos")),
-                name="chk_descuento_usos_no_superan_limite",
-            ),
-            models.CheckConstraint(
-                condition=models.Q(fecha_fin__isnull=True)
-                | models.Q(fecha_fin__gte=models.F("fecha_inicio")),
-                name="chk_descuento_vigencia_fechas",
-            ),
-            models.CheckConstraint(
-                condition=~models.Q(nombre=""),
-                name="chk_descuento_nombre_no_vacio",
-            ),
-        ]
-
-    def clean(self):
-        super().clean()
-        if self.nombre:
-            self.nombre = self.nombre.strip()
-        if not self.nombre:
-            raise ValidationError({"nombre": "El nombre del descuento no puede estar vacío."})
-
-        if self.codigo_cupon:
-            self.codigo_cupon = self.codigo_cupon.strip().upper()
-
-        if self.valor is not None:
-            if self.valor < 0:
-                raise ValidationError({"valor": "El valor del descuento no puede ser negativo."})
-            if self.tipo_calculo == Descuento.TipoCalculo.PORCENTAJE and self.valor > 100:
-                raise ValidationError(
-                    {"valor": "El porcentaje de descuento no puede superar el 100%."}
-                )
-
-        if self.fecha_fin and self.fecha_inicio and self.fecha_fin < self.fecha_inicio:
-            raise ValidationError(
-                {"fecha_fin": "La fecha final no puede ser anterior a la fecha inicial."}
-            )
-
-        if self.limite_usos is not None:
-            if self.limite_usos <= 0:
-                raise ValidationError({"limite_usos": "El límite de usos debe ser mayor a 0."})
-            if self.veces_usado > self.limite_usos:
-                raise ValidationError(
-                    {"veces_usado": "La cantidad de usos no puede superar el límite establecido."}
-                )
-
-    def save(self, *args, skip_clean=False, **kwargs):
-        if not skip_clean:
-            self.full_clean()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        simbolo = "%" if self.tipo_calculo == Descuento.TipoCalculo.PORCENTAJE else "$"
-        return f"{self.nombre} ({self.valor}{simbolo})"
+from app_inventario.models import Producto
 
 
 class ResolucionDIAN(models.Model):
@@ -250,13 +130,6 @@ class Factura(models.Model):
     sesion_caja = models.ForeignKey(SesionCaja, on_delete=models.PROTECT)
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT)
     empleado = models.ForeignKey(Empleado, on_delete=models.PROTECT)
-    descuento = models.ForeignKey(
-        Descuento,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="facturas",
-    )
     monto_descuento = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
     total_impuesto = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
@@ -363,6 +236,7 @@ class DetalleFactura(models.Model):
     costo_unitario_historico = models.DecimalField(
         max_digits=12, decimal_places=2, default=Decimal("0.00")
     )
+    monto_descuento = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
     tarifa_impuesto = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     monto_impuesto = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
@@ -388,6 +262,10 @@ class DetalleFactura(models.Model):
             models.CheckConstraint(
                 condition=models.Q(monto_impuesto__gte=0),
                 name="chk_det_fac_monto_impuesto_gte_0",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(monto_descuento__gte=0),
+                name="chk_det_fac_monto_descuento_gte_0",
             ),
             models.CheckConstraint(
                 condition=models.Q(subtotal__gte=0),
@@ -422,6 +300,11 @@ class DetalleFactura(models.Model):
                 {"monto_impuesto": "El monto del impuesto no puede ser negativo."}
             )
 
+        if self.monto_descuento is not None and self.monto_descuento < 0:
+            raise ValidationError(
+                {"monto_descuento": "El monto del descuento no puede ser negativo."}
+            )
+
         # No modificar items de facturas ya pagadas o anuladas
         if self.factura and self.factura.estado in [
             Factura.EstadoFactura.PAGADA,
@@ -447,7 +330,12 @@ class DetalleFactura(models.Model):
                 raise ValidationError({"cantidad": msg})
 
         if self.cantidad is not None and self.precio_unitario is not None:
-            self.subtotal = Decimal(str(self.cantidad)) * Decimal(str(self.precio_unitario))
+            bruto = Decimal(str(self.cantidad)) * Decimal(str(self.precio_unitario))
+            desc = self.monto_descuento or Decimal("0.00")
+            if desc > bruto:
+                msg = "El monto del descuento no puede superar el valor bruto del detalle."
+                raise ValidationError({"monto_descuento": msg})
+            self.subtotal = bruto - desc
 
     def save(self, *args, skip_clean=False, **kwargs):
         if self.producto:
@@ -456,7 +344,9 @@ class DetalleFactura(models.Model):
             if self.precio_unitario is None:
                 self.precio_unitario = self.producto.precio_venta
         if self.cantidad is not None and self.precio_unitario is not None and self.subtotal is None:
-            self.subtotal = Decimal(str(self.cantidad)) * Decimal(str(self.precio_unitario))
+            bruto = Decimal(str(self.cantidad)) * Decimal(str(self.precio_unitario))
+            desc = self.monto_descuento or Decimal("0.00")
+            self.subtotal = max(Decimal("0.00"), bruto - desc)
         if not skip_clean:
             self.full_clean()
         super().save(*args, **kwargs)
