@@ -12,6 +12,7 @@
 {#   - button_class: (Opcional) Clases adicionales para el botón toggle #}
 
 {% firstof id "dropdown" as field_id %}
+{% firstof name field_id as field_name %}
 {% firstof default_value "Ninguna" as initial_default %}
 {% firstof value default_value "Ninguna" as current_val %}
 
@@ -24,7 +25,7 @@
 
   <input 
     type="hidden" 
-    name="{{ name }}" 
+    name="{{ field_name }}" 
     id="input_{{ field_id }}_nombre" 
     class="searchable-hidden-input"
     value="{{ current_val }}" 
@@ -49,6 +50,7 @@
       type="button" 
       id="btn_dropdown_{{ field_id }}" 
       data-bs-toggle="dropdown" 
+      data-bs-reference="parent"
       aria-expanded="false"
       style="min-width: 0;">
       <span id="label_{{ field_id }}_seleccionada"
@@ -59,14 +61,15 @@
     </button>
 
     <div class="dropdown-menu p-2 shadow w-100"
-      style="max-height: 250px; overflow-y: auto;"
+      style="max-height: 250px; overflow-y: auto; box-sizing: border-box;"
       aria-labelledby="btn_dropdown_{{ field_id }}"
     >
       {% with ph_text=placeholder|default:None %}
       <input 
         type="text" 
-        class="form-control form-control-sm mb-2 searchable-input" 
+        class="form-control form-control-sm mb-2 searchable-input w-100" 
         id="search_{{ field_id }}_input" 
+        style="box-sizing: border-box;"
         placeholder="{% if ph_text %}{{ ph_text }}{% elif label %}Buscar o crear {{ label|lower }}...{% else %}Buscar o crear...{% endif %}"
         autocomplete="off" 
       />

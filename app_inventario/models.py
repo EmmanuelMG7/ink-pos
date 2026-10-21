@@ -132,10 +132,8 @@ class Impuesto(models.Model):
 class Producto(models.Model):
     nombre = models.CharField(max_length=150, unique=True)
     marca = models.ForeignKey(Marca, on_delete=models.PROTECT, related_name="productos")
-    categoria = models.ForeignKey(
+    categorias = models.ManyToManyField(
         Categoria,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name="productos",
     )

@@ -73,6 +73,11 @@
       return new bootstrap.Toast(toastEl, {delay: 3000})
     })
     toastList.forEach(toast => toast.show())
+    // Inicializar popovers de Bootstrap
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.forEach(function (popoverTriggerEl) {
+      new bootstrap.Popover(popoverTriggerEl);
+    });
   });
 </script>
 
