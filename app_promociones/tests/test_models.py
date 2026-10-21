@@ -35,19 +35,19 @@ class PromocionesModelosTests(TestCase):
         self.producto = Producto.objects.create(
             nombre="Tinta Cyan Promo",
             marca=self.marca,
-            categoria=self.categoria,
             costo_compra=Decimal("12000.00"),
             precio_venta=Decimal("24000.00"),
             stock_actual=15,
         )
+        self.producto.categorias.set([self.categoria])
         self.producto_regalo = Producto.objects.create(
             nombre="Libreta Regalo",
             marca=self.marca,
-            categoria=self.categoria,
             costo_compra=Decimal("2000.00"),
             precio_venta=Decimal("5000.00"),
             stock_actual=10,
         )
+        self.producto_regalo.categorias.set([self.categoria])
 
     def test_regla_promocion_clean_and_str(self):
         # Nombre vacío

@@ -91,7 +91,10 @@ class ActionApplicator:
             return candidatos
         elif accion.alcance_accion == AccionPromocion.AlcanceAccion.CATEGORIA:
             return [
-                it for it in candidatos if it.get("categoria_id") == accion.categoria_objetivo_id
+                it
+                for it in candidatos
+                if it.get("categoria_id") == accion.categoria_objetivo_id
+                or accion.categoria_objetivo_id in it.get("categoria_ids", [])
             ]
         elif accion.alcance_accion == AccionPromocion.AlcanceAccion.PRODUCTO:
             return [it for it in candidatos if it.get("producto_id") == accion.producto_objetivo_id]
@@ -120,11 +123,12 @@ class ActionApplicator:
 
         precio = prod.precio_venta
         bruto = (Decimal(str(cant)) * precio).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        cat = prod.categorias.first()
         linea_regalo = {
             "producto_id": prod.pk,
             "nombre": f"{prod.nombre} (Obsequio)",
-            "categoria_id": prod.categoria_id,
-            "categoria_nombre": prod.categoria.nombre if prod.categoria else "",
+            "categoria_id": cat.pk if cat else None,
+            "categoria_nombre": cat.nombre if cat else "",
             "cantidad": cant,
             "precio_unitario": precio,
             "subtotal": Decimal("0.00"),

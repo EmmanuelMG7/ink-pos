@@ -48,27 +48,27 @@ class PromocionesVentasIntegracionTests(TestCase):
         self.prod_a = Producto.objects.create(
             nombre="Tinta Negra 1L",
             marca=self.marca,
-            categoria=self.cat_tintas,
             costo_compra=Decimal("20000.00"),
             precio_venta=Decimal("60000.00"),
             stock_actual=10,
         )
+        self.prod_a.categorias.set([self.cat_tintas])
         self.prod_b = Producto.objects.create(
             nombre="Resma de Papel",
             marca=self.marca,
-            categoria=self.cat_papel,
             costo_compra=Decimal("15000.00"),
             precio_venta=Decimal("40000.00"),
             stock_actual=15,
         )
+        self.prod_b.categorias.set([self.cat_papel])
         self.prod_obsequio = Producto.objects.create(
             nombre="Cuaderno Obsequio",
             marca=self.marca,
-            categoria=self.cat_papel,
             costo_compra=Decimal("2000.00"),
             precio_venta=Decimal("8000.00"),
             stock_actual=20,
         )
+        self.prod_obsequio.categorias.set([self.cat_papel])
 
     def test_venta_con_promocion_automatica_porcentual_y_prorrateo(self):
         regla = ReglaPromocion.objects.create(
@@ -87,14 +87,14 @@ class PromocionesVentasIntegracionTests(TestCase):
             {
                 "producto_id": self.prod_a.pk,
                 "nombre": self.prod_a.nombre,
-                "categoria_id": self.prod_a.categoria_id,
+                "categoria_id": self.cat_tintas.pk,
                 "precio_unitario": self.prod_a.precio_venta,
                 "cantidad": 1,
             },
             {
                 "producto_id": self.prod_b.pk,
                 "nombre": self.prod_b.nombre,
-                "categoria_id": self.prod_b.categoria_id,
+                "categoria_id": self.cat_papel.pk,
                 "precio_unitario": self.prod_b.precio_venta,
                 "cantidad": 1,
             },

@@ -35,27 +35,27 @@ class PromotionEngineServiceTests(TestCase):
         self.prod_tinta = Producto.objects.create(
             nombre="Tinta Canon Engine",
             marca=self.marca,
-            categoria=self.cat_tintas,
             costo_compra=Decimal("20000.00"),
             precio_venta=Decimal("40000.00"),
             stock_actual=10,
         )
+        self.prod_tinta.categorias.set([self.cat_tintas])
         self.prod_papel = Producto.objects.create(
             nombre="Papel Fotográfico Engine",
             marca=self.marca,
-            categoria=self.cat_papel,
             costo_compra=Decimal("30000.00"),
             precio_venta=Decimal("60000.00"),
             stock_actual=10,
         )
+        self.prod_papel.categorias.set([self.cat_papel])
         self.prod_obsequio = Producto.objects.create(
             nombre="Cuaderno Promocional",
             marca=self.marca,
-            categoria=self.cat_papel,
             costo_compra=Decimal("500.00"),
             precio_venta=Decimal("3000.00"),
             stock_actual=20,
         )
+        self.prod_obsequio.categorias.set([self.cat_papel])
 
     def test_single_automatic_discount_on_cart(self):
         regla = ReglaPromocion.objects.create(

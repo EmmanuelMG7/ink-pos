@@ -16,27 +16,27 @@ class ActionApplicatorTests(TestCase):
         self.prod_tinta = Producto.objects.create(
             nombre="Tinta Negra App",
             marca=self.marca,
-            categoria=self.cat_tintas,
             costo_compra=Decimal("15000.00"),
             precio_venta=Decimal("30000.00"),
             stock_actual=10,
         )
+        self.prod_tinta.categorias.set([self.cat_tintas])
         self.prod_papel = Producto.objects.create(
             nombre="Papel Carta App",
             marca=self.marca,
-            categoria=self.cat_papel,
             costo_compra=Decimal("10000.00"),
             precio_venta=Decimal("20000.00"),
             stock_actual=20,
         )
+        self.prod_papel.categorias.set([self.cat_papel])
         self.prod_obsequio = Producto.objects.create(
             nombre="Lapicero InkPOS",
             marca=self.marca,
-            categoria=self.cat_papel,
             costo_compra=Decimal("500.00"),
             precio_venta=Decimal("2000.00"),
             stock_actual=5,
         )
+        self.prod_obsequio.categorias.set([self.cat_papel])
         self.regla = ReglaPromocion.objects.create(nombre="Regla Test Applicator")
 
     def test_apply_percentage_cart_with_prorate(self):
