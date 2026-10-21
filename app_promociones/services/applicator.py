@@ -46,7 +46,11 @@ class ActionApplicator:
         if accion.tipo_accion == AccionPromocion.TipoAccion.PORCENTAJE:
             descuento_bruto = (base_calculo * accion.valor_accion) / Decimal("100.00")
         elif accion.tipo_accion == AccionPromocion.TipoAccion.MONTO_FIJO:
-            descuento_bruto = min(accion.valor_accion, base_calculo)
+            if accion.alcance_accion == AccionPromocion.AlcanceAccion.PRODUCTO:
+                total_uds = Decimal(sum(it.get("cantidad", 1) for it in items_objetivo))
+                descuento_bruto = min(accion.valor_accion * total_uds, base_calculo)
+            else:
+                descuento_bruto = min(accion.valor_accion, base_calculo)
         else:
             descuento_bruto = Decimal("0.00")
 

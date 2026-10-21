@@ -33,6 +33,7 @@ class PromotionFactHydrator:
         producto_ids: set[int] = set()
         marca_ids: set[int] = set()
         marca_nombres: set[str] = set()
+        cantidades_por_producto: dict[Any, int] = {}
 
         normalized_items: list[dict[str, Any]] = []
         for item in items:
@@ -45,7 +46,12 @@ class PromotionFactHydrator:
 
             p_id = item.get("producto_id")
             if p_id is not None:
-                producto_ids.add(int(p_id))
+                p_int = int(p_id)
+                producto_ids.add(p_int)
+                cantidades_por_producto[p_int] = cantidades_por_producto.get(p_int, 0) + cant
+                cantidades_por_producto[str(p_int)] = (
+                    cantidades_por_producto.get(str(p_int), 0) + cant
+                )
 
             c_id = item.get("categoria_id")
             if c_id is not None:
@@ -99,6 +105,7 @@ class PromotionFactHydrator:
                 "producto_ids": sorted(producto_ids),
                 "marca_ids": sorted(marca_ids),
                 "marca_nombres": sorted(marca_nombres),
+                "cantidades": cantidades_por_producto,
                 "cupon": cupon_normalizado,
             },
             "items": normalized_items,

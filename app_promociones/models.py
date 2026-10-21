@@ -204,8 +204,10 @@ class AccionPromocion(models.Model):
     def clean(self) -> None:
         super().clean()
         if self.tipo_accion == AccionPromocion.TipoAccion.PORCENTAJE:
-            if self.valor_accion < 0 or self.valor_accion > 100:
-                raise ValidationError({"valor_accion": "El porcentaje debe estar entre 0 y 100."})
+            if self.valor_accion <= 0 or self.valor_accion > 100:
+                raise ValidationError(
+                    {"valor_accion": "Se requiere una tarifa porcentual entre 0.01% y 100.00%."}
+                )
         elif self.tipo_accion == AccionPromocion.TipoAccion.MONTO_FIJO:
             if self.valor_accion <= 0:
                 raise ValidationError({"valor_accion": "El monto fijo debe ser superior a cero."})
@@ -228,6 +230,31 @@ class AccionPromocion(models.Model):
             if not self.producto_objetivo:
                 raise ValidationError(
                     {"producto_objetivo": "Debe seleccionar un producto objetivo."}
+                )
+            # Validación de margen mínimo frente a costo de compra (chk_producto_precio_gte_costo)
+            if self.tipo_accion == AccionPromocion.TipoAccion.PORCENTAJE:
+                from decimal import ROUND_HALF_UP
+
+                desc_unit = (
+                    self.producto_objetivo.precio_venta * self.valor_accion / Decimal("100")
+                ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            elif self.tipo_accion == AccionPromocion.TipoAccion.MONTO_FIJO:
+                desc_unit = self.valor_accion
+            else:
+                desc_unit = Decimal("0.00")
+
+            precio_final = self.producto_objetivo.precio_venta - desc_unit
+            if precio_final < self.producto_objetivo.costo_compra:
+                costo_prod = self.producto_objetivo.costo_compra
+                raise ValidationError(
+                    {
+                        "valor_accion": (
+                            "El descuento vulnera el margen mínimo de costo del producto "
+                            "(chk_producto_precio_gte_costo): el precio final "
+                            f"(${precio_final:,.2f}) no puede ser inferior a su "
+                            f"costo de compra (${costo_prod:,.2f})."
+                        )
+                    }
                 )
 
         if self.tope_maximo_descuento is not None and self.tope_maximo_descuento <= 0:
