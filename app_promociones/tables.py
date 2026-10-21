@@ -32,8 +32,14 @@ class PromocionTable(tables.Table):
         <div class="d-flex flex-wrap gap-1">
             {% for acc in record.acciones.all %}
                 <span class="badge bg-info text-dark">
-                    {% if acc.tipo_accion == 'PORCENTAJE' %}{{ acc.valor_accion }}%
-                    {% elif acc.tipo_accion == 'MONTO_FIJO' %}${{ acc.valor_accion }}
+                    {% if acc.tipo_accion == 'PORCENTAJE' %}
+                        {{ acc.valor_accion }}%{% if acc.producto_objetivo %}
+                            en {{ acc.producto_objetivo.nombre }}
+                        {% endif %}
+                    {% elif acc.tipo_accion == 'MONTO_FIJO' %}
+                        ${{ acc.valor_accion }}{% if acc.producto_objetivo %}
+                            por unid. en {{ acc.producto_objetivo.nombre }}
+                        {% endif %}
                     {% elif acc.tipo_accion == 'ITEM_REGALO' %}
                         Regalo: {{ acc.producto_regalo.nombre }}
                     {% endif %}

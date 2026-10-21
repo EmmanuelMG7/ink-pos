@@ -7,6 +7,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django_tables2 import RequestConfig
 
@@ -68,6 +69,22 @@ def gestion_promociones(request: HttpRequest) -> HttpResponse:
             messages.error(request, f"Error en las condiciones: {exc}")
             return redirect("promociones:gestion")
 
+        # Validar y procesar tarjetas de acción
+        for act_conf in actions:
+            act_id = act_conf.get("card_id")
+            if act_id:
+                try:
+                    act_cls = card_registry.get_card(act_id)
+                    if not issubclass(act_cls, BaseActionCard):
+                        raise CardError(f"La tarjeta '{act_id}' no es de tipo BaseActionCard.")
+                    act_errors = act_cls.validate_config(act_conf)
+                    if act_errors:
+                        messages.error(request, f"Error en acción: {'; '.join(act_errors)}")
+                        return redirect("promociones:gestion")
+                except CardError as exc:
+                    messages.error(request, f"Error en acción: {exc}")
+                    return redirect("promociones:gestion")
+
         limits_dict: dict[str, Any] = {}
         for lim_conf in limits:
             card_id = lim_conf.get("card_id")
@@ -76,47 +93,67 @@ def gestion_promociones(request: HttpRequest) -> HttpResponse:
                     lim_cls = card_registry.get_card(card_id)
                     if not issubclass(lim_cls, BaseLimitCard):
                         raise CardError(f"La tarjeta '{card_id}' no es de tipo BaseLimitCard.")
-                    if not issubclass(lim_cls, BaseLimitCard):
-                        raise CardError(f"La tarjeta '{card_id}' no es de tipo BaseLimitCard.")
+                    lim_errors = lim_cls.validate_config(lim_conf)
+                    if lim_errors:
+                        messages.error(request, f"Error en límites: {'; '.join(lim_errors)}")
+                        return redirect("promociones:gestion")
+
                     lim_data = lim_cls.to_limit_data(lim_conf)
                     for k, v in lim_data.items():
                         if k in ("fecha_inicio", "fecha_fin") and isinstance(v, str) and v:
-                            limits_dict[k] = parse_datetime(v) or v
+                            dt = parse_datetime(v)
+                            if dt and timezone.is_naive(dt):
+                                dt = timezone.make_aware(dt)
+                            limits_dict[k] = dt or v
                         else:
                             limits_dict[k] = v
                 except CardError as exc:
                     messages.error(request, f"Error en límites: {exc}")
                     return redirect("promociones:gestion")
 
+        regla_id = request.POST.get("regla_id")
         try:
             with transaction.atomic():
-                regla = ReglaPromocion(
-                    nombre=nombre,
-                    descripcion=descripcion,
-                    es_cupon=es_cupon,
-                    codigo_cupon=codigo_cupon,
-                    es_acumulable=es_acumulable,
-                    expresion_condicion=expresion_condicion,
-                    config_tarjetas=cards_list,
-                    **limits_dict,
-                )
-                regla.full_clean()
-                regla.save()
+                if regla_id:
+                    if not request.user.has_perm("app_promociones.change_reglapromocion"):
+                        raise PermissionDenied("No tienes permisos para editar promociones.")
+                    regla = ReglaPromocion.objects.select_for_update().get(pk=regla_id)
+                    regla.nombre = nombre
+                    regla.descripcion = descripcion
+                    regla.es_cupon = es_cupon
+                    regla.codigo_cupon = codigo_cupon
+                    regla.es_acumulable = es_acumulable
+                    regla.expresion_condicion = expresion_condicion
+                    regla.config_tarjetas = cards_list
+                    for k, v in limits_dict.items():
+                        setattr(regla, k, v)
+                    regla.full_clean()
+                    regla.save()
+                    regla.acciones.all().delete()
+                else:
+                    regla = ReglaPromocion(
+                        nombre=nombre,
+                        descripcion=descripcion,
+                        es_cupon=es_cupon,
+                        codigo_cupon=codigo_cupon,
+                        es_acumulable=es_acumulable,
+                        expresion_condicion=expresion_condicion,
+                        config_tarjetas=cards_list,
+                        **limits_dict,
+                    )
+                    regla.full_clean()
+                    regla.save()
 
                 for act_conf in actions:
                     act_id = act_conf.get("card_id")
                     if act_id:
                         act_cls = card_registry.get_card(act_id)
-                        if not issubclass(act_cls, BaseActionCard):
-                            raise CardError(f"La tarjeta '{act_id}' no es de tipo BaseActionCard.")
-                        if not issubclass(act_cls, BaseActionCard):
-                            raise CardError(f"La tarjeta '{act_id}' no es de tipo BaseActionCard.")
                         act_data = act_cls.to_action_data(act_conf)
                         accion = AccionPromocion(regla_promocion=regla, **act_data)
                         accion.full_clean()
                         accion.save()
 
-            messages.success(request, f'Promoción "{nombre}" configurada exitosamente.')
+            messages.success(request, f'Promoción "{nombre}" guardada exitosamente.')
             return redirect("promociones:gestion")
 
         except ValidationError as exc:

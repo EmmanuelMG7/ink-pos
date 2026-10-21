@@ -140,6 +140,11 @@
                           <i class="bi bi-person-check text-purple"></i> Cliente Frecuente
                         </button>
                       </li>
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2 text-wrap" onclick="agregarTarjetaCondicion('cond_volumen')">
+                          <i class="bi bi-boxes text-info"></i> Cantidad Mínima por Producto (Volumen)
+                        </button>
+                      </li>
                     </ul>
                   </div>
                 </div>
@@ -219,6 +224,11 @@
                       <li>
                         <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2 text-wrap" onclick="agregarTarjetaAccion('act_item_mas_barato')">
                           <i class="bi bi-lightning-charge text-warning"></i> Ítem Más Barato (2x1)
+                        </button>
+                      </li>
+                      <li>
+                        <button type="button" class="dropdown-item d-flex align-items-center gap-2 py-2 text-wrap" onclick="agregarTarjetaAccion('act_descuento_producto')">
+                          <i class="bi bi-box-seam text-primary"></i> Descuento a Producto Específico
                         </button>
                       </li>
                     </ul>
@@ -320,7 +330,7 @@
 
 <div id="opciones_productos_cache" style="display: none;">
   {% for prod in productos %}
-    <option value="{{ prod.id }}">{{ prod.nombre }} (${{ prod.precio_venta }})</option>
+    <option value="{{ prod.id }}" data-precio="{{ prod.precio_venta }}" data-costo="{{ prod.costo_compra }}">{{ prod.nombre }} (${{ prod.precio_venta }})</option>
   {% endfor %}
 </div>
 
@@ -461,6 +471,32 @@
             <span class="input-group-text">compras</span>
           </div>
         </div>`;
+    } else if (cardId === 'cond_volumen') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="cond_volumen" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2 overflow-hidden">
+              <div class="p-2 rounded-2 bg-info bg-opacity-10 text-info lh-1 flex-shrink-0"><i class="bi bi-boxes fs-6"></i></div>
+              <div class="text-truncate">
+                <span class="fw-semibold small d-block text-truncate">Volumen por Producto</span>
+                <span class="text-secondary text-truncate" style="font-size: 0.75rem;">Cantidad mínima requerida</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none flex-shrink-0" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="row g-2">
+            <div class="col-8">
+              <label class="form-label text-secondary mb-1" style="font-size: 0.7rem;">PRODUCTO</label>
+              <select class="form-select form-select-sm card-field text-truncate" data-field="producto_id" onchange="actualizarPreview()">
+                ${getProductosOptions()}
+              </select>
+            </div>
+            <div class="col-4">
+              <label class="form-label text-secondary mb-1" style="font-size: 0.7rem;">CANTIDAD MÍN.</label>
+              <input type="number" class="form-control form-control-sm font-monospace card-field" data-field="cantidad_minima" value="3" min="2" oninput="actualizarPreview()">
+            </div>
+          </div>
+        </div>`;
     }
 
     container.insertAdjacentHTML('beforeend', innerHtml);
@@ -563,6 +599,39 @@
             <span class="input-group-text">Descuento</span>
             <input type="number" class="form-control font-monospace card-field" data-field="porcentaje" value="100" min="1" max="100" oninput="actualizarPreview()">
             <span class="input-group-text">%</span>
+          </div>
+        </div>`;
+    } else if (cardId === 'act_descuento_producto' || cardId === 'act_descuento_volumen') {
+      innerHtml = `
+        <div class="card border rounded-3 p-3 bg-body-tertiary shadow-xs card-item" data-card-id="act_descuento_producto" id="${elemId}">
+          <div class="d-flex align-items-start justify-content-between mb-2">
+            <div class="d-flex align-items-center gap-2 overflow-hidden">
+              <div class="p-2 rounded-2 bg-primary bg-opacity-10 text-primary lh-1 flex-shrink-0"><i class="bi bi-box-seam fs-6"></i></div>
+              <div class="text-truncate">
+                <span class="fw-semibold small d-block text-truncate">Descuento a Producto Específico</span>
+                <span class="text-secondary text-truncate" style="font-size: 0.75rem;">Porcentaje o monto fijo por unidad</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 text-decoration-none flex-shrink-0" onclick="eliminarTarjeta('${elemId}')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div class="mb-2">
+            <label class="form-label text-secondary mb-1" style="font-size: 0.7rem;">PRODUCTO OBJETIVO</label>
+            <select class="form-select form-select-sm card-field text-truncate" data-field="producto_id" onchange="actualizarPreview()">
+              ${getProductosOptions()}
+            </select>
+          </div>
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label text-secondary mb-1" style="font-size: 0.7rem;">TIPO DESCUENTO</label>
+              <select class="form-select form-select-sm card-field text-truncate" data-field="tipo_descuento" onchange="actualizarPreview()">
+                <option value="PORCENTAJE" selected>Porcentaje (%)</option>
+                <option value="MONTO_FIJO">Monto Fijo por Unidad ($)</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label text-secondary mb-1" style="font-size: 0.7rem;">VALOR DESCUENTO</label>
+              <input type="number" class="form-control form-control-sm font-monospace card-field" data-field="valor" value="10" min="0.01" step="0.01" oninput="actualizarPreview()">
+            </div>
           </div>
         </div>`;
     }
@@ -681,6 +750,10 @@
       } else if (cardId === 'cond_cliente_frecuente') {
         const cmp = cardEl.querySelector('[data-field="compras_minimas"]')?.value || '5';
         parts.push(`cliente.total_compras_historicas >= ${parseInt(cmp) || 1}`);
+      } else if (cardId === 'cond_volumen') {
+        const prodId = cardEl.querySelector('[data-field="producto_id"]')?.value || '1';
+        const cant = cardEl.querySelector('[data-field="cantidad_minima"]')?.value || '3';
+        parts.push(`${parseInt(prodId) || 1} in cart.cantidades and cart.cantidades[${parseInt(prodId) || 1}] >= ${parseInt(cant) || 2}`);
       }
     });
 
@@ -751,6 +824,66 @@
         } else if (alertAcciones) {
           alertAcciones.classList.remove('d-flex');
           alertAcciones.classList.add('d-none');
+        }
+
+        // 4. Validar reglas de volumen y márgenes de costo
+        if (isValid) {
+          document.querySelectorAll('.card-item').forEach(cardEl => {
+            const cardId = cardEl.getAttribute('data-card-id');
+            const cantMinEl = cardEl.querySelector('[data-field="cantidad_minima"]');
+            if (cantMinEl) {
+              const cantVal = parseInt(cantMinEl.value);
+              if (isNaN(cantVal) || cantVal <= 1) {
+                alert('La cantidad mínima para descuento por volumen debe ser mayor a 1.');
+                cantMinEl.classList.add('is-invalid');
+                cantMinEl.focus();
+                isValid = false;
+                return;
+              } else {
+                cantMinEl.classList.remove('is-invalid');
+              }
+            }
+
+            if (cardId === 'act_descuento_producto' || cardId === 'act_descuento_volumen' || cardId === 'act_porcentaje' || cardId === 'act_monto_fijo') {
+              const tipoEl = cardEl.querySelector('[data-field="tipo_descuento"]');
+              const tipo = tipoEl ? tipoEl.value : (cardId === 'act_porcentaje' ? 'PORCENTAJE' : 'MONTO_FIJO');
+              const valorEl = cardEl.querySelector('[data-field="valor"]') || cardEl.querySelector('[data-field="porcentaje"]') || cardEl.querySelector('[data-field="monto"]');
+              const valor = valorEl ? parseFloat(valorEl.value) : NaN;
+
+              if (tipo === 'PORCENTAJE') {
+                if (isNaN(valor) || valor <= 0 || valor > 100) {
+                  alert('La tarifa porcentual debe estar entre 0.01% y 100.00%.');
+                  if (valorEl) valorEl.classList.add('is-invalid');
+                  isValid = false;
+                  return;
+                } else if (valorEl) {
+                  valorEl.classList.remove('is-invalid');
+                }
+              }
+
+              const prodSelect = cardEl.querySelector('[data-field="producto_id"]');
+              if (prodSelect && prodSelect.value) {
+                const opt = document.querySelector(`#opciones_productos_cache option[value="${prodSelect.value}"]`);
+                if (opt) {
+                  const precio = parseFloat(opt.getAttribute('data-precio') || '0');
+                  const costo = parseFloat(opt.getAttribute('data-costo') || '0');
+                  let descUnit = 0;
+                  if (tipo === 'PORCENTAJE') {
+                    descUnit = (precio * valor) / 100;
+                  } else {
+                    descUnit = valor;
+                  }
+                  const precioFinal = precio - descUnit;
+                  if (precioFinal < costo) {
+                    alert('El descuento vulnera el margen mínimo de costo del producto (chk_producto_precio_gte_costo): el precio final no puede ser inferior al costo de compra.');
+                    if (valorEl) valorEl.classList.add('is-invalid');
+                    isValid = false;
+                    return;
+                  }
+                }
+              }
+            }
+          });
         }
 
         if (!isValid) {
