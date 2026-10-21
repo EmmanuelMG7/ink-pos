@@ -1,0 +1,97 @@
+{% extends 'Master.html' %}
+{% load django_tables2 %}
+
+{% block title %}
+    InkPOS - Gestión de Promociones
+{% endblock title %}
+
+{% block content %}
+<div class="d-flex flex-column h-100 overflow-hidden">
+  <!-- Encabezado de la Sección -->
+  <div class="d-flex align-items-center justify-content-between p-3 border-bottom bg-body-tertiary flex-shrink-0">
+    <div class="d-flex align-items-center gap-3">
+      <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 fs-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+        <i class="bi bi-tags-fill"></i>
+      </div>
+      <div>
+        <h1 class="fs-4 fw-bold mb-0">Gestión de Promociones</h1>
+        <p class="text-secondary small mb-0">Configura reglas automáticas de descuento y cupones promocionales dinámicos.</p>
+      </div>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <button
+        type="button"
+        class="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 fw-medium"
+        data-bs-toggle="modal"
+        data-bs-target="#modal_crear_promocion"
+      >
+        <i class="bi bi-plus-lg"></i>
+        <span>Crear Descuento</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenedor de la Tabla -->
+  <div class="p-3 flex-grow-1 overflow-auto">
+    <div class="card shadow-sm border-0 h-100 d-flex flex-column">
+      <div class="card-body p-0 flex-grow-1 overflow-auto">
+        {% if table.rows %}
+          <div class="table-responsive">
+            {% render_table table %}
+          </div>
+        {% else %}
+          <div class="container text-center text-secondary my-auto py-5">
+            <div class="bg-light d-inline-flex p-4 rounded-circle mb-3">
+              <i class="bi bi-percent text-muted" style="font-size: 3.5rem;"></i>
+            </div>
+            <h2 class="fs-4 fw-bold mb-2">No hay promociones configuradas</h2>
+            <p class="text-secondary mb-4 mx-auto" style="max-width: 480px;">
+              Crea tu primera promoción o cupón de descuento configurando condiciones, acciones y límites mediante el asistente de rutinas.
+            </p>
+            <button
+              type="button"
+              class="btn btn-primary px-4 py-2 fw-medium"
+              data-bs-toggle="modal"
+              data-bs-target="#modal_crear_promocion"
+            >
+              <i class="bi bi-plus-lg me-1"></i> Crear Primer Descuento
+            </button>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Placeholder (Se implementará en el siguiente paso) -->
+<div class="modal fade" id="modal_crear_promocion" tabindex="-1" aria-labelledby="modalCrearPromocionLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalCrearPromocionLabel">Nueva Regla de Promoción</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">El configurador de promociones se cargará aquí.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="toast align-items-center text-bg-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body">
+            {{ message }}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+{% endblock content %}
