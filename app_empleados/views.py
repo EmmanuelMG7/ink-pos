@@ -48,7 +48,7 @@ def gestion_empleados_view(request):
 @permission_required("app_empleados.change_empleado", raise_exception=True)
 def editar_empleado(request, pk):
     empleado = get_object_or_404(Empleado, pk=pk)
-    
+
     if request.method == "POST":
         form = EmpleadoForm(request.POST, instance=empleado)
         if form.is_valid():
@@ -56,7 +56,7 @@ def editar_empleado(request, pk):
                 form.save()
                 messages.success(
                     request,
-                    f"Empleado '{empleado.auth_user.first_name}' actualizado correctamente."
+                    f"Empleado '{empleado.auth_user.first_name}' actualizado correctamente.",
                 )
             except Exception as e:
                 messages.error(request, f"Hubo un error al actualizar el empleado: {str(e)}")
@@ -64,7 +64,7 @@ def editar_empleado(request, pk):
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"Error de validación: {error}")
-                    
+
     return redirect("empleados:gestion")
 
 
@@ -72,7 +72,7 @@ def editar_empleado(request, pk):
 @permission_required("app_empleados.change_empleado", raise_exception=True)
 def obtener_empleado(request, pk):
     empleado = get_object_or_404(Empleado, pk=pk)
-    
+
     data = {
         "tipo_documento": empleado.tipo_documento,
         "identificacion": empleado.identificacion,

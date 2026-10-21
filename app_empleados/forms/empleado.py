@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -113,7 +115,10 @@ class EmpleadoForm(BootstrapModelForm):
     def clean_telefono(self):
         telefono = self.cleaned_data.get("telefono")
         if telefono:
-            return str(telefono).strip()
+            telefono = str(telefono).strip()
+            if not re.match(r"^3[0-9]{9}$", telefono):
+                raise forms.ValidationError("El teléfono debe cumplir el patrón colombiano.")
+            return telefono
         return telefono
 
     def clean_usuario(self):
