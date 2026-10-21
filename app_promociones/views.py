@@ -10,6 +10,7 @@ from django.shortcuts import redirect, render
 from django.utils.dateparse import parse_datetime
 from django_tables2 import RequestConfig
 
+from app_common.cards.base import BaseActionCard, BaseLimitCard
 from app_common.cards.exceptions import CardError
 from app_common.cards.registry import card_registry
 from app_inventario.models import Categoria, Producto
@@ -73,6 +74,10 @@ def gestion_promociones(request: HttpRequest) -> HttpResponse:
             if card_id:
                 try:
                     lim_cls = card_registry.get_card(card_id)
+                    if not issubclass(lim_cls, BaseLimitCard):
+                        raise CardError(f"La tarjeta '{card_id}' no es de tipo BaseLimitCard.")
+                    if not issubclass(lim_cls, BaseLimitCard):
+                        raise CardError(f"La tarjeta '{card_id}' no es de tipo BaseLimitCard.")
                     lim_data = lim_cls.to_limit_data(lim_conf)
                     for k, v in lim_data.items():
                         if k in ("fecha_inicio", "fecha_fin") and isinstance(v, str) and v:
@@ -102,6 +107,10 @@ def gestion_promociones(request: HttpRequest) -> HttpResponse:
                     act_id = act_conf.get("card_id")
                     if act_id:
                         act_cls = card_registry.get_card(act_id)
+                        if not issubclass(act_cls, BaseActionCard):
+                            raise CardError(f"La tarjeta '{act_id}' no es de tipo BaseActionCard.")
+                        if not issubclass(act_cls, BaseActionCard):
+                            raise CardError(f"La tarjeta '{act_id}' no es de tipo BaseActionCard.")
                         act_data = act_cls.to_action_data(act_conf)
                         accion = AccionPromocion(regla_promocion=regla, **act_data)
                         accion.full_clean()

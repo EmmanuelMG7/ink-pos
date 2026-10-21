@@ -8,7 +8,7 @@ from app_clientes.models import Cliente
 from app_empleados.models import Empleado
 from app_inventario.models import Categoria, Marca, Producto
 from app_promociones.models import AccionPromocion, PromocionAplicada, ReglaPromocion
-from app_ventas.models import Factura, ResolucionDIAN
+from app_ventas.models import DetalleFactura, Factura, ResolucionDIAN
 from app_ventas.services.facturacion_promociones import procesar_venta_con_promociones
 
 
@@ -100,7 +100,7 @@ class PromocionesVentasIntegracionTests(TestCase):
             },
         ]
 
-        factura, eval_res = procesar_venta_con_promociones(
+        factura, _ = procesar_venta_con_promociones(
             sesion_caja=self.caja,
             empleado=self.empleado,
             items=items,
@@ -116,8 +116,8 @@ class PromocionesVentasIntegracionTests(TestCase):
         self.assertEqual(factura.estado, Factura.EstadoFactura.PAGADA)
 
         # Prorrateo: prod_a (60%) = 6,000; prod_b (40%) = 4,000
-        det_a = factura.detalles.get(producto=self.prod_a)
-        det_b = factura.detalles.get(producto=self.prod_b)
+        det_a = DetalleFactura.objects.get(factura=factura, producto=self.prod_a)
+        det_b = DetalleFactura.objects.get(factura=factura, producto=self.prod_b)
         self.assertEqual(det_a.monto_descuento, Decimal("6000.00"))
         self.assertEqual(det_a.subtotal, Decimal("54000.00"))
         self.assertEqual(det_b.monto_descuento, Decimal("4000.00"))
@@ -251,8 +251,8 @@ class PromocionesVentasIntegracionTests(TestCase):
             cliente=self.cliente,
         )
 
-        self.assertEqual(factura.detalles.count(), 2)
-        det_regalo = factura.detalles.get(producto=self.prod_obsequio)
+        self.assertEqual(DetalleFactura.objects.filter(factura=factura).count(), 2)
+        det_regalo = DetalleFactura.objects.get(factura=factura, producto=self.prod_obsequio)
         self.assertEqual(det_regalo.cantidad, 1)
         self.assertEqual(det_regalo.precio_unitario, self.prod_obsequio.precio_venta)
         self.assertEqual(det_regalo.monto_descuento, self.prod_obsequio.precio_venta)

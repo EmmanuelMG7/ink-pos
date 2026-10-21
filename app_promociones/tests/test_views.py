@@ -25,7 +25,8 @@ class PromocionesViewTests(TestCase):
         self.client.logout()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
-        self.assertIn("/auth/login", response.url)
+        redirect_url = getattr(response, "url", response.get("Location", ""))
+        self.assertIn("/auth/login", redirect_url)
 
     def test_acceso_denegado_para_usuario_sin_permiso(self):
         usuario_sin_permiso = User.objects.create_user(
@@ -57,7 +58,8 @@ class PromocionesViewTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "promociones/Gestion_Promociones.html")
-        self.assertIn("table", response.context)
+        context = getattr(response, "context", {})
+        self.assertIn("table", context)
         self.assertContains(response, "Descuento Bienvenida")
         self.assertContains(response, "BIENVENIDO10")
         self.assertContains(response, "10.00%")
@@ -89,10 +91,12 @@ class PromocionesViewTests(TestCase):
         self.assertTrue(regla.es_acumulable)
         self.assertEqual(regla.expresion_condicion, "(cart.subtotal >= 70000.0)")
         self.assertEqual(regla.limite_usos_total, 50)
-        self.assertEqual(regla.acciones.count(), 1)
-        accion = regla.acciones.first()
-        self.assertEqual(accion.tipo_accion, AccionPromocion.TipoAccion.PORCENTAJE)
-        self.assertEqual(accion.valor_accion, Decimal("15.00"))
+        self.assertEqual(AccionPromocion.objects.filter(regla_promocion=regla).count(), 1)
+        accion = AccionPromocion.objects.filter(regla_promocion=regla).first()
+        self.assertIsNotNone(accion)
+        if accion:
+            self.assertEqual(accion.tipo_accion, AccionPromocion.TipoAccion.PORCENTAJE)
+            self.assertEqual(accion.valor_accion, Decimal("15.00"))
 
     def test_crear_cupon_post(self):
         cards_payload = [
@@ -112,7 +116,10 @@ class PromocionesViewTests(TestCase):
         self.assertTrue(regla.es_cupon)
         self.assertFalse(regla.es_acumulable)
         self.assertEqual(regla.expresion_condicion, "true")
-        self.assertEqual(regla.acciones.first().valor_accion, Decimal("25000.00"))
+        accion_cupon = AccionPromocion.objects.filter(regla_promocion=regla).first()
+        self.assertIsNotNone(accion_cupon)
+        if accion_cupon:
+            self.assertEqual(accion_cupon.valor_accion, Decimal("25000.00"))
 
     def test_validacion_post_sin_nombre(self):
         data = {

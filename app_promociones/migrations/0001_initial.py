@@ -11,74 +11,249 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('app_inventario', '0001_initial'),
-        ('app_ventas', '0002_remove_descuento_chk_descuento_valor_gte_0_and_more'),
+        ("app_inventario", "0001_initial"),
+        ("app_ventas", "0002_remove_descuento_chk_descuento_valor_gte_0_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ReglaPromocion',
+            name="ReglaPromocion",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nombre', models.CharField(max_length=150)),
-                ('descripcion', models.TextField(blank=True, default='')),
-                ('es_cupon', models.BooleanField(default=False)),
-                ('codigo_cupon', models.CharField(blank=True, max_length=50, null=True, unique=True)),
-                ('es_acumulable', models.BooleanField(default=True)),
-                ('activo', models.BooleanField(default=True)),
-                ('expresion_condicion', models.TextField(default='true')),
-                ('fecha_inicio', models.DateTimeField(default=django.utils.timezone.now)),
-                ('fecha_fin', models.DateTimeField(blank=True, null=True)),
-                ('limite_usos_total', models.PositiveIntegerField(blank=True, null=True)),
-                ('veces_usado', models.PositiveIntegerField(default=0)),
-                ('limite_usos_por_cliente', models.PositiveIntegerField(blank=True, null=True)),
-                ('config_tarjetas', models.JSONField(blank=True, default=list)),
-                ('fecha_creacion', models.DateTimeField(auto_now_add=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("nombre", models.CharField(max_length=150)),
+                ("descripcion", models.TextField(blank=True, default="")),
+                ("es_cupon", models.BooleanField(default=False)),
+                (
+                    "codigo_cupon",
+                    models.CharField(blank=True, max_length=50, null=True, unique=True),
+                ),
+                ("es_acumulable", models.BooleanField(default=True)),
+                ("activo", models.BooleanField(default=True)),
+                ("expresion_condicion", models.TextField(default="true")),
+                ("fecha_inicio", models.DateTimeField(default=django.utils.timezone.now)),
+                ("fecha_fin", models.DateTimeField(blank=True, null=True)),
+                ("limite_usos_total", models.PositiveIntegerField(blank=True, null=True)),
+                ("veces_usado", models.PositiveIntegerField(default=0)),
+                ("limite_usos_por_cliente", models.PositiveIntegerField(blank=True, null=True)),
+                ("config_tarjetas", models.JSONField(blank=True, default=list)),
+                ("fecha_creacion", models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'verbose_name': 'Regla de Promoción',
-                'verbose_name_plural': 'Reglas de Promoción',
-                'constraints': [models.CheckConstraint(condition=models.Q(('nombre', ''), _negated=True), name='chk_regla_nombre_no_vacio'), models.CheckConstraint(condition=models.Q(('veces_usado__gte', 0)), name='chk_regla_veces_usado_gte_0'), models.CheckConstraint(condition=models.Q(('limite_usos_total__isnull', True), ('limite_usos_total__gt', 0), _connector='OR'), name='chk_regla_limite_usos_valido'), models.CheckConstraint(condition=models.Q(('limite_usos_total__isnull', True), ('veces_usado__lte', models.F('limite_usos_total')), _connector='OR'), name='chk_regla_usos_no_superan_limite'), models.CheckConstraint(condition=models.Q(('limite_usos_por_cliente__isnull', True), ('limite_usos_por_cliente__gt', 0), _connector='OR'), name='chk_regla_limite_cliente_valido'), models.CheckConstraint(condition=models.Q(('fecha_fin__isnull', True), ('fecha_fin__gte', models.F('fecha_inicio')), _connector='OR'), name='chk_regla_vigencia_fechas')],
+                "verbose_name": "Regla de Promoción",
+                "verbose_name_plural": "Reglas de Promoción",
+                "constraints": [
+                    models.CheckConstraint(
+                        condition=models.Q(("nombre", ""), _negated=True),
+                        name="chk_regla_nombre_no_vacio",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(("veces_usado__gte", 0)),
+                        name="chk_regla_veces_usado_gte_0",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(
+                            ("limite_usos_total__isnull", True),
+                            ("limite_usos_total__gt", 0),
+                            _connector="OR",
+                        ),
+                        name="chk_regla_limite_usos_valido",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(
+                            ("limite_usos_total__isnull", True),
+                            ("veces_usado__lte", models.F("limite_usos_total")),
+                            _connector="OR",
+                        ),
+                        name="chk_regla_usos_no_superan_limite",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(
+                            ("limite_usos_por_cliente__isnull", True),
+                            ("limite_usos_por_cliente__gt", 0),
+                            _connector="OR",
+                        ),
+                        name="chk_regla_limite_cliente_valido",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(
+                            ("fecha_fin__isnull", True),
+                            ("fecha_fin__gte", models.F("fecha_inicio")),
+                            _connector="OR",
+                        ),
+                        name="chk_regla_vigencia_fechas",
+                    ),
+                ],
             },
         ),
         migrations.CreateModel(
-            name='PromocionAplicada',
+            name="PromocionAplicada",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nombre_regla_snapshot', models.CharField(max_length=150)),
-                ('codigo_cupon_snapshot', models.CharField(blank=True, max_length=50, null=True)),
-                ('monto_descontado_total', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
-                ('desglose_por_item', models.JSONField(blank=True, default=list)),
-                ('fecha_hora', models.DateTimeField(auto_now_add=True)),
-                ('factura', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='promociones_aplicadas', to='app_ventas.factura')),
-                ('regla_promocion', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='aplicaciones', to='app_promociones.reglapromocion')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("nombre_regla_snapshot", models.CharField(max_length=150)),
+                ("codigo_cupon_snapshot", models.CharField(blank=True, max_length=50, null=True)),
+                (
+                    "monto_descontado_total",
+                    models.DecimalField(decimal_places=2, default=Decimal("0.00"), max_digits=12),
+                ),
+                ("desglose_por_item", models.JSONField(blank=True, default=list)),
+                ("fecha_hora", models.DateTimeField(auto_now_add=True)),
+                (
+                    "factura",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="promociones_aplicadas",
+                        to="app_ventas.factura",
+                    ),
+                ),
+                (
+                    "regla_promocion",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="aplicaciones",
+                        to="app_promociones.reglapromocion",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Promoción Aplicada',
-                'verbose_name_plural': 'Promociones Aplicadas',
-                'constraints': [models.CheckConstraint(condition=models.Q(('monto_descontado_total__gte', 0)), name='chk_prom_ap_monto_gte_0'), models.CheckConstraint(condition=models.Q(('nombre_regla_snapshot', ''), _negated=True), name='chk_prom_ap_nombre_no_vacio')],
+                "verbose_name": "Promoción Aplicada",
+                "verbose_name_plural": "Promociones Aplicadas",
+                "constraints": [
+                    models.CheckConstraint(
+                        condition=models.Q(("monto_descontado_total__gte", 0)),
+                        name="chk_prom_ap_monto_gte_0",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(("nombre_regla_snapshot", ""), _negated=True),
+                        name="chk_prom_ap_nombre_no_vacio",
+                    ),
+                ],
             },
         ),
         migrations.CreateModel(
-            name='AccionPromocion',
+            name="AccionPromocion",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('orden', models.PositiveSmallIntegerField(default=1)),
-                ('tipo_accion', models.CharField(choices=[('PORCENTAJE', 'Porcentaje (%)'), ('MONTO_FIJO', 'Monto Fijo ($)'), ('ITEM_REGALO', 'Producto de Regalo')], default='PORCENTAJE', max_length=20)),
-                ('alcance_accion', models.CharField(choices=[('CARRITO', 'A todo el carrito'), ('CATEGORIA', 'A categoría específica'), ('PRODUCTO', 'A producto específico'), ('ITEM_MAS_BARATO', 'Al ítem de menor valor'), ('ITEM_MAS_CARO', 'Al ítem de mayor valor')], default='CARRITO', max_length=20)),
-                ('valor_accion', models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=12)),
-                ('tope_maximo_descuento', models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True)),
-                ('cantidad_regalo', models.PositiveIntegerField(default=1)),
-                ('categoria_objetivo', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='acciones_promocion', to='app_inventario.categoria')),
-                ('producto_objetivo', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='acciones_promocion_objetivo', to='app_inventario.producto')),
-                ('producto_regalo', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='acciones_promocion_regalo', to='app_inventario.producto')),
-                ('regla_promocion', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='acciones', to='app_promociones.reglapromocion')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("orden", models.PositiveSmallIntegerField(default=1)),
+                (
+                    "tipo_accion",
+                    models.CharField(
+                        choices=[
+                            ("PORCENTAJE", "Porcentaje (%)"),
+                            ("MONTO_FIJO", "Monto Fijo ($)"),
+                            ("ITEM_REGALO", "Producto de Regalo"),
+                        ],
+                        default="PORCENTAJE",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "alcance_accion",
+                    models.CharField(
+                        choices=[
+                            ("CARRITO", "A todo el carrito"),
+                            ("CATEGORIA", "A categoría específica"),
+                            ("PRODUCTO", "A producto específico"),
+                            ("ITEM_MAS_BARATO", "Al ítem de menor valor"),
+                            ("ITEM_MAS_CARO", "Al ítem de mayor valor"),
+                        ],
+                        default="CARRITO",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "valor_accion",
+                    models.DecimalField(decimal_places=2, default=Decimal("0.00"), max_digits=12),
+                ),
+                (
+                    "tope_maximo_descuento",
+                    models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True),
+                ),
+                ("cantidad_regalo", models.PositiveIntegerField(default=1)),
+                (
+                    "categoria_objetivo",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="acciones_promocion",
+                        to="app_inventario.categoria",
+                    ),
+                ),
+                (
+                    "producto_objetivo",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="acciones_promocion_objetivo",
+                        to="app_inventario.producto",
+                    ),
+                ),
+                (
+                    "producto_regalo",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.PROTECT,
+                        related_name="acciones_promocion_regalo",
+                        to="app_inventario.producto",
+                    ),
+                ),
+                (
+                    "regla_promocion",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="acciones",
+                        to="app_promociones.reglapromocion",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Acción de Promoción',
-                'verbose_name_plural': 'Acciones de Promoción',
-                'ordering': ['orden', 'id'],
-                'constraints': [models.CheckConstraint(condition=models.Q(('valor_accion__gte', 0)), name='chk_accion_valor_gte_0'), models.CheckConstraint(condition=models.Q(models.Q(('tipo_accion', 'PORCENTAJE'), ('valor_accion__lte', 100)), models.Q(('tipo_accion', 'PORCENTAJE'), _negated=True), _connector='OR'), name='chk_accion_porcentaje_max_100'), models.CheckConstraint(condition=models.Q(('tope_maximo_descuento__isnull', True), ('tope_maximo_descuento__gt', 0), _connector='OR'), name='chk_accion_tope_gt_0'), models.CheckConstraint(condition=models.Q(('cantidad_regalo__gt', 0)), name='chk_accion_cantidad_regalo_gt_0')],
+                "verbose_name": "Acción de Promoción",
+                "verbose_name_plural": "Acciones de Promoción",
+                "ordering": ["orden", "id"],
+                "constraints": [
+                    models.CheckConstraint(
+                        condition=models.Q(("valor_accion__gte", 0)), name="chk_accion_valor_gte_0"
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(
+                            models.Q(("tipo_accion", "PORCENTAJE"), ("valor_accion__lte", 100)),
+                            models.Q(("tipo_accion", "PORCENTAJE"), _negated=True),
+                            _connector="OR",
+                        ),
+                        name="chk_accion_porcentaje_max_100",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(
+                            ("tope_maximo_descuento__isnull", True),
+                            ("tope_maximo_descuento__gt", 0),
+                            _connector="OR",
+                        ),
+                        name="chk_accion_tope_gt_0",
+                    ),
+                    models.CheckConstraint(
+                        condition=models.Q(("cantidad_regalo__gt", 0)),
+                        name="chk_accion_cantidad_regalo_gt_0",
+                    ),
+                ],
             },
         ),
     ]

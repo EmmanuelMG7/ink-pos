@@ -7,58 +7,69 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app_inventario', '0001_initial'),
-        ('app_ventas', '0001_initial'),
+        ("app_inventario", "0001_initial"),
+        ("app_ventas", "0001_initial"),
     ]
 
     operations = [
         migrations.RemoveConstraint(
-            model_name='descuento',
-            name='chk_descuento_valor_gte_0',
+            model_name="descuento",
+            name="chk_descuento_valor_gte_0",
         ),
         migrations.RemoveConstraint(
-            model_name='descuento',
-            name='chk_descuento_porcentaje_max_100',
+            model_name="descuento",
+            name="chk_descuento_porcentaje_max_100",
         ),
         migrations.RemoveConstraint(
-            model_name='descuento',
-            name='chk_descuento_veces_usado_gte_0',
+            model_name="descuento",
+            name="chk_descuento_veces_usado_gte_0",
         ),
         migrations.RemoveConstraint(
-            model_name='descuento',
-            name='chk_descuento_limite_usos_valido',
+            model_name="descuento",
+            name="chk_descuento_limite_usos_valido",
         ),
         migrations.RemoveConstraint(
-            model_name='descuento',
-            name='chk_descuento_usos_no_superan_limite',
+            model_name="descuento",
+            name="chk_descuento_usos_no_superan_limite",
         ),
         migrations.RemoveConstraint(
-            model_name='descuento',
-            name='chk_descuento_vigencia_fechas',
+            model_name="descuento",
+            name="chk_descuento_vigencia_fechas",
         ),
         migrations.RemoveConstraint(
-            model_name='descuento',
-            name='chk_descuento_nombre_no_vacio',
+            model_name="descuento",
+            name="chk_descuento_nombre_no_vacio",
         ),
         migrations.RemoveField(
-            model_name='factura',
-            name='descuento',
+            model_name="factura",
+            name="descuento",
         ),
         migrations.AddField(
-            model_name='detallefactura',
-            name='monto_descuento',
-            field=models.DecimalField(decimal_places=2, default=Decimal('0.00'), max_digits=12),
+            model_name="detallefactura",
+            name="monto_descuento",
+            field=models.DecimalField(decimal_places=2, default=Decimal("0.00"), max_digits=12),
         ),
         migrations.AlterField(
-            model_name='pagofactura',
-            name='metodo_pago',
-            field=models.CharField(choices=[('EFECTIVO', 'Efectivo'), ('TARJETA_DEBITO', 'Tarjeta de Débito'), ('TARJETA_CREDITO', 'Tarjeta de Crédito'), ('TRANSFERENCIA', 'Transferencia')], max_length=20),
+            model_name="pagofactura",
+            name="metodo_pago",
+            field=models.CharField(
+                choices=[
+                    ("EFECTIVO", "Efectivo"),
+                    ("TARJETA_DEBITO", "Tarjeta de Débito"),
+                    ("TARJETA_CREDITO", "Tarjeta de Crédito"),
+                    ("TRANSFERENCIA", "Transferencia"),
+                ],
+                max_length=20,
+            ),
         ),
         migrations.AddConstraint(
-            model_name='detallefactura',
-            constraint=models.CheckConstraint(condition=models.Q(('monto_descuento__gte', 0)), name='chk_det_fac_monto_descuento_gte_0'),
+            model_name="detallefactura",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("monto_descuento__gte", 0)),
+                name="chk_det_fac_monto_descuento_gte_0",
+            ),
         ),
         migrations.DeleteModel(
-            name='Descuento',
+            name="Descuento",
         ),
     ]
