@@ -95,7 +95,7 @@ class CategoriaRequeridaCard(BaseConditionCard):
     @classmethod
     def to_rule_expression(cls, config: dict[str, Any]) -> str:
         cat_id = int(config["categoria_id"])
-        return f"items.exists(categoria_id == {cat_id})"
+        return f"{cat_id} in cart.categoria_ids"
 
 
 @register_card

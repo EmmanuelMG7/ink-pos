@@ -658,7 +658,7 @@
         parts.push(`cart.subtotal >= ${parseFloat(val) || 0}`);
       } else if (cardId === 'cond_categoria') {
         const cat = cardEl.querySelector('[data-field="categoria_id"]')?.value || '1';
-        parts.push(`items.exists(categoria_id == ${parseInt(cat) || 1})`);
+        parts.push(`${parseInt(cat) || 1} in cart.categoria_ids`);
       } else if (cardId === 'cond_fin_de_semana') {
         parts.push('temporal.es_fin_de_semana == true');
       } else if (cardId === 'cond_primera_compra') {

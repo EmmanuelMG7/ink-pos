@@ -38,7 +38,7 @@ class PromotionCardsTests(SimpleTestCase):
         )
         self.assertEqual(
             CategoriaRequeridaCard.to_rule_expression({"categoria_id": 4}),
-            "items.exists(categoria_id == 4)",
+            "4 in cart.categoria_ids",
         )
 
     def test_temporal_y_cliente_cards(self):
