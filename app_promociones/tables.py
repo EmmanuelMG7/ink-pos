@@ -9,6 +9,13 @@ class PromocionTable(tables.Table):
         template_code="""
         <div class="d-flex align-items-center gap-2">
             <span class="fw-bold">{{ record.nombre }}</span>
+        </div>
+        """,
+        verbose_name="Nombre",
+    )
+    codigo = tables.TemplateColumn(
+        template_code="""
+        <div class="d-flex align-items-center gap-2">
             {% if record.es_cupon %}
                 <span class="badge bg-warning text-dark font-monospace">
                     {{ record.codigo_cupon }}
@@ -18,15 +25,7 @@ class PromocionTable(tables.Table):
             {% endif %}
         </div>
         """,
-        verbose_name="Nombre / Código",
-    )
-    condicion = tables.TemplateColumn(
-        template_code="""
-        <code class="text-muted small font-monospace">
-            {{ record.expresion_condicion|truncatechars:45 }}
-        </code>
-        """,
-        verbose_name="Condición Lógica",
+        verbose_name="Código",
     )
     beneficios = tables.TemplateColumn(
         template_code="""
@@ -102,7 +101,7 @@ class PromocionTable(tables.Table):
         fields = (
             "id",
             "nombre",
-            "condicion",
+            "codigo",
             "beneficios",
             "acumulable",
             "vigencia",
