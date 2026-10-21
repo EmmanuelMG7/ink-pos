@@ -7,6 +7,7 @@ from .bootstrap import (
     BootstrapFormMixin,
     BootstrapModelForm,
 )
+from .fields import MultipleTagsField
 from .validators import (
     AlphanumericValidator,
     AlphanumericWithSpacesValidator,
@@ -15,6 +16,7 @@ from .validators import (
     PasswordValidator,
     UsernameValidator,
 )
+from .widgets import MultipleHiddenWidget
 
 __all__ = [
     "AlphanumericValidator",
@@ -22,6 +24,8 @@ __all__ = [
     "BootstrapFormMixin",
     "BootstrapForm",
     "BootstrapModelForm",
+    "MultipleHiddenWidget",
+    "MultipleTagsField",
     "OnlyAlphaNumericValidator",
     "OnlyTextValidator",
     "PasswordValidator",
