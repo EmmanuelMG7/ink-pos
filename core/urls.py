@@ -35,4 +35,5 @@ urlpatterns = [
     path("auth/", include("app_autenticacion.urls")),
     path("inventario/", include("app_inventario.urls")),
     path("ventas/", include("app_ventas.urls")),
+    path("promociones/", include("app_promociones.urls")),
 ]
