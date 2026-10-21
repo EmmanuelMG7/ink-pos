@@ -1,14 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.shortcuts import redirect, render
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django_tables2 import RequestConfig
 
 from .forms import ProductoForm
 from .models import Categoria, Marca, Producto
 from .tables import ProductoTable
-
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
 
 
 @login_required
@@ -56,19 +54,19 @@ def gestion_productos(request):
         },
     )
 
+
 @login_required
 @permission_required("app_inventario.change_producto", raise_exception=True)
 def editar_producto(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
-    
+
     if request.method == "POST":
         form = ProductoForm(request.POST, instance=producto)
         if form.is_valid():
             try:
                 form.save()
                 messages.success(
-                    request,
-                    f"Producto '{producto.nombre}' actualizado correctamente."
+                    request, f"Producto '{producto.nombre}' actualizado correctamente."
                 )
             except Exception as e:
                 messages.error(request, f"Hubo un error al actualizar el producto: {str(e)}")
@@ -76,14 +74,15 @@ def editar_producto(request, pk):
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"Error de validación: {error}")
-                    
+
     return redirect("inventario:gestion")
+
 
 @login_required
 @permission_required("app_inventario.change_producto", raise_exception=True)
 def obtener_producto(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
-    
+
     data = {
         "codigo": producto.codigo,
         "nombre": producto.nombre,
