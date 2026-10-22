@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.sessions.models import Session
 from django.db import transaction
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -35,7 +36,7 @@ def gestion_empleados_view(request):
                 empleado = form.save()
                 messages.success(
                     request,
-                    f"Empleado '{empleado.usuario.first_name}' creado correctamente.",
+                    f"Empleado '{empleado.auth_user.first_name}' creado correctamente.",
                 )
                 return redirect("empleados:gestion")
             except Exception as e:
@@ -64,6 +65,45 @@ def gestion_empleados_view(request):
 
 
 @login_required
+@permission_required("app_empleados.change_empleado", raise_exception=True)
+def editar_empleado(request, pk):
+    empleado = get_object_or_404(Empleado, pk=pk)
+
+    if request.method == "POST":
+        form = EmpleadoForm(request.POST, instance=empleado)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(
+                    request,
+                    f"Empleado '{empleado.auth_user.first_name}' actualizado correctamente.",
+                )
+            except Exception as e:
+                messages.error(request, f"Hubo un error al actualizar el empleado: {str(e)}")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"Error de validación: {error}")
+
+    return redirect("empleados:gestion")
+
+
+@login_required
+@permission_required("app_empleados.change_empleado", raise_exception=True)
+def obtener_empleado(request, pk):
+    empleado = get_object_or_404(Empleado, pk=pk)
+
+    data = {
+        "tipo_documento": empleado.tipo_documento,
+        "identificacion": empleado.identificacion,
+        "nombre": empleado.auth_user.first_name if empleado.auth_user else "",
+        "usuario": empleado.auth_user.username if empleado.auth_user else "",
+        "telefono": empleado.telefono,
+        "es_admin": empleado.es_admin,
+    }
+    return JsonResponse(data)
+
+
 @require_POST
 @permission_required("app_empleados.delete_empleado", raise_exception=True)
 def eliminar_empleado_view(request, empleado_id=None):
