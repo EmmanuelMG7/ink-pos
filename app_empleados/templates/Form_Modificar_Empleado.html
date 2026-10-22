@@ -1,0 +1,65 @@
+<!-- cspell:disable -->
+{% load static %}
+<div class="modal fade" tabindex="-1" id="modal_editar_empleado">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Editar Empleado</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form action="" method="post" class="needs-validation" novalidate id="form_editar_empleado">
+        {% csrf_token %}
+        
+        <!-- Campo Oculto (HiddenInput) según forms.py -->
+        {{ form.tipo_documento }}
+        
+        <div class="modal-body m-2">
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+                <label class="form-label fw-bold">Identificación</label>
+                {{ form.identificacion }}
+            </div>
+            <div class="col">
+                <label class="form-label fw-bold">Nombre Completo</label>
+                {{ form.nombre }}
+            </div>
+          </div>
+          
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+                <label class="form-label fw-bold">Usuario</label>
+                {{ form.usuario }}
+            </div>
+            <div class="col">
+                <label class="form-label fw-bold">Teléfono</label>
+                {{ form.telefono }}
+            </div>
+          </div>
+
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+                <label class="form-label fw-bold">Nueva Contraseña</label>
+                {{ form.contrasena }}
+                <div class="form-text text-muted" style="font-size: 0.85em;">Déjalo en blanco para conservar la actual.</div>
+            </div>
+          </div>
+
+          <div class="row g-2 mt-3 align-items-center">
+            <div class="col form-check ms-2">
+                {{ form.es_admin }}
+                <label class="form-check-label fw-bold" for="{{ form.es_admin.id_for_label }}">
+                    Es usuario administrador
+                </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Empleado</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

@@ -1,3 +1,4 @@
+<!-- cspell:disable -->
 {% extends 'Master.html' %}
 {% load django_tables2 %} 
 {% block title %} 
@@ -7,6 +8,8 @@
 {% block content %}
 
 {% include "modals/Modal_Agregar_Empleado.html" %}
+<!-- NUEVO: Inyectar modal de edición -->
+{% include "Form_Modificar_Empleado.html" %}
 {% include "modals/Modal_Eliminar_Empleado.html" %}
 
 <div class="d-flex flex-column h-100 overflow-hidden">
@@ -56,24 +59,31 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    // 1. Toasts
     var toastElList = [].slice.call(document.querySelectorAll('.toast'))
     var toastList = toastElList.map(function (toastEl) {
       return new bootstrap.Toast(toastEl, {delay: 3000})
     })
     toastList.forEach(toast => toast.show())
-  });
-</script>
 
-{% if form.errors %}
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      var modalEl = document.getElementById('modal_agregar_empleado');
-      if (modalEl) {
-        var modal = new bootstrap.Modal(modalEl);
-        modal.show();
-      }
-    });
-  </script>
-{% endif %}
+    // 2. Lógica AJAX de Edición (HU8)
+    const formEditar = document.getElementById('form_editar_empleado');
+    if (formEditar) {
+        document.body.addEventListener('click', function(e) {
+            const btnEditar = e.target.closest('.btn-editar-empleado');
+            if (!btnEditar) return;
 
-{% endblock %}
+            const empleadoId = btnEditar.getAttribute('data-empleado-id');
+            formEditar.action = `/empleados/editar/${empleadoId}/`;
+
+            fetch(`/empleados/obtener/${empleadoId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    formEditar.querySelector('[name="tipo_documento"]').value = data.tipo_documento;
+                    formEditar.querySelector('[name="identificacion"]').value = data.identificacion;
+                    formEditar.querySelector('[name="nombre"]').value = data.nombre;
+                    formEditar.querySelector('[name="usuario"]').value = data.usuario;
+                    formEditar.querySelector('[name="telefono"]').value = data.telefono;
+                    
+                    const checkboxAdmin = formEditar.querySelector('[name="es_admin"]');
+                    if (checkboxAdmin)
