@@ -22,14 +22,16 @@ from app_ventas.models import Factura
 class EmpleadoViewsTests(TestCase):
     def setUp(self):
         # 1. Configuración del Administrador con permisos totales
-        self.admin_user = User.objects.create_user(username="admin", password="password123", is_staff=True)
+        self.admin_user = User.objects.create_user(
+            username="admin", password="password123", is_staff=True
+        )
         perm_view = Permission.objects.get(codename="view_empleado")
         perm_change = Permission.objects.get(codename="change_empleado")
         self.admin_user.user_permissions.add(perm_view, perm_change)
-        
+
         grupo_admin, _ = Group.objects.get_or_create(name=RolUsuario.ADMINISTRADOR)
         self.admin_user.groups.add(grupo_admin)
-        
+
         self.admin_empleado = Empleado.objects.create(
             auth_user=self.admin_user,
             tipo_documento=Empleado.TipoDocumento.CEDULA,
@@ -50,7 +52,7 @@ class EmpleadoViewsTests(TestCase):
         self.url = reverse("empleados:gestion")
         self.url_editar = reverse("empleados:editar_empleado", args=[self.empleado.id])
         self.url_obtener = reverse("empleados:obtener_empleado", args=[self.empleado.id])
-        
+
         self.client.login(username="admin", password="password123")
 
     def test_editar_rechaza_no_admin_403(self):

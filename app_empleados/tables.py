@@ -15,7 +15,6 @@ class EmpleadoTable(tables.Table):
                 <i class="bi bi-pencil-square"></i>
             </button>
             {% endif %}
-            
             {% if record.auth_user == request.user %}
             <button type="button" class="btn btn-sm btn-outline-secondary disabled"
             title="No puedes eliminarte ni bloquearte a ti mismo" disabled aria-disabled="true">
@@ -25,7 +24,8 @@ class EmpleadoTable(tables.Table):
             <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-empleado"
             title="Eliminar" data-bs-toggle="modal" data-bs-target="#modal_eliminar_empleado"
             data-empleado-id="{{ record.id }}"
-            data-empleado-nombre="{{ record.usuario.get_full_name|default:record.usuario.username }}"
+            data-empleado-nombre="{{ record.usuario.get_full_name|
+            default:record.usuario.username }}"
             data-empleado-usuario="{{ record.usuario.username }}"
             data-empleado-identificacion="{{ record.identificacion }}">
                 <i class="bi bi-trash"></i>
