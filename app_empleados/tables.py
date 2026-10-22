@@ -6,19 +6,28 @@ from .models import Empleado
 class EmpleadoTable(tables.Table):
     acciones = tables.TemplateColumn(
         template_code="""
-        <div class="d-flex gap-1">
-            <button type="button" class="btn btn-sm btn-outline-primary"
-            title="Editar" data-bs-toggle="modal" data-bs-target=
-            "#modal_modificar_{{ record.id }}">
-                <i class="bi bi-pencil-square"></i>
-            </button>
-            <button type="button" class="btn btn-sm btn-outline-danger"
-            title="Eliminar" data-bs-toggle="modal" data-bs-target=
-            "#modal_eliminar_{{ record.id }}">
-                <i class="bi bi-trash"></i>
-            </button>
-        </div>
-        """,
+<div class="d-flex gap-1">
+    <button type="button" class="btn btn-sm btn-outline-primary"
+    title="Editar" data-bs-toggle="modal" data-bs-target="#modal_modificar_{{ record.id }}">
+        <i class="bi bi-pencil-square"></i>
+    </button>
+    {% if record.auth_user == request.user %}
+    <button type="button" class="btn btn-sm btn-outline-secondary disabled"
+    title="No puedes eliminarte ni bloquearte a ti mismo" disabled aria-disabled="true">
+        <i class="bi bi-trash"></i>
+    </button>
+    {% else %}
+    <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-empleado"
+    title="Eliminar" data-bs-toggle="modal" data-bs-target="#modal_eliminar_empleado"
+    data-empleado-id="{{ record.id }}"
+    data-empleado-nombre="{{ record.usuario.get_full_name|default:record.usuario.username }}"
+    data-empleado-usuario="{{ record.usuario.username }}"
+    data-empleado-identificacion="{{ record.identificacion }}">
+        <i class="bi bi-trash"></i>
+    </button>
+    {% endif %}
+</div>
+""",
         orderable=False,
         verbose_name="Acciones",
     )

@@ -59,6 +59,26 @@ class LoginViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("error", response.context)
 
+    def test_login_post_cuenta_inactiva_muestra_mensaje_deshabilitada(self):
+        """Login con credenciales válidas pero cuenta inactiva muestra advertencia de inactiva."""
+        User.objects.create_user(username="adminuser", password="AdminPassword123!", is_staff=True)
+        User.objects.create_user(
+            username="empleado_inactivo",
+            password="Password123!",
+            is_active=False,
+        )
+        url = reverse("autenticacion:login")
+        response = self.client.post(
+            url,
+            {"usuario": "empleado_inactivo", "contrasena": "Password123!"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.context["error"],
+            "La cuenta se encuentra inactiva o deshabilitada.",
+        )
+        self.assertContains(response, "La cuenta se encuentra inactiva o deshabilitada.")
+
     def test_logout_redirige_a_login(self):
         """Logout cierra la sesión y redirige a login."""
         User.objects.create_user(username="adminuser", password="AdminPassword123!", is_staff=True)

@@ -20,6 +20,16 @@ def Login(request):
             else:
                 return redirect("ventas:pos")
         else:
+            candidato = User.objects.filter(username=usuario_input).first()
+            if candidato and candidato.check_password(contrasena_input) and not candidato.is_active:
+                return render(
+                    request,
+                    "Login.html",
+                    {
+                        "error": "La cuenta se encuentra inactiva o deshabilitada.",
+                        "form": form,
+                    },
+                )
             return render(
                 request,
                 "Login.html",
