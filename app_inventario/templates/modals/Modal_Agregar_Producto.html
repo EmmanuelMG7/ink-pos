@@ -1,6 +1,6 @@
 {% load static %}
 <div class="modal fade" tabindex="-1" id="modal_agregar_producto">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h4 class="modal-title">Crear Nuevo Producto</h4>
@@ -8,69 +8,115 @@
         </button>
       </div>
 
+      <!-- Barra de progreso delgada indicando la página actual -->
+      <div class="progress" style="height: 4px; border-radius: 0;">
+        <div id="modal_producto_progress" 
+             class="progress-bar bg-primary" 
+             role="progressbar" 
+             style="width: 50%; transition: width 0.3s ease;" 
+             aria-valuenow="50" 
+             aria-valuemin="0" 
+             aria-valuemax="100">
+        </div>
+      </div>
+
       <form action="" method="post" class="needs-validation" novalidate id="form_crear_producto">
         {% csrf_token %}
 
         <div class="modal-body m-2">
-          <div class="row g-2 mb-2 align-items-start">
-            <div class="col">
-              {% with field=form.nombre span_text=siguiente_codigo %}
-                {% include 'bootstrap_input_field.html' %}
-              {% endwith %}
+          <!-- PÁGINA 1: Datos principales del producto y placeholder de imagen -->
+          <div id="modal_producto_page_1">
+            <div class="row g-3 align-items-stretch">
+              <!-- Placeholder para futura imagen del producto con integración en tema oscuro -->
+              <div class="col-12 col-md-4">
+                <div class="border border-secondary-subtle rounded bg-body-tertiary d-flex flex-column align-items-center justify-content-center h-100 p-3 text-body-secondary text-center" 
+                     style="min-height: 180px; border-style: dashed !important;">
+                  <i class="bi bi-image fs-1 text-secondary mb-2"></i>
+                  <span class="small fw-semibold text-body-secondary">Imagen del producto</span>
+                  <span class="text-body-tertiary" style="font-size: 0.75rem;">(Próximamente)</span>
+                </div>
+              </div>
+
+              <!-- Campos principales compactos -->
+              <div class="col-12 col-md-8">
+                <div class="mb-2">
+                  {% with field=form.nombre span_text=siguiente_codigo %}
+                    {% include 'bootstrap_input_field.html' %}
+                  {% endwith %}
+                </div>
+
+                <div class="row g-2 mb-2">
+                  <div class="col">
+                    {% with field=form.precio_venta span_icon="bi bi-tags-fill" %}
+                      {% include 'bootstrap_input_field.html' %}
+                    {% endwith %}
+                  </div>
+                  <div class="col">
+                    {% with field=form.costo_compra span_icon="bi bi-cash-stack" %}
+                      {% include 'bootstrap_input_field.html' %}
+                    {% endwith %}
+                  </div>
+                </div>
+
+                <div class="row g-2">
+                  <div class="col">
+                    {% with field=form.stock_actual span_icon="bi bi-box-seam-fill" %}
+                      {% include 'bootstrap_input_field.html' %}
+                    {% endwith %}
+                  </div>
+                  <div class="col">
+                    {% with field=form.stock_minimo span_icon="bi bi-box-arrow-in-down" %}
+                      {% include 'bootstrap_input_field.html' %}
+                    {% endwith %}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="row g-2 mb-2 align-items-start">
-            <div class="col">
-              {% with field=form.precio_venta span_icon="bi bi-tags-fill"%}
-                {% include 'bootstrap_input_field.html' %}
-              {% endwith %}
+          <!-- PÁGINA 2: Clasificación y relaciones (Marca, Categorías e Impuesto) -->
+          <div id="modal_producto_page_2" class="d-none">
+            <div class="row g-2 mb-3">
+              <div class="col-12">
+                {% with id='marca' name='marca' label='Marca' default_value='Generico' value=form.marca.value|default:'Generico' items=marcas %}
+                  {% include 'search_and_create_dropdown.html' %}
+                {% endwith %}
+              </div>
             </div>
-            <div class="col">
-            {% with field=form.costo_compra span_icon="bi bi-cash-stack"%}
-              {% include 'bootstrap_input_field.html' %}
-            {% endwith %}
-            </div>
-          </div>
 
-          <div class="row g-2 mb-2 align-items-start">
-            <div class="col">
-              {% with field=form.stock_actual span_icon="bi bi-box-seam-fill" %}
-                {% include 'bootstrap_input_field.html' %}
-              {% endwith %}
+            <div class="row g-2 mb-3">
+              <div class="col-12">
+                {% with id='categorias' name='categorias' label='Categorías' items=categorias %}
+                  {% include 'multi_search_and_create_dropdown.html' %}
+                {% endwith %}
+              </div>
             </div>
-            <div class="col">
-              {% with field=form.stock_minimo span_icon="bi bi-box-arrow-in-down" %}
-                {% include 'bootstrap_input_field.html' %}
-              {% endwith %}
-            </div>
-          </div>
-          
-          <div class="row g-2 mb-2 align-items-start">
-            <div class="col">
-              {% with id='marca' label='Marca' default_value='Generico' value=form.marca.value|default:'Generico' items=marcas %}
-                {% include 'search_and_create_dropdown.html' %}
-              {% endwith %}
-            </div>
-            <div class="col">
-              {% with id='categoria' label='Categoría' default_value='Ninguna' value=form.categoria.value|default:'Ninguna' items=categorias %}
-                {% include 'search_and_create_dropdown.html' %}
-              {% endwith %}
-            </div>
-          </div>
 
-          <div class="row g-2 align-items-start">
-            <div class="col">
-              {% with field=form.impuesto span_icon="bi bi-receipt" %}
-                {% include 'bootstrap_input_field.html' %} 
-              {% endwith %}
+            <div class="row g-2">
+              <div class="col-12">
+                {% with field=form.impuesto span_icon="bi bi-receipt" %}
+                  {% include 'bootstrap_input_field.html' %} 
+                {% endwith %}
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="modal-footer">
-          <button type="reset" class="btn btn-secondary" id="btn_reset_modal_producto">Limpiar</button>
-          <button type="submit" class="btn btn-primary">Guardar Producto</button>
+        <div class="modal-footer d-flex justify-content-between">
+          <div>
+            <button type="reset" class="btn btn-secondary" id="btn_modal_cancelar">Limpiar</button>
+            <button type="button" class="btn btn-secondary d-none" id="btn_modal_anterior">
+              <i class="bi bi-arrow-left me-1"></i> Atrás
+            </button>
+          </div>
+          <div>
+            <button type="button" class="btn btn-primary" id="btn_modal_siguiente">
+              Siguiente <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+            <button type="submit" class="btn btn-primary d-none" id="btn_modal_guardar">
+              <i class="bi bi-check-lg me-1"></i> Guardar Producto
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -78,4 +124,77 @@
 </div>
 
 <script src="{% static 'js/search_and_create_dropdown.js' %}"></script>
+<script src="{% static 'js/multi_search_and_create_dropdown.js' %}"></script>
 <script src="{% static 'js/FormValidationIntercept.js' %}"></script>
+
+<script>
+  (function () {
+    const modalEl = document.getElementById('modal_agregar_producto');
+    if (!modalEl) return;
+
+    const page1 = document.getElementById('modal_producto_page_1');
+    const page2 = document.getElementById('modal_producto_page_2');
+    const progressBar = document.getElementById('modal_producto_progress');
+    const btnCancelar = document.getElementById('btn_modal_cancelar');
+    const btnAnterior = document.getElementById('btn_modal_anterior');
+    const btnSiguiente = document.getElementById('btn_modal_siguiente');
+    const btnGuardar = document.getElementById('btn_modal_guardar');
+
+    function irAPagina1() {
+      page2.classList.add('d-none');
+      page1.classList.remove('d-none');
+      progressBar.style.width = '50%';
+      progressBar.setAttribute('aria-valuenow', '50');
+
+      btnAnterior.classList.add('d-none');
+      btnCancelar.classList.remove('d-none');
+      btnGuardar.classList.add('d-none');
+      btnSiguiente.classList.remove('d-none');
+    }
+
+    function irAPagina2() {
+      page1.classList.add('d-none');
+      page2.classList.remove('d-none');
+      progressBar.style.width = '100%';
+      progressBar.setAttribute('aria-valuenow', '100');
+
+      btnCancelar.classList.add('d-none');
+      btnAnterior.classList.remove('d-none');
+      btnSiguiente.classList.add('d-none');
+      btnGuardar.classList.remove('d-none');
+    }
+
+    if (btnSiguiente) {
+      btnSiguiente.addEventListener('click', function () {
+        // Validar los campos de la página 1 antes de avanzar
+        const inputs = page1.querySelectorAll('input');
+        let valido = true;
+        for (let i = 0; i < inputs.length; i++) {
+          if (inputs[i].checkValidity && !inputs[i].checkValidity()) {
+            valido = false;
+            inputs[i].reportValidity();
+            break;
+          }
+        }
+        if (valido) {
+          irAPagina2();
+        }
+      });
+    }
+
+    if (btnAnterior) {
+      btnAnterior.addEventListener('click', function () {
+        irAPagina1();
+      });
+    }
+
+    // Volver a la página 1 cuando se limpie o cierre el modal
+    modalEl.addEventListener('reset', function () {
+      setTimeout(irAPagina1, 0);
+    });
+
+    modalEl.addEventListener('hidden.bs.modal', function () {
+      irAPagina1();
+    });
+  })();
+</script>

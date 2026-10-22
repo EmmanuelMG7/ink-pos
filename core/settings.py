@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "app_autenticacion",
     "app_inventario",
     "app_ventas",
+    "app_promociones",
     "app_caja",
     "app_proveedores",
     "django_tables2",

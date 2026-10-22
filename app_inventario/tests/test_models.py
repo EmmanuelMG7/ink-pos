@@ -28,12 +28,12 @@ class InventarioModelosTests(TestCase):
         self.producto = Producto.objects.create(
             nombre="Lápiz",
             marca=self.marca,
-            categoria=self.categoria,
             costo_compra=Decimal("100.00"),
             precio_venta=Decimal("200.00"),
             stock_actual=10,
             stock_minimo=2,
         )
+        self.producto.categorias.set([self.categoria])
 
     def test_categoria_clean_and_str(self):
         cat = Categoria(nombre="   ")

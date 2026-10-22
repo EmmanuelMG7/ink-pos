@@ -90,7 +90,6 @@
     function filtrarOpciones(query) {
       const q = (query || '').trim().toLowerCase();
       let matchExacto = false;
-      let totalVisibles = 0;
 
       itemsList.querySelectorAll('.searchable-item, .dropdown-item').forEach(function (btn) {
         if (btn === crearItem) return;
@@ -103,7 +102,6 @@
 
         if (!q || texto.includes(q)) {
           btn.classList.remove('d-none');
-          totalVisibles++;
         } else {
           btn.classList.add('d-none');
         }
@@ -156,6 +154,21 @@
       });
     }
 
+    // Confirmar texto escrito si se cierra el dropdown o se envía el formulario
+    function confirmarTextoPendiente() {
+      const txt = searchInput.value.trim();
+      if (txt && (!hiddenInput.value || hiddenInput.value.toLowerCase() === 'ninguna' || hiddenInput.value !== txt)) {
+        seleccionarValor(txt, txt);
+      }
+    }
+
+    btnDropdown.addEventListener('hide.bs.dropdown', confirmarTextoPendiente);
+
+    const parentForm = container.closest('form');
+    if (parentForm) {
+      parentForm.addEventListener('submit', confirmarTextoPendiente);
+    }
+
     // Restaurar valor por defecto
     container.resetToDefault = function () {
       const defaultVal = container.dataset.defaultValue || '';
@@ -194,4 +207,3 @@
   window.initSearchableDropdowns = initAll;
   window.initSearchableDropdown = initDropdown;
 })();
-

@@ -5,8 +5,8 @@ from app_ventas.models import ResolucionDIAN
 
 
 def obtener_siguiente_numero_factura(tipo_documento: str | None = None) -> str:
-    """
-    Obtiene el consecutivo bloqueando la fila de la resolución DIAN activa.
+    """Obtiene el consecutivo bloqueando la fila de la resolución DIAN activa.
+
     Exige que el llamador ya haya abierto un transaction.atomic().
     """
     # Guardián de seguridad: si no hay transacción abierta, aborta de inmediato

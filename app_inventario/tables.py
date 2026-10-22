@@ -1,4 +1,7 @@
+import html
+
 import django_tables2 as tables
+from django.utils.safestring import mark_safe
 
 from .models import Producto
 
@@ -6,6 +9,11 @@ from .models import Producto
 class ProductoTable(tables.Table):
     id = tables.Column(verbose_name="# ID")
     nombre = tables.Column(verbose_name="Nombre")
+    categorias = tables.Column(
+        empty_values=(),
+        orderable=False,
+        verbose_name="Categorías",
+    )
     stock_actual = tables.Column(verbose_name="Stock")
     precio_venta = tables.Column(verbose_name="Precio")
     acciones = tables.TemplateColumn(
@@ -30,10 +38,42 @@ class ProductoTable(tables.Table):
     class Meta:
         model = Producto
         template_name = "django_tables2/bootstrap5.html"
-        fields = ("id", "nombre", "stock_actual", "precio_venta", "acciones")
+        fields = ("id", "nombre", "categorias", "stock_actual", "precio_venta", "acciones")
         empty_text = "Nada que mostrar aún. Puedes crear nuevos productos usando el botón +"
         per_page = 10
 
-    # Opcional: agrega el signo de pesos al precio
+    def render_categorias(self, record):
+        cats = list(record.categorias.all())
+        if not cats:
+            return mark_safe('<span class="text-muted fst-italic">Sin categoría</span>')
+
+        if len(cats) <= 3:
+            badges = "".join(
+                f'<span class="badge bg-primary me-1">{html.escape(c.nombre)}</span>' for c in cats
+            )
+            return mark_safe(badges)
+
+        # Más de 3 categorías: muestra las 2 primeras y el chip +N con popover interactivo
+        visibles = cats[:2]
+        restantes = len(cats) - len(visibles)
+        visibles_html = "".join(
+            f'<span class="badge bg-primary me-1">{html.escape(c.nombre)}</span>' for c in visibles
+        )
+        todas_badges = "".join(
+            f'<span class="badge bg-primary me-1 mb-1">{html.escape(c.nombre)}</span>' for c in cats
+        )
+        popover_content = html.escape(
+            f'<div class="d-flex flex-wrap gap-1 py-1">{todas_badges}</div>'
+        )
+
+        chip_mas = (
+            f'<span class="badge bg-secondary cursor-pointer" role="button" '
+            f'data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-html="true" '
+            f'data-bs-title="Todas las categorías ({len(cats)})" '
+            f'data-bs-content="{popover_content}">+{restantes}</span>'
+        )
+        return mark_safe(visibles_html + chip_mas)
+
+    # Agrega el signo de pesos al precio
     def render_precio(self, value):
         return f"${value}"
