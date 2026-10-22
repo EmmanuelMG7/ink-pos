@@ -10,6 +10,7 @@
 {% include "modals/Modal_Agregar_Empleado.html" %}
 <!-- NUEVO: Inyectar modal de edición -->
 {% include "Form_Modificar_Empleado.html" %}
+{% include "modals/Modal_Eliminar_Empleado.html" %}
 
 <div class="d-flex flex-column h-100 overflow-hidden">
   <div class="d-flex p-2 gap-2 flex-shrink-0">
@@ -85,40 +86,4 @@
                     formEditar.querySelector('[name="telefono"]').value = data.telefono;
                     
                     const checkboxAdmin = formEditar.querySelector('[name="es_admin"]');
-                    if (checkboxAdmin) {
-                        checkboxAdmin.checked = data.es_admin;
-                    }
-                    
-                    // La contraseña siempre debe estar vacía por seguridad
-                    const inputPassword = formEditar.querySelector('[name="contrasena"]');
-                    if (inputPassword) inputPassword.value = '';
-                })
-                .catch(error => console.error('Error al obtener datos del empleado:', error));
-        });
-
-        // 3. Reseteo automático al cancelar o cerrar el modal
-        const modalEditarEl = document.getElementById('modal_editar_empleado');
-        if (modalEditarEl) {
-            modalEditarEl.addEventListener('hidden.bs.modal', function () {
-                formEditar.reset();
-                formEditar.action = "";
-                formEditar.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-            });
-        }
-    }
-  });
-</script>
-
-{% if form.errors %}
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      var modalEl = document.getElementById('modal_agregar_empleado');
-      if (modalEl) {
-        var modal = new bootstrap.Modal(modalEl);
-        modal.show();
-      }
-    });
-  </script>
-{% endif %}
-
-{% endblock %}
+                    if (checkboxAdmin)

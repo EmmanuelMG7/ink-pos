@@ -3,6 +3,7 @@ import re
 from django import forms
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models import ProtectedError
 
 from app_common.forms import (
     BootstrapModelForm,
@@ -110,7 +111,17 @@ class EmpleadoForm(BootstrapModelForm):
     def clean_identificacion(self):
         identificacion = self.cleaned_data.get("identificacion")
         if identificacion:
-            return str(identificacion).strip()
+            identificacion = str(identificacion).strip()
+            # Validar solo contra empleados activos
+            query = Empleado.objects.filter(
+                identificacion=identificacion, auth_user__is_active=True
+            )
+            if self.instance and self.instance.pk:
+                query = query.exclude(pk=self.instance.pk)
+            if query.exists():
+                msg = f"Ya existe un empleado con la identificación '{identificacion}'."
+                raise forms.ValidationError(msg)
+            return identificacion
         return identificacion
 
     def clean_telefono(self):
@@ -126,7 +137,7 @@ class EmpleadoForm(BootstrapModelForm):
         usuario = self.cleaned_data.get("usuario")
         if not usuario:
             return usuario
-        query = User.objects.filter(username=usuario)
+        query = User.objects.filter(username=usuario, is_active=True)
         if (
             self.instance
             and self.instance.pk
@@ -158,6 +169,43 @@ class EmpleadoForm(BootstrapModelForm):
                 "on",
                 "yes",
             )
+
+        # Si se va a crear un nuevo empleado y no hay errores de validación
+        if not self.errors and not self.instance.pk:
+            usuario = cleaned_data.get("usuario")
+            identificacion = cleaned_data.get("identificacion")
+
+            # 1. Si existe un usuario inactivo con ese username, liberarlo/eliminarlo
+            if usuario:
+                user_inactivo = User.objects.filter(username=usuario, is_active=False).first()
+                if user_inactivo:
+                    try:
+                        with transaction.atomic():
+                            emp_asociado = getattr(user_inactivo, "empleado", None)
+                            if emp_asociado:
+                                emp_asociado.delete()
+                            user_inactivo.delete()
+                    except ProtectedError:
+                        user_inactivo.username = (
+                            f"{user_inactivo.username}_inactivo_{user_inactivo.pk}"
+                        )
+                        user_inactivo.save()
+
+            # 2. Si existe un empleado inactivo con esa identificación, liberarlo/eliminarlo
+            if identificacion:
+                emp_inactivo = Empleado.objects.filter(
+                    identificacion=identificacion,
+                    auth_user__is_active=False,
+                ).first()
+                if emp_inactivo:
+                    try:
+                        with transaction.atomic():
+                            u_inactivo = emp_inactivo.auth_user
+                            emp_inactivo.delete()
+                            u_inactivo.delete()
+                    except ProtectedError:
+                        pass
+
         return cleaned_data
 
     def save(self, commit=True):
