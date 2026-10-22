@@ -24,7 +24,7 @@ class EmpleadoTable(tables.Table):
             <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-empleado"
             title="Eliminar" data-bs-toggle="modal" data-bs-target="#modal_eliminar_empleado"
             data-empleado-id="{{ record.id }}"
-            data-empleado-nombre="{{ record.usuario.get_full_name|
+            data-empleado-nombre="{{ record.usuario.get_full_name }}"
             default:record.usuario.username }}"
             data-empleado-usuario="{{ record.usuario.username }}"
             data-empleado-identificacion="{{ record.identificacion }}">
