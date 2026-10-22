@@ -1,3 +1,4 @@
+# cspell:disable
 from decimal import Decimal
 from unittest.mock import patch
 
@@ -185,7 +186,7 @@ class GestionProductosViewTests(TestCase):
             p.categorias.set([cat1, cat2])
 
         # Verifica que la consulta a la vista cargue las categorías sin consultas N+1
-        with self.assertNumQueries(11):
+        with self.assertNumQueries(12):
             response = self.client.get(self.url)
             self.assertEqual(response.status_code, 200)
 
@@ -210,3 +211,174 @@ class GestionProductosViewTests(TestCase):
         self.assertEqual(get_resp.status_code, 200)
         duracion = time.perf_counter() - inicio
         self.assertLess(duracion, 1.0, f"El tiempo total {duracion:.3f}s supera 1 segundo")
+
+    # ======================================================================
+    # PRUEBAS HU7: RUTAS DE EDICIÓN, 403 Y PRECARGA JSON
+    # ======================================================================
+    def test_editar_rechaza_no_admin_403(self):
+        """HU7: Cajero sin permisos change_producto recibe HTTP 403 al intentar editar."""
+        marca = Marca.objects.create(nombre="Marca Test")
+        prod = Producto.objects.create(
+            nombre="Producto Protegido",
+            marca=marca,
+            costo_compra=Decimal("10.00"),
+            precio_venta=Decimal("20.00"),
+        )
+        url_editar = reverse("inventario:editar_producto", args=[prod.id])
+
+        # Cajero (creado en setUp pero re-autenticado aquí)
+        cajero = User.objects.create_user(username="cajero_edit", password="123")
+        cajero.groups.add(Group.objects.get(name=RolUsuario.CAJERO))
+        self.client.login(username="cajero_edit", password="123")
+
+        response = self.client.post(url_editar, {"nombre": "Hack"})
+        self.assertEqual(response.status_code, 403)
+
+    def test_obtener_json_precarga_exitoso(self):
+        """HU7: El endpoint JSON devuelve correctamente los datos para el frontend."""
+        marca = Marca.objects.create(nombre="Marca Test JSON")
+        cat1 = Categoria.objects.create(nombre="Cat 1")
+        prod = Producto.objects.create(
+            nombre="Producto JSON",
+            marca=marca,
+            costo_compra=Decimal("100.00"),
+            precio_venta=Decimal("200.00"),
+            stock_actual=15,
+            stock_minimo=5,
+        )
+        prod.categorias.add(cat1)
+        url_obtener = reverse("inventario:obtener_producto", args=[prod.id])
+
+        response = self.client.get(url_obtener)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+
+        self.assertEqual(data["nombre"], "Producto JSON")
+        self.assertEqual(data["costo_compra"], "100.00")
+        self.assertEqual(data["marca"], "Marca Test JSON")
+        self.assertEqual(data["categorias"], ["Cat 1"])
+
+    def test_editar_exitoso_y_desasociacion_categorias(self):
+        """HU7: Un guardado exitoso actualiza el producto y permite quitar categorías (vacío)."""
+        marca = Marca.objects.create(nombre="Marca Inicial")
+        cat1 = Categoria.objects.create(nombre="Cat Vieja")
+        prod = Producto.objects.create(
+            nombre="Producto A Actualizar",
+            marca=marca,
+            costo_compra=Decimal("50.00"),
+            precio_venta=Decimal("100.00"),
+            stock_actual=10,
+            stock_minimo=2,
+        )
+        prod.categorias.add(cat1)
+        url_editar = reverse("inventario:editar_producto", args=[prod.id])
+
+        data = {
+            "nombre": "Producto Actualizado",
+            "costo_compra": "60.00",
+            "precio_venta": "120.00",
+            "stock_actual": 15,
+            "stock_minimo": 3,
+            "marca": "Marca Nueva",
+            # Enviamos lista vacía o 'Ninguna' para desasociar la categoría actual
+            "categorias": ["Ninguna"],
+        }
+        response = self.client.post(url_editar, data)
+        self.assertRedirects(response, self.url)
+
+        prod.refresh_from_db()
+        self.assertEqual(prod.nombre, "Producto Actualizado")
+        self.assertEqual(prod.precio_venta, Decimal("120.00"))
+        self.assertEqual(prod.marca.nombre, "Marca Nueva")
+        # Validamos que se haya quitado la categoría "Cat Vieja"
+        self.assertEqual(prod.categorias.count(), 0)
+
+    # ======================================================================
+    # PRUEBAS HU9: ELIMINACIÓN LÓGICA DE PRODUCTOS
+    # ======================================================================
+    def test_eliminar_rechaza_no_admin_403(self):
+        """HU9: Cajero sin permisos delete_producto recibe HTTP 403 al intentar eliminar."""
+        marca = Marca.objects.create(nombre="Marca Eliminar 403")
+        prod = Producto.objects.create(
+            nombre="Producto Protegido Eliminar",
+            marca=marca,
+            costo_compra=Decimal("10.00"),
+            precio_venta=Decimal("20.00"),
+        )
+        url_eliminar = reverse("inventario:eliminar_producto", args=[prod.id])
+
+        # Cajero autenticado sin permisos de borrado
+        cajero = User.objects.create_user(username="cajero_del", password="123")
+        cajero.groups.add(Group.objects.get(name=RolUsuario.CAJERO))
+        self.client.login(username="cajero_del", password="123")
+
+        response = self.client.post(url_eliminar)
+        self.assertEqual(response.status_code, 403)
+
+        # Verificar que la base de datos no fue alterada
+        prod.refresh_from_db()
+        self.assertTrue(prod.activo)
+
+    def test_eliminar_producto_borrado_logico_exitoso(self):
+        """HU9: Un POST exitoso actualiza activo = False sin destruir el registro físico."""
+        marca = Marca.objects.create(nombre="Marca Eliminar Exitoso")
+        prod = Producto.objects.create(
+            nombre="Producto A Descontinuar",
+            marca=marca,
+            costo_compra=Decimal("50.00"),
+            precio_venta=Decimal("100.00"),
+            activo=True,
+        )
+        url_eliminar = reverse("inventario:eliminar_producto", args=[prod.id])
+
+        # El self.client ya está logueado como admin por el setUp de la clase
+        response = self.client.post(url_eliminar)
+        self.assertRedirects(response, self.url)
+
+        # Verificar que el producto sigue en base de datos pero inactivo
+        prod.refresh_from_db()
+        self.assertFalse(prod.activo)
+        self.assertTrue(Producto.objects.filter(id=prod.id).exists())
+
+    def test_gestion_productos_no_muestra_inactivos(self):
+        """HU9: La vista principal filtra y excluye los productos descontinuados (activo=False)."""
+        marca = Marca.objects.create(nombre="Marca Filtro")
+        prod_activo = Producto.objects.create(
+            nombre="Producto Activo Test",
+            marca=marca,
+            costo_compra=Decimal("10.00"),
+            precio_venta=Decimal("20.00"),
+            activo=True,
+        )
+        prod_inactivo = Producto.objects.create(
+            nombre="Producto Inactivo Test",
+            marca=marca,
+            costo_compra=Decimal("10.00"),
+            precio_venta=Decimal("20.00"),
+            activo=False,
+        )
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+
+        # Extraer los productos directamente de las filas renderizadas en la tabla
+        table = response.context["table"]
+        productos_en_tabla = [row.record for row in table.rows]
+
+        self.assertIn(prod_activo, productos_en_tabla)
+        self.assertNotIn(prod_inactivo, productos_en_tabla)
+
+    def test_eliminar_producto_requiere_post(self):
+        """HU9: El endpoint de borrado rechaza peticiones GET mediante @require_POST."""
+        marca = Marca.objects.create(nombre="Marca Delete GET")
+        prod = Producto.objects.create(
+            nombre="Producto Intento GET",
+            marca=marca,
+            costo_compra=Decimal("10.00"),
+            precio_venta=Decimal("20.00"),
+        )
+        url_eliminar = reverse("inventario:eliminar_producto", args=[prod.id])
+
+        # Un GET debe retornar 405 Method Not Allowed
+        response = self.client.get(url_eliminar)
+        self.assertEqual(response.status_code, 405)

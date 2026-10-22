@@ -1,3 +1,4 @@
+<!-- cspell:disable -->
 {% extends 'Master.html' %}
 {% load django_tables2 %}
 {% block title %}
@@ -7,6 +8,69 @@
 {% block content %}
 
 {% include "modals/Modal_Agregar_Producto.html" %}
+<!-- NUEVO: Inyectar modal de edición -->
+{% include "Form_Modificar_Producto.html" %}
+<!-- Modal Único de Confirmación de Eliminación -->
+<div class="modal fade" id="modal_eliminar_producto" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <div class="modal-body text-center mt-3">
+        <p class="fs-5 mb-1">¿Estás seguro de que deseas eliminar este producto?</p>
+        <!-- Elemento dinámico para inyectar el texto mediante AJAX -->
+        <p class="fs-4 fw-bold text-light" id="texto_producto_eliminar">
+        <span class="spinner-border spinner-border-sm text-danger" role="status" aria-hidden="true"></span> Cargando...
+        </p>
+        <div class="alert alert-warning mt-4 text-start small mb-0" role="alert">
+          <strong>Nota:</strong> Esta acción cambiará el estado del producto a <em>descontinuado</em>. No aparecerá en el módulo de ventas, pero se conservará en la base de datos para mantener la integridad de las facturas históricas.
+        </div>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form action="" method="post" class="m-0" id="form_eliminar_producto">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Sí, Eliminar Producto</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lógica Dinámica de Eliminación (HU9) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const modalEliminarEl = document.getElementById('modal_eliminar_producto');
+    if (!modalEliminarEl) return;
+    
+    const modalEliminarObj = new bootstrap.Modal(modalEliminarEl);
+    const formEliminar = document.getElementById('form_eliminar_producto');
+    const textoProducto = document.getElementById('texto_producto_eliminar');
+
+    document.body.addEventListener('click', function(e) {
+        const btnEliminar = e.target.closest('.btn-eliminar-producto');
+        if (!btnEliminar) return;
+
+        // Extraer los datos directamente del botón
+        const productoId = btnEliminar.getAttribute('data-producto-id');
+        const productoCodigo = btnEliminar.getAttribute('data-producto-codigo');
+        const productoNombre = btnEliminar.getAttribute('data-producto-nombre');
+        
+        // Preparar el formulario y el texto (sin guiones extraños ni saltos de línea)
+        formEliminar.action = `/inventario/eliminar/${productoId}/`;
+        textoProducto.textContent = `${productoCodigo} - ${productoNombre}`;
+        
+        // Mostrar el modal
+        modalEliminarObj.show();
+    });
+  });
+</script>
 
 <div class="d-flex flex-column h-100 overflow-hidden">
   <div class="d-flex p-2 gap-2 flex-shrink-0">
@@ -66,6 +130,63 @@
   {% endif %}
 </div>
 
+<!-- Lógica AJAX de Edición (HU7) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const formEditar = document.getElementById('form_editar_producto');
+    if (formEditar) {
+        document.body.addEventListener('click', function(e) {
+            const btnEditar = e.target.closest('.btn-editar-producto');
+            if (!btnEditar) return;
+
+            const productoId = btnEditar.getAttribute('data-producto-id');
+            formEditar.action = `/inventario/editar/${productoId}/`;
+
+            fetch(`/inventario/obtener/${productoId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    formEditar.querySelector('[name="codigo"]').value = data.codigo;
+                    formEditar.querySelector('[name="nombre"]').value = data.nombre;
+                    formEditar.querySelector('[name="precio_venta"]').value = data.precio_venta;
+                    formEditar.querySelector('[name="costo_compra"]').value = data.costo_compra;
+                    formEditar.querySelector('[name="stock_actual"]').value = data.stock_actual;
+                    formEditar.querySelector('[name="stock_minimo"]').value = data.stock_minimo;
+                    
+                    const selectImpuesto = formEditar.querySelector('[name="impuesto"]');
+                    if (selectImpuesto) selectImpuesto.value = data.impuesto;
+
+                    // Precarga de componentes de Búsqueda (Marca)
+                    const hiddenMarca = document.getElementById('marca_edit');
+                    if(hiddenMarca) {
+                        hiddenMarca.value = data.marca;
+                        const visibleMarca = document.getElementById('marca_edit_search');
+                        if(visibleMarca) visibleMarca.value = data.marca;
+                    }
+
+                    // Precarga de componentes Multi-Select (Categorías) a formato JSON para MultipleTagsField
+                    const hiddenCat = document.getElementById('categorias_edit');
+                    if(hiddenCat) {
+                        hiddenCat.value = JSON.stringify(data.categorias);
+                        // Emitimos evento change para que el script de tu compañero reconstruya los chips visuales
+                        hiddenCat.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                })
+                .catch(error => console.error('Error al cargar datos:', error));
+        });
+
+        // Reseteo de campos y URL al cancelar
+        const modalEditarEl = document.getElementById('modal_editar_producto');
+        if (modalEditarEl) {
+            modalEditarEl.addEventListener('hidden.bs.modal', function () {
+                formEditar.reset();
+                formEditar.action = "";
+                formEditar.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            });
+        }
+    }
+  });
+</script>
+
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     var toastElList = [].slice.call(document.querySelectorAll('.toast'))
@@ -73,7 +194,7 @@
       return new bootstrap.Toast(toastEl, {delay: 3000})
     })
     toastList.forEach(toast => toast.show())
-    // Inicializar popovers de Bootstrap
+    
     var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
     popoverTriggerList.forEach(function (popoverTriggerEl) {
       new bootstrap.Popover(popoverTriggerEl);

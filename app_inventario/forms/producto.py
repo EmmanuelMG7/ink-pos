@@ -102,6 +102,9 @@ class ProductoForm(BootstrapModelForm):
         """
         super().__init__(*args, **kwargs)
 
+        if "costo_compra" in self.fields:
+            self.fields["costo_compra"].required = False
+
         if self.instance and self.instance.pk and not self.is_bound:
             if "codigo" in self.fields:
                 self.fields["codigo"].initial = self.instance.codigo
@@ -111,6 +114,25 @@ class ProductoForm(BootstrapModelForm):
                 self.fields["categorias"].initial = list(
                     self.instance.categorias.values_list("nombre", flat=True)
                 )
+
+    def clean_nombre(self):
+        """
+        Garantiza que el nombre del producto sea único,
+        exceptuando al producto que se está editando.
+        """
+        nombre = self.cleaned_data.get("nombre")
+        if not nombre or not nombre.strip():
+            raise forms.ValidationError("Ingrese un nombre valido.")
+
+        nombre = nombre.strip()
+        query = Producto.objects.filter(nombre__iexact=nombre)
+        if self.instance and self.instance.pk:
+            query = query.exclude(pk=self.instance.pk)
+
+        if query.exists():
+            raise forms.ValidationError("Este producto ya existe.")
+
+        return nombre
 
     def clean(self):
         """
@@ -122,13 +144,19 @@ class ProductoForm(BootstrapModelForm):
         cleaned_data = super().clean()
         if cleaned_data is None:
             cleaned_data = {}
+
         # 1. Asegurar costo de compra válido (default 0.00 si se dejó vacío)
         costo_compra = cleaned_data.get("costo_compra")
         if costo_compra is None:
             costo_compra = Decimal("0.00")
             cleaned_data["costo_compra"] = costo_compra
+            # Blindaje: Borrar el error de validación inicial que Django pone por campo vacío
+            if "costo_compra" in self.errors:
+                del self.errors["costo_compra"]
+
         # 2. Obtener precio de venta limpio
         precio_venta = cleaned_data.get("precio_venta")
+
         # 3. Regla cruzada: El precio no puede ser inferior al costo
         if precio_venta is not None and costo_compra is not None:
             if precio_venta < costo_compra:

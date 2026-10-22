@@ -196,3 +196,85 @@ class ProductoFormTests(TestCase):
         form2.cleaned_data = {"precio_venta": Decimal("10.00"), "costo_compra": None}
         res2 = form2.clean()
         self.assertEqual(res2["costo_compra"], Decimal("0.00"))
+
+    # ======================================================================
+    # PRUEBAS HU7: EDICIÓN Y VALIDACIONES DEL FORMULARIO DE PRODUCTO
+    # ======================================================================
+    def test_costo_compra_vacio_se_asigna_cero(self):
+        """HU7: Si se envía costo de compra vacío, se asigna 0.00 por defecto."""
+        from app_inventario.forms.producto import ProductoForm
+
+        data = {
+            "nombre": "Producto Sin Costo",
+            "precio_venta": "5000.00",
+            "stock_actual": 10,
+            "stock_minimo": 2,
+            "costo_compra": "",  # Vacío
+        }
+        form = ProductoForm(data)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["costo_compra"], Decimal("0.00"))
+
+    def test_precio_venta_menor_al_costo_falla_en_formulario(self):
+        """HU7: El formulario rechaza precios menores al costo de compra."""
+        from app_inventario.forms.producto import ProductoForm
+
+        data = {
+            "nombre": "Producto a Pérdida",
+            "costo_compra": "10000.00",
+            "precio_venta": "9000.00",  # Menor al costo
+            "stock_actual": 10,
+            "stock_minimo": 2,
+        }
+        form = ProductoForm(data)
+        self.assertFalse(form.is_valid())
+        self.assertIn("precio_venta", form.errors)
+        self.assertEqual(form.errors["precio_venta"][0], "El precio debe ser superior al costo.")
+
+    def test_edicion_mismo_nombre_permitida(self):
+        """HU7: Permite guardar el producto conservando su propio nombre."""
+        from app_inventario.forms.producto import ProductoForm
+
+        prod = Producto.objects.create(
+            nombre="Producto Original",
+            marca=self.marca,
+            costo_compra=Decimal("1000.00"),
+            precio_venta=Decimal("2000.00"),
+        )
+        data = {
+            "nombre": "Producto Original",  # Mismo nombre
+            "costo_compra": "1000.00",
+            "precio_venta": "2500.00",  # Editamos el precio
+            "stock_actual": 10,
+            "stock_minimo": 2,
+        }
+        form = ProductoForm(data, instance=prod)
+        self.assertTrue(form.is_valid())
+
+    def test_edicion_nombre_duplicado_falla(self):
+        """HU7: Evita usar un nombre que ya pertenece a otro producto."""
+        from app_inventario.forms.producto import ProductoForm
+
+        Producto.objects.create(
+            nombre="Producto Existente",
+            marca=self.marca,
+            costo_compra=Decimal("1000.00"),
+            precio_venta=Decimal("2000.00"),
+        )
+        prod_editar = Producto.objects.create(
+            nombre="Producto A Editar",
+            marca=self.marca,
+            costo_compra=Decimal("1000.00"),
+            precio_venta=Decimal("2000.00"),
+        )
+        data = {
+            "nombre": "Producto Existente",  # Pertenece a otro
+            "costo_compra": "1000.00",
+            "precio_venta": "2500.00",
+            "stock_actual": 10,
+            "stock_minimo": 2,
+        }
+        form = ProductoForm(data, instance=prod_editar)
+        self.assertFalse(form.is_valid())
+        self.assertIn("nombre", form.errors)
+        self.assertEqual(form.errors["nombre"][0], "Este producto ya existe.")

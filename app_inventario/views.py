@@ -1,6 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.shortcuts import redirect, render
+from django.db import transaction
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
 
 from .forms import ProductoForm
@@ -32,7 +35,8 @@ def gestion_productos(request):
 
     # Consultar productos optimizado con prefetch_related para categorías
     productos_queryset = (
-        Producto.objects.select_related("marca", "impuesto")
+        Producto.objects.filter(activo=True)
+        .select_related("marca", "impuesto")
         .prefetch_related("categorias")
         .order_by("-id")
     )
@@ -52,3 +56,62 @@ def gestion_productos(request):
             "form": form,
         },
     )
+
+
+@login_required
+@permission_required("app_inventario.change_producto", raise_exception=True)
+def editar_producto(request, pk):
+    producto = get_object_or_404(Producto, pk=pk)
+
+    if request.method == "POST":
+        form = ProductoForm(request.POST, instance=producto)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(
+                    request, f"Producto '{producto.nombre}' actualizado correctamente."
+                )
+            except Exception as e:
+                messages.error(request, f"Hubo un error al actualizar el producto: {str(e)}")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"Error de validación: {error}")
+
+    return redirect("inventario:gestion")
+
+
+@login_required
+@permission_required("app_inventario.change_producto", raise_exception=True)
+def obtener_producto(request, pk):
+    producto = get_object_or_404(Producto, pk=pk)
+
+    data = {
+        "codigo": producto.codigo,
+        "nombre": producto.nombre,
+        "precio_venta": str(producto.precio_venta),
+        "costo_compra": str(producto.costo_compra),
+        "stock_actual": producto.stock_actual,
+        "stock_minimo": producto.stock_minimo,
+        "marca": producto.marca.nombre if producto.marca else "",
+        "categorias": list(producto.categorias.values_list("nombre", flat=True)),
+        "impuesto": producto.impuesto_id if producto.impuesto else "",
+    }
+    return JsonResponse(data)
+
+
+@login_required
+@permission_required("app_inventario.delete_producto", raise_exception=True)
+@require_POST
+def eliminar_producto(request, pk):
+    producto = get_object_or_404(Producto, pk=pk)
+    try:
+        with transaction.atomic():
+            producto.activo = False
+            # Se especifica update_fields por rendimiento (HU9)
+            producto.save(update_fields=["activo"], skip_clean=True)
+        messages.success(request, f"Producto '{producto.nombre}' eliminado correctamente.")
+    except Exception as e:
+        messages.error(request, f"Hubo un error al eliminar el producto: {str(e)}")
+
+    return redirect("inventario:gestion")
