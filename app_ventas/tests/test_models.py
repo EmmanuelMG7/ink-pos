@@ -10,7 +10,6 @@ from app_clientes.models import Cliente
 from app_empleados.models import Empleado
 from app_inventario.models import Marca, Producto
 from app_ventas.models import (
-    Descuento,
     DetalleDevolucion,
     DetalleFactura,
     Devolucion,
@@ -45,57 +44,47 @@ class VentasModelosDetalladosTests(TestCase):
             monto_inicial=Decimal("50000.00"),
         )
 
-    def test_descuento_clean_and_str(self):
-        # Empty nombre
-        d_nom = Descuento(nombre="   ", valor=Decimal("10.00"))
-        with self.assertRaises(ValidationError):
-            d_nom.clean()
-
-        # Cupón lowercase sanitized to upper
-        d_cupon = Descuento(
-            nombre="Promo Verano", codigo_cupon=" verano2026 ", valor=Decimal("10.00")
+    def test_detalle_factura_monto_descuento_clean(self):
+        fac = Factura.objects.create(
+            codigo="FAC-MODEL-1",
+            sesion_caja=self.sesion_caja,
+            cliente=self.cliente,
+            empleado=self.empleado,
+            subtotal=Decimal("30000.00"),
+            total=Decimal("30000.00"),
         )
-        d_cupon.clean()
-        self.assertEqual(d_cupon.codigo_cupon, "VERANO2026")
-
-        # Negative valor
-        d_neg = Descuento(nombre="Desc Neg", valor=Decimal("-5.00"))
-        with self.assertRaises(ValidationError):
-            d_neg.clean()
-
-        # Fecha fin < fecha inicio
-        d_fechas = Descuento(
-            nombre="Fechas Mal",
-            valor=Decimal("10.00"),
-            fecha_inicio=date.today(),
-            fecha_fin=date.today() - timedelta(days=1),
+        # Descuento negativo
+        det_neg = DetalleFactura(
+            factura=fac,
+            producto=self.producto,
+            cantidad=1,
+            precio_unitario=Decimal("30000.00"),
+            monto_descuento=Decimal("-500.00"),
         )
         with self.assertRaises(ValidationError):
-            d_fechas.clean()
+            det_neg.clean()
 
-        # Limite usos <= 0
-        d_usos = Descuento(nombre="Limite 0", valor=Decimal("10.00"), limite_usos=0)
-        with self.assertRaises(ValidationError):
-            d_usos.clean()
-
-        # Veces usado > limite_usos
-        d_exceso = Descuento(nombre="Exceso", valor=Decimal("10.00"), limite_usos=5, veces_usado=6)
-        with self.assertRaises(ValidationError):
-            d_exceso.clean()
-
-        # __str__ porcentaje y fijo
-        d_pct = Descuento(
-            nombre="Diez",
-            tipo_calculo=Descuento.TipoCalculo.PORCENTAJE,
-            valor=Decimal("10.00"),
+        # Descuento mayor al bruto
+        det_exceso = DetalleFactura(
+            factura=fac,
+            producto=self.producto,
+            cantidad=1,
+            precio_unitario=Decimal("30000.00"),
+            monto_descuento=Decimal("35000.00"),
         )
-        self.assertEqual(str(d_pct), "Diez (10.00%)")
-        d_fijo = Descuento(
-            nombre="Mil",
-            tipo_calculo=Descuento.TipoCalculo.MONTO_FIJO,
-            valor=Decimal("1000.00"),
+        with self.assertRaises(ValidationError):
+            det_exceso.clean()
+
+        # Descuento válido
+        det_ok = DetalleFactura(
+            factura=fac,
+            producto=self.producto,
+            cantidad=2,
+            precio_unitario=Decimal("30000.00"),
+            monto_descuento=Decimal("10000.00"),
         )
-        self.assertEqual(str(d_fijo), "Mil (1000.00$)")
+        det_ok.clean()
+        self.assertEqual(det_ok.subtotal, Decimal("50000.00"))
 
     def test_resolucion_dian_clean_and_str(self):
         # Empty numero_resolución

@@ -1,7 +1,6 @@
 from django.contrib import admin
 
 from .models import (
-    Descuento,
     DetalleDevolucion,
     DetalleFactura,
     Devolucion,
@@ -24,25 +23,6 @@ class PagoFacturaInline(admin.TabularInline):
 class DetalleDevolucionInline(admin.TabularInline):
     model = DetalleDevolucion
     extra = 0
-
-
-@admin.register(Descuento)
-class DescuentoAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "nombre",
-        "codigo_cupon",
-        "tipo_calculo",
-        "valor",
-        "alcance",
-        "activo",
-        "fecha_inicio",
-        "fecha_fin",
-        "veces_usado",
-    )
-    list_filter = ("tipo_calculo", "alcance", "activo")
-    search_fields = ("nombre", "codigo_cupon")
-    filter_horizontal = ("productos", "categorias")
 
 
 @admin.register(ResolucionDIAN)
@@ -91,6 +71,7 @@ class DetalleFacturaAdmin(admin.ModelAdmin):
         "producto",
         "cantidad",
         "precio_unitario",
+        "monto_descuento",
         "subtotal",
         "monto_impuesto",
     )

@@ -19,6 +19,7 @@ source = [
     "app_autenticacion",
     "app_inventario",
     "app_ventas",
+    "app_promociones",
 ]
 omit = [
     "*/migrations/*",

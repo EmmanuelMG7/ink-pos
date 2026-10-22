@@ -54,6 +54,7 @@ class PermissionsModuleTests(TestCase):
             [
                 "ventas:reportes",
                 "inventario:gestion",
+                "promociones:gestion",
                 "ventas:gestion_facturas",
                 "empleados:gestion",
             ],
@@ -69,6 +70,7 @@ class PermissionsModuleTests(TestCase):
             [
                 "ventas:reportes",
                 "inventario:gestion",
+                "promociones:gestion",
                 "ventas:pos",
                 "ventas:gestion_facturas",
                 "empleados:gestion",
