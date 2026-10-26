@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from app_common.constants import TipoDocumento
 from app_empleados.models import Empleado
@@ -15,14 +16,25 @@ class Proveedor(models.Model):
         max_length=2,
         choices=TipoDocumento.choices,
         default=TipoDocumento.NIT,
+        verbose_name=_("models.proveedor.field.tipo_documento"),
     )
-    identificacion = models.CharField(max_length=20, unique=True)
-    razon_social = models.CharField(max_length=150)
-    telefono = models.CharField(max_length=20, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
-    direccion = models.CharField(max_length=150, blank=True, null=True)
+    identificacion = models.CharField(
+        max_length=20, unique=True, verbose_name=_("models.proveedor.field.identificacion")
+    )
+    razon_social = models.CharField(
+        max_length=150, verbose_name=_("models.proveedor.field.razon_social")
+    )
+    telefono = models.CharField(
+        max_length=20, blank=True, null=True, verbose_name=_("models.proveedor.field.telefono")
+    )
+    email = models.EmailField(blank=True, null=True, verbose_name=_("models.proveedor.field.email"))
+    direccion = models.CharField(
+        max_length=150, blank=True, null=True, verbose_name=_("models.proveedor.field.direccion")
+    )
 
     class Meta:
+        verbose_name = _("models.proveedor.verbose_name")
+        verbose_name_plural = _("models.proveedor.verbose_name_plural")
         constraints = [
             models.CheckConstraint(
                 condition=~models.Q(identificacion=""),
@@ -85,6 +97,8 @@ class OrdenCompra(models.Model):
     observaciones = models.TextField(blank=True)
 
     class Meta:
+        verbose_name = _("models.proveedor.verbose_name")
+        verbose_name_plural = _("models.proveedor.verbose_name_plural")
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(total_estimado__gte=0),
@@ -138,6 +152,8 @@ class DetalleOrdenCompra(models.Model):
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
 
     class Meta:
+        verbose_name = _("models.proveedor.verbose_name")
+        verbose_name_plural = _("models.proveedor.verbose_name_plural")
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(cantidad_solicitada__gt=0),
@@ -210,6 +226,8 @@ class RecepcionCompra(models.Model):
     observaciones = models.TextField(blank=True)
 
     class Meta:
+        verbose_name = _("models.proveedor.verbose_name")
+        verbose_name_plural = _("models.proveedor.verbose_name_plural")
         constraints = [
             models.CheckConstraint(
                 condition=~models.Q(numero_factura_proveedor=""),
@@ -254,6 +272,8 @@ class DetalleRecepcionCompra(models.Model):
     motivo_rechazo = models.TextField(blank=True)
 
     class Meta:
+        verbose_name = _("models.proveedor.verbose_name")
+        verbose_name_plural = _("models.proveedor.verbose_name_plural")
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(cantidad_recibida__gte=0),
