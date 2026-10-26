@@ -783,6 +783,18 @@
     }
 
     if (form) {
+      form.addEventListener('input', function (e) {
+        if (e.target && e.target.classList && e.target.classList.contains('is-invalid')) {
+          e.target.classList.remove('is-invalid');
+        }
+      });
+
+      form.addEventListener('change', function (e) {
+        if (e.target && e.target.classList && e.target.classList.contains('is-invalid')) {
+          e.target.classList.remove('is-invalid');
+        }
+      });
+
       form.addEventListener('submit', function (e) {
         let isValid = true;
 
@@ -826,10 +838,14 @@
           alertAcciones.classList.add('d-none');
         }
 
-        // 4. Validar reglas de volumen y márgenes de costo
+        // 4. Validar reglas de volumen, acciones, límites y condiciones
         if (isValid) {
           document.querySelectorAll('.card-item').forEach(cardEl => {
+            if (!isValid) return;
+
             const cardId = cardEl.getAttribute('data-card-id');
+
+            // Validación de cantidad mínima para volumen
             const cantMinEl = cardEl.querySelector('[data-field="cantidad_minima"]');
             if (cantMinEl) {
               const cantVal = parseInt(cantMinEl.value);
@@ -844,16 +860,49 @@
               }
             }
 
-            if (cardId === 'act_descuento_producto' || cardId === 'act_descuento_volumen' || cardId === 'act_porcentaje' || cardId === 'act_monto_fijo') {
+            // Validación de subtotal mínimo
+            if (cardId === 'cond_subtotal') {
+              const montoEl = cardEl.querySelector('[data-field="monto"]');
+              if (montoEl) {
+                const montoVal = parseFloat(montoEl.value);
+                if (isNaN(montoVal) || montoVal < 0) {
+                  alert('El monto no puede ser negativo.');
+                  montoEl.classList.add('is-invalid');
+                  montoEl.focus();
+                  isValid = false;
+                  return;
+                } else {
+                  montoEl.classList.remove('is-invalid');
+                }
+              }
+            }
+
+            // Validación de acciones con descuento
+            if (cardId === 'act_descuento_producto' || cardId === 'act_descuento_volumen' || cardId === 'act_porcentaje' || cardId === 'act_monto_fijo' || cardId === 'act_item_mas_barato') {
               const tipoEl = cardEl.querySelector('[data-field="tipo_descuento"]');
-              const tipo = tipoEl ? tipoEl.value : (cardId === 'act_porcentaje' ? 'PORCENTAJE' : 'MONTO_FIJO');
+              const tipo = tipoEl ? tipoEl.value : (cardId === 'act_porcentaje' || cardId === 'act_item_mas_barato' ? 'PORCENTAJE' : 'MONTO_FIJO');
               const valorEl = cardEl.querySelector('[data-field="valor"]') || cardEl.querySelector('[data-field="porcentaje"]') || cardEl.querySelector('[data-field="monto"]');
               const valor = valorEl ? parseFloat(valorEl.value) : NaN;
 
               if (tipo === 'PORCENTAJE') {
                 if (isNaN(valor) || valor <= 0 || valor > 100) {
                   alert('La tarifa porcentual debe estar entre 0.01% y 100.00%.');
-                  if (valorEl) valorEl.classList.add('is-invalid');
+                  if (valorEl) {
+                    valorEl.classList.add('is-invalid');
+                    valorEl.focus();
+                  }
+                  isValid = false;
+                  return;
+                } else if (valorEl) {
+                  valorEl.classList.remove('is-invalid');
+                }
+              } else if (tipo === 'MONTO_FIJO') {
+                if (isNaN(valor) || valor <= 0) {
+                  alert('El monto fijo debe ser superior a cero.');
+                  if (valorEl) {
+                    valorEl.classList.add('is-invalid');
+                    valorEl.focus();
+                  }
                   isValid = false;
                   return;
                 } else if (valorEl) {
@@ -876,10 +925,79 @@
                   const precioFinal = precio - descUnit;
                   if (precioFinal < costo) {
                     alert('El descuento vulnera el margen mínimo de costo del producto (chk_producto_precio_gte_costo): el precio final no puede ser inferior al costo de compra.');
-                    if (valorEl) valorEl.classList.add('is-invalid');
+                    if (valorEl) {
+                      valorEl.classList.add('is-invalid');
+                      valorEl.focus();
+                    }
                     isValid = false;
                     return;
                   }
+                }
+              }
+            }
+
+            // Validación de producto de regalo
+            if (cardId === 'act_producto_regalo') {
+              const cantEl = cardEl.querySelector('[data-field="cantidad"]');
+              if (cantEl) {
+                const cantVal = parseInt(cantEl.value);
+                if (isNaN(cantVal) || cantVal <= 0) {
+                  alert('La cantidad debe ser mayor a 0.');
+                  cantEl.classList.add('is-invalid');
+                  cantEl.focus();
+                  isValid = false;
+                  return;
+                } else {
+                  cantEl.classList.remove('is-invalid');
+                }
+              }
+            }
+
+            // Validación de límites de uso
+            if (cardId === 'lim_usos_totales') {
+              const limEl = cardEl.querySelector('[data-field="limite_usos_total"]');
+              if (limEl) {
+                const limVal = parseInt(limEl.value);
+                if (isNaN(limVal) || limVal <= 0) {
+                  alert('El límite de usos debe ser mayor a 0.');
+                  limEl.classList.add('is-invalid');
+                  limEl.focus();
+                  isValid = false;
+                  return;
+                } else {
+                  limEl.classList.remove('is-invalid');
+                }
+              }
+            }
+            if (cardId === 'lim_usos_cliente') {
+              const limEl = cardEl.querySelector('[data-field="limite_usos_por_cliente"]');
+              if (limEl) {
+                const limVal = parseInt(limEl.value);
+                if (isNaN(limVal) || limVal <= 0) {
+                  alert('El límite por cliente debe ser mayor a 0.');
+                  limEl.classList.add('is-invalid');
+                  limEl.focus();
+                  isValid = false;
+                  return;
+                } else {
+                  limEl.classList.remove('is-invalid');
+                }
+              }
+            }
+
+            // Validación de fechas de vigencia
+            if (cardId === 'lim_vigencia') {
+              const iniEl = cardEl.querySelector('[data-field="fecha_inicio"]');
+              const finEl = cardEl.querySelector('[data-field="fecha_fin"]');
+              if (iniEl && finEl && iniEl.value && finEl.value) {
+                if (new Date(iniEl.value) >= new Date(finEl.value)) {
+                  alert('La fecha de fin debe ser posterior a la fecha de inicio.');
+                  finEl.classList.add('is-invalid');
+                  finEl.focus();
+                  isValid = false;
+                  return;
+                } else {
+                  finEl.classList.remove('is-invalid');
                 }
               }
             }

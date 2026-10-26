@@ -434,3 +434,52 @@ class PromocionesViewTests(TestCase):
             self.assertEqual(accion_upd.valor_accion, Decimal("15.00"))
             self.assertEqual(accion_upd.producto_objetivo, prod)
         self.assertIsNotNone(regla.fecha_fin)
+
+    def test_rechazo_monto_fijo_cero_o_negativo_en_descuento_producto(self):
+        marca = Marca.objects.create(nombre="MarcaMontoErrado")
+        prod = Producto.objects.create(
+            nombre="Tinta Negra Eco",
+            marca=marca,
+            costo_compra=Decimal("10000.00"),
+            precio_venta=Decimal("25000.00"),
+            stock_actual=10,
+        )
+
+        for valor_errado in [0, -5000]:
+            cards_payload = [
+                {
+                    "card_id": "cond_volumen",
+                    "producto_id": prod.pk,
+                    "cantidad_minima": 2,
+                },
+                {
+                    "card_id": "act_descuento_producto",
+                    "producto_id": prod.pk,
+                    "tipo_descuento": "MONTO_FIJO",
+                    "valor": valor_errado,
+                },
+            ]
+            response = self.client.post(
+                self.url,
+                {
+                    "nombre": f"Promo Error Monto {valor_errado}",
+                    "cards_payload": json.dumps(cards_payload),
+                },
+                follow=True,
+            )
+            self.assertEqual(
+                ReglaPromocion.objects.filter(nombre=f"Promo Error Monto {valor_errado}").count(),
+                0,
+            )
+            storage = list(response.context["messages"])
+            self.assertTrue(
+                any("el monto fijo debe ser superior a cero" in m.message.lower() for m in storage)
+            )
+
+    def test_modal_contiene_validacion_js_monto_fijo_superior_a_cero(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "El monto fijo debe ser superior a cero.",
+        )
