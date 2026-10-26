@@ -68,6 +68,12 @@ class Empleado(models.Model):
         self.auth_user.is_active = value
 
     @property
+    def nombre(self) -> str:
+        if hasattr(self, "auth_user") and self.auth_user:
+            return self.auth_user.get_full_name() or self.auth_user.first_name or ""
+        return ""
+
+    @property
     def usuario(self):
         return self.auth_user
 

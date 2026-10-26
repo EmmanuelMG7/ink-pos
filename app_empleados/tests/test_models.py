@@ -7,7 +7,7 @@ from app_empleados.models import Empleado
 
 class EmpleadoModelTests(TestCase):
     def test_empleado_model_properties_and_str(self):
-        """Prueba propiedades es_activo (getter/setter) y __str__."""
+        """Prueba propiedades es_activo (getter/setter), nombre y __str__."""
         user = User.objects.create_user(
             username="empleado",
             first_name="Carlos",
@@ -20,6 +20,7 @@ class EmpleadoModelTests(TestCase):
             telefono="3000000000",
         )
         self.assertTrue(empleado.es_activo)
+        self.assertEqual(empleado.nombre, "Carlos Gomez")
         empleado.es_activo = False
         self.assertFalse(empleado.es_activo)
         self.assertFalse(user.is_active)
@@ -29,4 +30,5 @@ class EmpleadoModelTests(TestCase):
         user.first_name = ""
         user.last_name = ""
         user.save()
+        self.assertEqual(empleado.nombre, "")
         self.assertEqual(str(empleado), "empleado (77889900)")
