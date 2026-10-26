@@ -4,6 +4,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import ProtectedError
+from django.utils.translation import gettext_lazy as _
 
 from app_common.forms import (
     BootstrapModelForm,
@@ -22,37 +23,26 @@ class EmpleadoForm(BootstrapModelForm):
 
     # --- Campos delegados a auth.User (generados manualmente) ---
     nombre = forms.CharField(
-        label="",
+        label=_("form.empleado.field.nombre"),
         max_length=150,
         validators=[OnlyTextValidator],
-        widget=forms.TextInput(
-            attrs={
-                "placeholder": "Nombre",
-            }
-        ),
+        widget=forms.TextInput(),
     )
 
     usuario = forms.CharField(
-        label="",
+        label=_("form.empleado.field.usuario"),
         max_length=150,
         validators=[UsernameValidator],
-        widget=forms.TextInput(
-            attrs={
-                "placeholder": "Usuario",
-            }
-        ),
+        widget=forms.TextInput(),
     )
 
     contrasena = forms.CharField(
-        label="",
+        label=_("form.empleado.field.contrasena"),
         required=False,
         min_length=8,
         validators=[PasswordValidator],
         widget=forms.PasswordInput(
             render_value=True,
-            attrs={
-                "placeholder": "Contraseña",
-            },
         ),
     )
 
@@ -61,22 +51,20 @@ class EmpleadoForm(BootstrapModelForm):
         # Excluir salario (default 0) y auth_user (se crea y enlaza en save())
         exclude = ["salario", "auth_user"]
         labels = {
-            "identificacion": "",
-            "telefono": "",
-            "es_admin": "Es usuario administrador",
+            "identificacion": _("form.empleado.field.identificacion"),
+            "telefono": _("form.empleado.field.telefono"),
+            "es_admin": _("form.empleado.field.es_admin"),
         }
         widgets = {
             "tipo_documento": forms.HiddenInput(),
             "identificacion": forms.TextInput(
                 attrs={
-                    "placeholder": "Identificación",
                     "class": "number-only",
                     "pattern": "^[0-9]+$",
                 }
             ),
             "telefono": forms.TextInput(
                 attrs={
-                    "placeholder": "Teléfono",
                     "class": "number-only",
                     "pattern": "^3[0-9]{9}$",
                 }
