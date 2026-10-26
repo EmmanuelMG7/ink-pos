@@ -19,9 +19,11 @@
     ".pre-commit-config.yaml",
     ".flake8",
     "pyproject.toml",
-    "templates/svg/**"
+    "templates/svg/**",
+    "locale/**"
   ],
   "words": [
+    "errormsg",
     "asgiref",
     "asgi",
     "atómicamente",
