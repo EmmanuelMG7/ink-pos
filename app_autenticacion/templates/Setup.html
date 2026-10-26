@@ -1,6 +1,6 @@
-{% load static %}
+{% load i18n static %}
 <!doctype html>
-<html lang="en" data-bs-theme="dark">
+<html data-bs-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -36,8 +36,8 @@
         </div>
         <div class="d-flex w-100 justify-content-center">
           <p class="text-center text-wrap" style="max-width: 20rem;">
-            Bienvenido a InkPOS. <br>
-            Aquí podrá crear el primer usuario administrador antes de usar el sistema.
+            {% trans "Bienvenido a InkPOS." %} <br>
+            {% trans "Aquí podrá crear el primer usuario administrador antes de usar el sistema." %}
           </p>
         </div>
         
@@ -70,7 +70,7 @@
           </div>
 
           <button type="submit" class="btn btn-primary w-100">
-            Crear Administrador
+            {% trans "Crear Administrador" %}
           </button>
         </form>
       </div>
