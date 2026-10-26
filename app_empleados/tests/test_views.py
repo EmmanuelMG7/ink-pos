@@ -159,6 +159,78 @@ class EmpleadoViewsTests(TestCase):
         self.assertEqual(self.empleado.auth_user.first_name, "Nombre Editado")
         self.assertTrue(self.empleado.auth_user.is_staff)
 
+    def test_editar_empleado_usuario_existente(self):
+        """
+        HU8 - Test Case 39: Al intentar editar un empleado con un username existente,
+        la vista re-renderiza con código 200, asigna form_editar con el error en usuario,
+        reabre el modal y no agrega mensajes toast.
+        """
+        data = {
+            "tipo_documento": self.empleado.tipo_documento,
+            "identificacion": self.empleado.identificacion,
+            "nombre": "Nombre Modificado",
+            "usuario": "admin",
+            "telefono": "3112223344",
+            "es_admin": "on",
+        }
+        response = self.client.post(self.url_editar, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "Gestion_Empleados.html")
+        self.assertIn("form_editar", response.context)
+        form_editar = response.context["form_editar"]
+        self.assertIn("usuario", form_editar.errors)
+        self.assertIn(
+            "Ya existe un empleado con el usuario 'admin'.",
+            form_editar.errors["usuario"],
+        )
+        self.assertContains(response, "Ya existe un empleado con el usuario &#x27;admin&#x27;.")
+        self.assertContains(response, 'id="modal_editar_empleado"')
+
+        # Verificar que NO se agregaron mensajes toast de error a messages
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 0)
+
+    def test_editar_empleado_identificacion_existente(self):
+        """Al editar con identificación existente de otro empleado, se re-renderiza con error."""
+        otro_user = User.objects.create_user(username="otrouserid", password="123")
+        Empleado.objects.create(
+            auth_user=otro_user,
+            tipo_documento=Empleado.TipoDocumento.CEDULA,
+            identificacion="555666777",
+            telefono="3001112233",
+        )
+        data = {
+            "tipo_documento": self.empleado.tipo_documento,
+            "identificacion": "555666777",
+            "nombre": "Nombre Modificado",
+            "usuario": self.empleado.auth_user.username,
+            "telefono": "3112223344",
+            "es_admin": "on",
+            "contrasena": "Password123*",
+        }
+        response = self.client.post(self.url_editar, data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "Gestion_Empleados.html")
+        form_editar = response.context["form_editar"]
+        self.assertIn("identificacion", form_editar.errors)
+
+    def test_editar_empleado_exception_handling(self):
+        """Prueba manejo de excepción en editar_empleado."""
+        data = {
+            "tipo_documento": self.empleado.tipo_documento,
+            "identificacion": self.empleado.identificacion,
+            "nombre": "Nombre Error",
+            "usuario": "nuevousuariook",
+            "telefono": "3112223344",
+            "es_admin": "on",
+            "contrasena": "Password123*",
+        }
+        with patch("app_empleados.views.EmpleadoForm.save", side_effect=Exception("Fallo en BD")):
+            response = self.client.post(self.url_editar, data)
+            self.assertRedirects(response, self.url)
+            messages = list(get_messages(response.wsgi_request))
+            self.assertTrue(any("Fallo en BD" in m.message for m in messages))
+
     def test_gestion_empleados_view_exception_handling(self):
         """Prueba manejo de excepción en gestión_empleados_view."""
         data = {
