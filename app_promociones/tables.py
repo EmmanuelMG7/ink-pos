@@ -29,15 +29,16 @@ class PromocionTable(tables.Table):
     )
     beneficios = tables.TemplateColumn(
         template_code="""
+        {% load l10n %}
         <div class="d-flex flex-wrap gap-1">
             {% for acc in record.acciones.all %}
                 <span class="badge bg-info text-dark">
                     {% if acc.tipo_accion == 'PORCENTAJE' %}
-                        {{ acc.valor_accion }}%{% if acc.producto_objetivo %}
+                        {{ acc.valor_accion|unlocalize }}%{% if acc.producto_objetivo %}
                             en {{ acc.producto_objetivo.nombre }}
                         {% endif %}
                     {% elif acc.tipo_accion == 'MONTO_FIJO' %}
-                        ${{ acc.valor_accion }}{% if acc.producto_objetivo %}
+                        ${{ acc.valor_accion|unlocalize }}{% if acc.producto_objetivo %}
                             por unid. en {{ acc.producto_objetivo.nombre }}
                         {% endif %}
                     {% elif acc.tipo_accion == 'ITEM_REGALO' %}
