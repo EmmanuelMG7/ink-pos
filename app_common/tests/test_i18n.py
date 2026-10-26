@@ -132,7 +132,7 @@ class I18nTranslationsTests(TestCase):
 
     def test_form_can_override_model_field_label_with_form_key(self):
         """
-        Verifica que un formulario pueda sobreescribir la frase de un campo del modelo
+        Verifica que un formulario pueda sobre escribir la frase de un campo del modelo
         asociándolo a su clave específica form.<nombre_form>.field.<campo>.
         """
         activate("es")
