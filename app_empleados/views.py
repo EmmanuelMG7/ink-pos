@@ -78,12 +78,29 @@ def editar_empleado(request, pk):
                     request,
                     f"Empleado '{empleado.auth_user.first_name}' actualizado correctamente.",
                 )
+                return redirect("empleados:gestion")
             except Exception as e:
                 messages.error(request, f"Hubo un error al actualizar el empleado: {str(e)}")
+                return redirect("empleados:gestion")
         else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"Error de validación: {error}")
+            empleados_queryset = (
+                Empleado.objects.filter(auth_user__is_active=True)
+                .select_related("auth_user")
+                .order_by("-id")
+            )
+            tabla_empleados = EmpleadoTable(empleados_queryset)
+            RequestConfig(request, paginate=True).configure(tabla_empleados)
+
+            return render(
+                request,
+                "Gestion_Empleados.html",
+                {
+                    "table": tabla_empleados,
+                    "form": EmpleadoForm(),
+                    "form_editar": form,
+                    "empleado_editando_id": pk,
+                },
+            )
 
     return redirect("empleados:gestion")
 
