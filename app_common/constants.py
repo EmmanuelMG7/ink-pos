@@ -1,14 +1,15 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class TipoDocumento(models.TextChoices):
-    CEDULA = "13", "Cédula de Ciudadanía (CC)"
-    NIT = "31", "NIT (Número de Identificación Tributaria)"
-    CEDULA_EXTRANJERIA = "22", "Cédula de Extranjería (CE)"
-    PASAPORTE = "41", "Pasaporte"
-    TARJETA_IDENTIDAD = "12", "Tarjeta de Identidad"
-    REGISTRO_CIVIL = "11", "Registro Civil"
-    EXTERIOR = "50", "Documento de Identificación Extranjero"
+    CEDULA = "13", _("Cédula de Ciudadanía (CC)")
+    NIT = "31", _("NIT (Número de Identificación Tributaria)")
+    CEDULA_EXTRANJERIA = "22", _("Cédula de Extranjería (CE)")
+    PASAPORTE = "41", _("Pasaporte")
+    TARJETA_IDENTIDAD = "12", _("Tarjeta de Identidad")
+    REGISTRO_CIVIL = "11", _("Registro Civil")
+    EXTERIOR = "50", _("Documento de Identificación Extranjero")
 
     @classmethod
     def siglas(cls) -> dict[str, str]:
@@ -28,5 +29,5 @@ class TipoDocumento(models.TextChoices):
 
 
 class RolUsuario(models.TextChoices):
-    ADMINISTRADOR = "Administrador", "Administrador"
-    CAJERO = "Cajero", "Cajero"
+    ADMINISTRADOR = "Administrador", _("Administrador")
+    CAJERO = "Cajero", _("Cajero")
