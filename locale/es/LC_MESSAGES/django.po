@@ -1,0 +1,843 @@
+# Traducciones de InkPOS al Español
+# Copyright (C) 2026 InkPOS Team
+msgid ""
+msgstr ""
+"Project-Id-Version: InkPOS 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-25 15:50-0500\n"
+"PO-Revision-Date: 2026-10-25 15:50-0500\n"
+"Last-Translator: InkPOS <dev@inkpos.local>\n"
+"Language-Team: Spanish\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Identificadores y Documentos
+msgid "identificacion"
+msgstr "Identificación"
+
+msgid "Identificacion"
+msgstr "Identificación"
+
+msgid "tipo_documento"
+msgstr "Tipo de documento"
+
+msgid "Tipo documento"
+msgstr "Tipo de documento"
+
+msgid "numero_documento"
+msgstr "Número de documento"
+
+msgid "Numero documento"
+msgstr "Número de documento"
+
+# Usuario y Autenticación
+msgid "usuario"
+msgstr "Usuario"
+
+msgid "Usuario"
+msgstr "Usuario"
+
+msgid "nombre"
+msgstr "Nombre"
+
+msgid "Nombre"
+msgstr "Nombre"
+
+msgid "Nombre Completo"
+msgstr "Nombre completo"
+
+msgid "contrasena"
+msgstr "Contraseña"
+
+msgid "Contrasena"
+msgstr "Contraseña"
+
+msgid "es_admin"
+msgstr "Es usuario administrador"
+
+msgid "Es admin"
+msgstr "Es usuario administrador"
+
+msgid "rol"
+msgstr "Rol"
+
+msgid "Rol"
+msgstr "Rol"
+
+# Contacto y Ubicación
+msgid "telefono"
+msgstr "Teléfono"
+
+msgid "Telefono"
+msgstr "Teléfono"
+
+msgid "direccion"
+msgstr "Dirección"
+
+msgid "Direccion"
+msgstr "Dirección"
+
+msgid "email"
+msgstr "Correo electrónico"
+
+msgid "Email"
+msgstr "Correo electrónico"
+
+msgid "correo"
+msgstr "Correo electrónico"
+
+# Proveedores y Clientes
+msgid "razon_social"
+msgstr "Razón social"
+
+msgid "Razon social"
+msgstr "Razón social"
+
+msgid "cliente"
+msgstr "Cliente"
+
+msgid "proveedor"
+msgstr "Proveedor"
+
+# Inventario y Productos
+msgid "codigo"
+msgstr "Código"
+
+msgid "Codigo"
+msgstr "Código"
+
+msgid "codigo_barras"
+msgstr "Código de barras"
+
+msgid "Codigo barras"
+msgstr "Código de barras"
+
+msgid "codigo_tributario"
+msgstr "Código tributario"
+
+msgid "Codigo tributario"
+msgstr "Código tributario"
+
+msgid "descripcion"
+msgstr "Descripción"
+
+msgid "Descripcion"
+msgstr "Descripción"
+
+msgid "precio"
+msgstr "Precio"
+
+msgid "Precio"
+msgstr "Precio"
+
+msgid "costo"
+msgstr "Costo"
+
+msgid "Costo"
+msgstr "Costo"
+
+msgid "precio_venta"
+msgstr "Precio de venta"
+
+msgid "Precio venta"
+msgstr "Precio de venta"
+
+msgid "costo_compra"
+msgstr "Costo de compra"
+
+msgid "Costo compra"
+msgstr "Costo de compra"
+
+msgid "stock_actual"
+msgstr "Stock actual"
+
+msgid "Stock actual"
+msgstr "Stock actual"
+
+msgid "Stock Actual"
+msgstr "Stock actual"
+
+msgid "stock_minimo"
+msgstr "Stock mínimo"
+
+msgid "Stock minimo"
+msgstr "Stock mínimo"
+
+msgid "Stock Minimo"
+msgstr "Stock mínimo"
+
+msgid "Stock Mínimo"
+msgstr "Stock mínimo"
+
+msgid "marca"
+msgstr "Marca"
+
+msgid "Marca"
+msgstr "Marca"
+
+msgid "categoria"
+msgstr "Categoría"
+
+msgid "Categoria"
+msgstr "Categoría"
+
+msgid "categorias"
+msgstr "Categorías"
+
+msgid "Categorias"
+msgstr "Categorías"
+
+msgid "impuesto"
+msgstr "Impuesto"
+
+msgid "Impuesto"
+msgstr "Impuesto"
+
+msgid "tipo_impuesto"
+msgstr "Tipo de impuesto"
+
+msgid "Tipo impuesto"
+msgstr "Tipo de impuesto"
+
+msgid "tarifa"
+msgstr "Tarifa"
+
+msgid "Tarifa"
+msgstr "Tarifa"
+
+msgid "activo"
+msgstr "Activo"
+
+msgid "Activo"
+msgstr "Activo"
+
+# Empleados y Finanzas
+msgid "salario"
+msgstr "Salario"
+
+msgid "Salario"
+msgstr "Salario"
+
+# Ventas, Facturación y DIAN
+msgid "numero_resolucion"
+msgstr "Número de resolución"
+
+msgid "Numero resolucion"
+msgstr "Número de resolución"
+
+msgid "prefijo"
+msgstr "Prefijo"
+
+msgid "Prefijo"
+msgstr "Prefijo"
+
+msgid "rango_desde"
+msgstr "Rango inicial"
+
+msgid "Rango desde"
+msgstr "Rango inicial"
+
+msgid "rango_hasta"
+msgstr "Rango final"
+
+msgid "Rango hasta"
+msgstr "Rango final"
+
+msgid "ultimo_numero"
+msgstr "Último número"
+
+msgid "Ultimo numero"
+msgstr "Último número"
+
+msgid "longitud_ceros"
+msgstr "Longitud de ceros"
+
+msgid "Longitud ceros"
+msgstr "Longitud de ceros"
+
+msgid "fecha_inicio_vigencia"
+msgstr "Fecha de inicio de vigencia"
+
+msgid "Fecha inicio vigencia"
+msgstr "Fecha de inicio de vigencia"
+
+msgid "fecha_fin_vigencia"
+msgstr "Fecha de fin de vigencia"
+
+msgid "Fecha fin vigencia"
+msgstr "Fecha de fin de vigencia"
+
+msgid "clave_tecnica"
+msgstr "Clave técnica"
+
+msgid "Clave tecnica"
+msgstr "Clave técnica"
+
+# Caja
+msgid "sesion_caja"
+msgstr "Sesión de caja"
+
+msgid "Sesion caja"
+msgstr "Sesión de caja"
+
+msgid "monto_inicial"
+msgstr "Monto inicial"
+
+msgid "Monto inicial"
+msgstr "Monto inicial"
+
+msgid "monto_final"
+msgstr "Monto final"
+
+msgid "Monto final"
+msgstr "Monto final"
+
+msgid "diferencia"
+msgstr "Diferencia"
+
+msgid "Diferencia"
+msgstr "Diferencia"
+
+msgid "observaciones"
+msgstr "Observaciones"
+
+msgid "Observaciones"
+msgstr "Observaciones"
+
+# Promociones y Descuentos
+msgid "porcentaje"
+msgstr "Porcentaje"
+
+msgid "Porcentaje"
+msgstr "Porcentaje"
+
+msgid "monto_minimo"
+msgstr "Monto mínimo"
+
+msgid "Monto minimo"
+msgstr "Monto mínimo"
+
+msgid "monto_descuento"
+msgstr "Monto de descuento"
+
+msgid "Monto descuento"
+msgstr "Monto de descuento"
+
+msgid "fecha_inicio"
+msgstr "Fecha de inicio"
+
+msgid "Fecha inicio"
+msgstr "Fecha de inicio"
+
+msgid "fecha_fin"
+msgstr "Fecha de fin"
+
+msgid "Fecha fin"
+msgstr "Fecha de fin"
+
+msgid "motivo"
+msgstr "Motivo"
+
+msgid "Motivo"
+msgstr "Motivo"
+
+msgid "total"
+msgstr "Total"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "subtotal"
+msgstr "Subtotal"
+
+msgid "Subtotal"
+msgstr "Subtotal"
+
+msgid "descuento"
+msgstr "Descuento"
+
+msgid "Descuento"
+msgstr "Descuento"
+
+msgid "cantidad"
+msgstr "Cantidad"
+
+msgid "Cantidad"
+msgstr "Cantidad"
+
+msgid "precio_unitario"
+msgstr "Precio unitario"
+
+msgid "Precio unitario"
+msgstr "Precio unitario"
+
+msgid "Español"
+msgstr "Español"
+
+msgid "Inglés"
+msgstr "Inglés"
+
+
+# Claves de traducción explícitas para Modelos (models.<modelo>.<campo>)
+msgid "models.empleado.field.tipo_documento"
+msgstr "Tipo de documento"
+
+msgid "models.empleado.field.identificacion"
+msgstr "Identificación"
+
+msgid "models.empleado.field.auth_user"
+msgstr "Usuario"
+
+msgid "models.empleado.field.telefono"
+msgstr "Teléfono"
+
+msgid "models.empleado.field.salario"
+msgstr "Salario"
+
+msgid "models.empleado.field.es_admin"
+msgstr "Es usuario administrador"
+
+msgid "models.empleado.verbose_name"
+msgstr "Empleado"
+
+msgid "models.empleado.verbose_name_plural"
+msgstr "Empleados"
+
+msgid "models.cliente.field.tipo_documento"
+msgstr "Tipo de documento"
+
+msgid "models.cliente.field.identificacion"
+msgstr "Identificación"
+
+msgid "models.cliente.field.nombre"
+msgstr "Nombre"
+
+msgid "models.cliente.field.direccion"
+msgstr "Dirección"
+
+msgid "models.cliente.field.telefono"
+msgstr "Teléfono"
+
+msgid "models.cliente.field.email"
+msgstr "Correo electrónico"
+
+msgid "models.cliente.verbose_name"
+msgstr "Cliente"
+
+msgid "models.cliente.verbose_name_plural"
+msgstr "Clientes"
+
+msgid "models.proveedor.field.tipo_documento"
+msgstr "Tipo de documento"
+
+msgid "models.proveedor.field.identificacion"
+msgstr "Identificación"
+
+msgid "models.proveedor.field.razon_social"
+msgstr "Razón social"
+
+msgid "models.proveedor.field.telefono"
+msgstr "Teléfono"
+
+msgid "models.proveedor.field.email"
+msgstr "Correo electrónico"
+
+msgid "models.proveedor.field.direccion"
+msgstr "Dirección"
+
+msgid "models.proveedor.verbose_name"
+msgstr "Proveedor"
+
+msgid "models.proveedor.verbose_name_plural"
+msgstr "Proveedores"
+
+msgid "models.categoria.field.nombre"
+msgstr "Nombre"
+
+msgid "models.categoria.verbose_name"
+msgstr "Categoría"
+
+msgid "models.categoria.verbose_name_plural"
+msgstr "Categorías"
+
+msgid "models.marca.field.nombre"
+msgstr "Nombre"
+
+msgid "models.marca.verbose_name"
+msgstr "Marca"
+
+msgid "models.marca.verbose_name_plural"
+msgstr "Marcas"
+
+msgid "models.impuesto.field.nombre"
+msgstr "Nombre"
+
+msgid "models.impuesto.field.codigo_tributario"
+msgstr "Código tributario"
+
+msgid "models.impuesto.field.tarifa"
+msgstr "Tarifa"
+
+msgid "models.impuesto.field.tipo_impuesto"
+msgstr "Tipo de impuesto"
+
+msgid "models.impuesto.field.activo"
+msgstr "Activo"
+
+msgid "models.impuesto.verbose_name"
+msgstr "Impuesto"
+
+msgid "models.impuesto.verbose_name_plural"
+msgstr "Impuestos"
+
+msgid "models.producto.field.nombre"
+msgstr "Nombre"
+
+msgid "models.producto.field.marca"
+msgstr "Marca"
+
+msgid "models.producto.field.categorias"
+msgstr "Categorías"
+
+msgid "models.producto.field.costo_compra"
+msgstr "Costo de compra"
+
+msgid "models.producto.field.precio_venta"
+msgstr "Precio de venta"
+
+msgid "models.producto.field.impuesto"
+msgstr "Impuesto"
+
+msgid "models.producto.field.stock_actual"
+msgstr "Stock actual"
+
+msgid "models.producto.field.stock_minimo"
+msgstr "Stock mínimo"
+
+msgid "models.producto.field.activo"
+msgstr "Activo"
+
+msgid "models.producto.verbose_name"
+msgstr "Producto"
+
+msgid "models.producto.verbose_name_plural"
+msgstr "Productos"
+
+msgid "models.movimiento_inventario.field.producto"
+msgstr "Producto"
+
+msgid "models.movimiento_inventario.field.tipo_movimiento"
+msgstr "Tipo de movimiento"
+
+msgid "models.movimiento_inventario.field.referencia_origen"
+msgstr "Referencia de origen"
+
+msgid "models.movimiento_inventario.field.cantidad"
+msgstr "Cantidad"
+
+msgid "models.movimiento_inventario.field.stock_anterior"
+msgstr "Stock anterior"
+
+msgid "models.movimiento_inventario.field.stock_posterior"
+msgstr "Stock posterior"
+
+msgid "models.movimiento_inventario.field.motivo"
+msgstr "Motivo"
+
+msgid "models.movimiento_inventario.field.empleado"
+msgstr "Empleado"
+
+msgid "models.movimiento_inventario.field.fecha_hora"
+msgstr "Fecha y hora"
+
+msgid "models.movimiento_inventario.verbose_name"
+msgstr "Movimiento de inventario"
+
+msgid "models.movimiento_inventario.verbose_name_plural"
+msgstr "Movimientos de inventario"
+
+# Claves de traducción explícitas para Formularios (form.<formulario>.field.<campo>)
+msgid "form.login.field.usuario"
+msgstr "Usuario"
+
+msgid "form.login.field.contrasena"
+msgstr "Contraseña"
+
+msgid "form.setup_admin.field.tipo_documento"
+msgstr "Tipo de documento"
+
+msgid "form.setup_admin.field.identificacion"
+msgstr "Identificación"
+
+msgid "form.setup_admin.field.usuario"
+msgstr "Usuario"
+
+msgid "form.setup_admin.field.nombre"
+msgstr "Nombre Completo"
+
+msgid "form.setup_admin.field.telefono"
+msgstr "Teléfono"
+
+msgid "form.setup_admin.field.contrasena"
+msgstr "Contraseña"
+
+msgid "form.empleado.field.nombre"
+msgstr "Nombre"
+
+msgid "form.empleado.field.usuario"
+msgstr "Usuario"
+
+msgid "form.empleado.field.contrasena"
+msgstr "Contraseña"
+
+msgid "form.empleado.field.identificacion"
+msgstr "Identificación"
+
+msgid "form.empleado.field.telefono"
+msgstr "Teléfono"
+
+msgid "form.empleado.field.es_admin"
+msgstr "Es usuario administrador"
+
+msgid "form.producto.field.codigo"
+msgstr "Código"
+
+# Mensajes de error para Formularios (form.<nombre_form>.errormsg.<nombre_campo>.<tipo_error>)
+# form.login
+msgid "form.login.errormsg.usuario.required"
+msgstr "El campo usuario es obligatorio."
+
+msgid "form.login.errormsg.usuario.invalid"
+msgstr "Por favor ingresa un usuario válido."
+
+msgid "form.login.errormsg.contrasena.required"
+msgstr "El campo contraseña es obligatorio."
+
+msgid "form.login.errormsg.contrasena.invalid"
+msgstr "Por favor ingresa una contraseña válida."
+
+# form.setup_admin
+msgid "form.setup_admin.errormsg.tipo_documento.required"
+msgstr "El tipo de documento es obligatorio."
+
+msgid "form.setup_admin.errormsg.tipo_documento.invalid"
+msgstr "Por favor ingresa un tipo de documento válido."
+
+msgid "form.setup_admin.errormsg.identificacion.required"
+msgstr "El número de identificación es obligatorio."
+
+msgid "form.setup_admin.errormsg.identificacion.invalid"
+msgstr "Por favor ingresa una identificación válida."
+
+msgid "form.setup_admin.errormsg.usuario.required"
+msgstr "El campo usuario es obligatorio."
+
+msgid "form.setup_admin.errormsg.usuario.invalid"
+msgstr "El usuario solo puede contener letras y números."
+
+msgid "form.setup_admin.errormsg.nombre.required"
+msgstr "El nombre es obligatorio."
+
+msgid "form.setup_admin.errormsg.nombre.invalid"
+msgstr "El nombre solo puede contener letras."
+
+msgid "form.setup_admin.errormsg.telefono.required"
+msgstr "El teléfono es obligatorio."
+
+msgid "form.setup_admin.errormsg.telefono.invalid"
+msgstr "Por favor ingresa un teléfono válido."
+
+msgid "form.setup_admin.errormsg.telefono.min_value"
+msgstr "Por favor ingresa un teléfono válido."
+
+msgid "form.setup_admin.errormsg.telefono.max_value"
+msgstr "Por favor ingresa un teléfono válido."
+
+msgid "form.setup_admin.errormsg.contrasena.required"
+msgstr "La contraseña es obligatoria."
+
+msgid "form.setup_admin.errormsg.contrasena.invalid"
+msgstr "La contraseña no cumple con los requisitos de complejidad."
+
+# form.empleado
+msgid "form.empleado.errormsg.nombre.required"
+msgstr "El nombre es obligatorio."
+
+msgid "form.empleado.errormsg.nombre.invalid"
+msgstr "El nombre solo puede contener letras."
+
+msgid "form.empleado.errormsg.usuario.required"
+msgstr "El campo usuario es obligatorio."
+
+msgid "form.empleado.errormsg.usuario.invalid"
+msgstr "El usuario solo puede contener letras y números."
+
+msgid "form.empleado.errormsg.contrasena.required"
+msgstr "La contraseña es obligatoria para nuevos empleados."
+
+msgid "form.empleado.errormsg.contrasena.invalid"
+msgstr "La contraseña no cumple con los requisitos de complejidad."
+
+msgid "form.empleado.errormsg.identificacion.required"
+msgstr "El número de identificación es obligatorio."
+
+msgid "form.empleado.errormsg.identificacion.invalid"
+msgstr "Por favor ingresa una identificación válida."
+
+msgid "form.empleado.errormsg.telefono.required"
+msgstr "El teléfono es obligatorio."
+
+msgid "form.empleado.errormsg.telefono.invalid"
+msgstr "El teléfono debe cumplir el patrón colombiano."
+
+msgid "form.empleado.errormsg.tipo_documento.required"
+msgstr "El tipo de documento es obligatorio."
+
+msgid "form.empleado.errormsg.tipo_documento.invalid"
+msgstr "Por favor ingresa un tipo de documento válido."
+
+msgid "form.empleado.errormsg.es_admin.required"
+msgstr "Por favor selecciona un valor válido."
+
+msgid "form.empleado.errormsg.es_admin.invalid"
+msgstr "Por favor selecciona un valor válido."
+
+# form.producto
+msgid "form.producto.errormsg.codigo.required"
+msgstr "El código es obligatorio."
+
+msgid "form.producto.errormsg.codigo.invalid"
+msgstr "Por favor ingresa un código válido."
+
+msgid "form.producto.errormsg.nombre.required"
+msgstr "El nombre del producto es obligatorio."
+
+msgid "form.producto.errormsg.nombre.invalid"
+msgstr "Por favor ingresa un nombre válido."
+
+msgid "form.producto.errormsg.nombre.unique"
+msgstr "Ya existe un producto con este nombre."
+
+msgid "form.producto.errormsg.precio_venta.required"
+msgstr "El precio de venta es obligatorio."
+
+msgid "form.producto.errormsg.precio_venta.invalid"
+msgstr "Ingrese un precio válido."
+
+msgid "form.producto.errormsg.costo_compra.required"
+msgstr "El costo de compra es obligatorio."
+
+msgid "form.producto.errormsg.costo_compra.invalid"
+msgstr "Ingrese un costo válido."
+
+msgid "form.producto.errormsg.stock_actual.required"
+msgstr "El stock actual es obligatorio."
+
+msgid "form.producto.errormsg.stock_actual.invalid"
+msgstr "Ingrese un stock válido."
+
+msgid "form.producto.errormsg.stock_minimo.required"
+msgstr "El stock mínimo es obligatorio."
+
+msgid "form.producto.errormsg.stock_minimo.invalid"
+msgstr "Ingrese un stock mínimo válido."
+
+msgid "form.producto.errormsg.impuesto.required"
+msgstr "El impuesto es obligatorio."
+
+msgid "form.producto.errormsg.impuesto.invalid"
+msgstr "Por favor selecciona un impuesto válido."
+
+# form.cliente
+msgid "form.cliente.errormsg.identificacion.required"
+msgstr "El número de identificación es obligatorio."
+
+msgid "form.cliente.errormsg.identificacion.invalid"
+msgstr "Por favor ingresa una identificación válida."
+
+msgid "form.cliente.errormsg.nombre.required"
+msgstr "El nombre del cliente es obligatorio."
+
+msgid "form.cliente.errormsg.nombre.invalid"
+msgstr "Por favor ingresa un nombre válido."
+
+msgid "form.cliente.errormsg.telefono.required"
+msgstr "El teléfono es obligatorio."
+
+msgid "form.cliente.errormsg.telefono.invalid"
+msgstr "Por favor ingresa un teléfono válido."
+
+msgid "form.cliente.errormsg.direccion.required"
+msgstr "La dirección es obligatoria."
+
+msgid "form.cliente.errormsg.direccion.invalid"
+msgstr "Por favor ingresa una dirección válida."
+
+msgid "form.cliente.errormsg.email.required"
+msgstr "El correo electrónico es obligatorio."
+
+msgid "form.cliente.errormsg.email.invalid"
+msgstr "Por favor ingresa un correo electrónico válido."
+
+# form.proveedor
+msgid "form.proveedor.errormsg.identificacion.required"
+msgstr "El número de identificación es obligatorio."
+
+msgid "form.proveedor.errormsg.identificacion.invalid"
+msgstr "Por favor ingresa una identificación válida."
+
+msgid "form.proveedor.errormsg.razon_social.required"
+msgstr "La razón social es obligatoria."
+
+msgid "form.proveedor.errormsg.razon_social.invalid"
+msgstr "Por favor ingresa una razón social válida."
+
+msgid "form.proveedor.errormsg.telefono.required"
+msgstr "El teléfono es obligatorio."
+
+msgid "form.proveedor.errormsg.telefono.invalid"
+msgstr "Por favor ingresa un teléfono válido."
+
+msgid "form.proveedor.errormsg.email.required"
+msgstr "El correo electrónico es obligatorio."
+
+msgid "form.proveedor.errormsg.email.invalid"
+msgstr "Por favor ingresa un correo electrónico válido."
+
+msgid "form.proveedor.errormsg.direccion.required"
+msgstr "La dirección es obligatoria."
+
+msgid "form.proveedor.errormsg.direccion.invalid"
+msgstr "Por favor ingresa una dirección válida."
+
+# form.producto.field.*
+msgid "form.producto.field.nombre"
+msgstr "Nombre"
+
+msgid "form.producto.field.costo_compra"
+msgstr "Costo de compra"
+
+msgid "form.producto.field.precio_venta"
+msgstr "Precio de venta"
+
+msgid "form.producto.field.stock_actual"
+msgstr "Stock actual"
+
+msgid "form.producto.field.stock_minimo"
+msgstr "Stock mínimo"
+
+msgid "form.producto.field.impuesto"
+msgstr "Impuesto"
+
+# form.default.errormsg.*
+msgid "form.default.errormsg.required"
+msgstr "Este campo es obligatorio."
+
+msgid "form.default.errormsg.invalid"
+msgstr "Por favor ingresa un valor válido."
+
+msgid "form.default.errormsg.empty"
+msgstr "Este campo no puede estar vacío."
