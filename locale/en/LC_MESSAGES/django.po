@@ -1,0 +1,645 @@
+# Translations of InkPOS into English
+# Copyright (C) 2026 InkPOS Team
+msgid ""
+msgstr ""
+"Project-Id-Version: InkPOS 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-25 16:30-0500\n"
+"PO-Revision-Date: 2026-10-25 16:30-0500\n"
+"Last-Translator: InkPOS <dev@inkpos.local>\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "InkPOS - Login"
+msgstr "InkPOS - Log In"
+
+msgid "InkPOS - Setup"
+msgstr "InkPOS - Setup"
+
+msgid "Error"
+msgstr "Error"
+
+msgid "Iniciar Sesión"
+msgstr "Log In"
+
+msgid "Cerrar Sesión"
+msgstr "Log Out"
+
+msgid "Ajustes"
+msgstr "Settings"
+
+msgid "Bienvenido a InkPOS."
+msgstr "Welcome to InkPOS."
+
+msgid "Aquí podrá crear el primer usuario administrador antes de usar el sistema."
+msgstr "Here you can create the first administrator user before using the system."
+
+msgid "Crear Administrador"
+msgstr "Create Administrator"
+
+msgid "Reportes"
+msgstr "Reports"
+
+msgid "Inventario"
+msgstr "Inventory"
+
+msgid "Promociones"
+msgstr "Promotions"
+
+msgid "Facturas"
+msgstr "Invoices"
+
+msgid "Empleados"
+msgstr "Employees"
+
+msgid "Usuario"
+msgstr "Username"
+
+msgid "Contraseña"
+msgstr "Password"
+
+msgid "Nombre"
+msgstr "Name"
+
+msgid "Nombre Completo"
+msgstr "Full Name"
+
+msgid "Nombre completo"
+msgstr "Full Name"
+
+msgid "Identificación"
+msgstr "Identification"
+
+msgid "Teléfono"
+msgstr "Phone"
+
+msgid "Dirección"
+msgstr "Address"
+
+msgid "Correo electrónico"
+msgstr "Email"
+
+msgid "Salario"
+msgstr "Salary"
+
+msgid "Es usuario administrador"
+msgstr "Is administrator"
+
+msgid "Tipo de documento"
+msgstr "Document type"
+
+msgid "Código"
+msgstr "Code"
+
+msgid "Código tributario"
+msgstr "Tax code"
+
+msgid "Descripción"
+msgstr "Description"
+
+msgid "Precio"
+msgstr "Price"
+
+msgid "Costo"
+msgstr "Cost"
+
+msgid "Precio de venta"
+msgstr "Sale price"
+
+msgid "Costo de compra"
+msgstr "Purchase cost"
+
+msgid "Stock actual"
+msgstr "Current stock"
+
+msgid "Stock mínimo"
+msgstr "Minimum stock"
+
+msgid "Marca"
+msgstr "Brand"
+
+msgid "Categoría"
+msgstr "Category"
+
+msgid "Categorías"
+msgstr "Categories"
+
+msgid "Impuesto"
+msgstr "Tax"
+
+msgid "Tipo de impuesto"
+msgstr "Tax type"
+
+msgid "Tarifa"
+msgstr "Rate"
+
+msgid "Activo"
+msgstr "Active"
+
+msgid "Razón social"
+msgstr "Company name"
+
+msgid "Proveedor"
+msgstr "Supplier"
+
+msgid "Proveedores"
+msgstr "Suppliers"
+
+msgid "Cliente"
+msgstr "Customer"
+
+msgid "Clientes"
+msgstr "Customers"
+
+msgid "Empleado"
+msgstr "Employee"
+
+msgid "Producto"
+msgstr "Product"
+
+msgid "Productos"
+msgstr "Products"
+
+msgid "El campo usuario es obligatorio."
+msgstr "The username field is required."
+
+msgid "El campo contraseña es obligatorio."
+msgstr "The password field is required."
+
+msgid "Ingrese un valor válido."
+msgstr "Enter a valid value."
+
+msgid "Este nombre de usuario ya está registrado."
+msgstr "This username is already registered."
+
+msgid "Español"
+msgstr "Spanish"
+
+msgid "Inglés"
+msgstr "English"
+
+
+# Explicit translation keys for Models (models.<model>.<field>)
+msgid "models.empleado.field.tipo_documento"
+msgstr "Document Type"
+
+msgid "models.empleado.field.identificacion"
+msgstr "Identification"
+
+msgid "models.empleado.field.auth_user"
+msgstr "User"
+
+msgid "models.empleado.field.telefono"
+msgstr "Phone"
+
+msgid "models.empleado.field.salario"
+msgstr "Salary"
+
+msgid "models.empleado.field.es_admin"
+msgstr "Is administrator"
+
+msgid "models.empleado.verbose_name"
+msgstr "Employee"
+
+msgid "models.empleado.verbose_name_plural"
+msgstr "Employees"
+
+msgid "models.cliente.field.tipo_documento"
+msgstr "Document Type"
+
+msgid "models.cliente.field.identificacion"
+msgstr "Identification"
+
+msgid "models.cliente.field.nombre"
+msgstr "Name"
+
+msgid "models.cliente.field.direccion"
+msgstr "Address"
+
+msgid "models.cliente.field.telefono"
+msgstr "Phone"
+
+msgid "models.cliente.field.email"
+msgstr "Email"
+
+msgid "models.cliente.verbose_name"
+msgstr "Customer"
+
+msgid "models.cliente.verbose_name_plural"
+msgstr "Customers"
+
+msgid "models.proveedor.field.tipo_documento"
+msgstr "Document Type"
+
+msgid "models.proveedor.field.identificacion"
+msgstr "Identification"
+
+msgid "models.proveedor.field.razon_social"
+msgstr "Company Name"
+
+msgid "models.proveedor.field.telefono"
+msgstr "Phone"
+
+msgid "models.proveedor.field.email"
+msgstr "Email"
+
+msgid "models.proveedor.field.direccion"
+msgstr "Address"
+
+msgid "models.proveedor.verbose_name"
+msgstr "Supplier"
+
+msgid "models.proveedor.verbose_name_plural"
+msgstr "Suppliers"
+
+msgid "models.categoria.field.nombre"
+msgstr "Name"
+
+msgid "models.categoria.verbose_name"
+msgstr "Category"
+
+msgid "models.categoria.verbose_name_plural"
+msgstr "Categories"
+
+msgid "models.marca.field.nombre"
+msgstr "Name"
+
+msgid "models.marca.verbose_name"
+msgstr "Brand"
+
+msgid "models.marca.verbose_name_plural"
+msgstr "Brands"
+
+msgid "models.impuesto.field.nombre"
+msgstr "Name"
+
+msgid "models.impuesto.field.codigo_tributario"
+msgstr "Tax Code"
+
+msgid "models.impuesto.field.tarifa"
+msgstr "Rate"
+
+msgid "models.impuesto.field.tipo_impuesto"
+msgstr "Tax Type"
+
+msgid "models.impuesto.field.activo"
+msgstr "Active"
+
+msgid "models.impuesto.verbose_name"
+msgstr "Tax"
+
+msgid "models.impuesto.verbose_name_plural"
+msgstr "Taxes"
+
+msgid "models.producto.field.nombre"
+msgstr "Name"
+
+msgid "models.producto.field.marca"
+msgstr "Brand"
+
+msgid "models.producto.field.categorias"
+msgstr "Categories"
+
+msgid "models.producto.field.costo_compra"
+msgstr "Purchase Cost"
+
+msgid "models.producto.field.precio_venta"
+msgstr "Sale Price"
+
+msgid "models.producto.field.impuesto"
+msgstr "Tax"
+
+msgid "models.producto.field.stock_actual"
+msgstr "Current Stock"
+
+msgid "models.producto.field.stock_minimo"
+msgstr "Minimum Stock"
+
+msgid "models.producto.field.activo"
+msgstr "Active"
+
+msgid "models.producto.verbose_name"
+msgstr "Product"
+
+msgid "models.producto.verbose_name_plural"
+msgstr "Products"
+
+msgid "models.movimiento_inventario.field.producto"
+msgstr "Product"
+
+msgid "models.movimiento_inventario.field.tipo_movimiento"
+msgstr "Movement Type"
+
+msgid "models.movimiento_inventario.field.referencia_origen"
+msgstr "Origin Reference"
+
+msgid "models.movimiento_inventario.field.cantidad"
+msgstr "Quantity"
+
+msgid "models.movimiento_inventario.field.stock_anterior"
+msgstr "Previous Stock"
+
+msgid "models.movimiento_inventario.field.stock_posterior"
+msgstr "Subsequent Stock"
+
+msgid "models.movimiento_inventario.field.motivo"
+msgstr "Reason"
+
+msgid "models.movimiento_inventario.field.empleado"
+msgstr "Employee"
+
+msgid "models.movimiento_inventario.field.fecha_hora"
+msgstr "Date and Time"
+
+msgid "models.movimiento_inventario.verbose_name"
+msgstr "Inventory Movement"
+
+msgid "models.movimiento_inventario.verbose_name_plural"
+msgstr "Inventory Movements"
+
+# Explicit translation keys for Forms (form.<form>.field.<field>)
+msgid "form.login.field.usuario"
+msgstr "Username"
+
+msgid "form.login.field.contrasena"
+msgstr "Password"
+
+msgid "form.setup_admin.field.tipo_documento"
+msgstr "Document Type"
+
+msgid "form.setup_admin.field.identificacion"
+msgstr "Identification"
+
+msgid "form.setup_admin.field.usuario"
+msgstr "Username"
+
+msgid "form.setup_admin.field.nombre"
+msgstr "Full Name"
+
+msgid "form.setup_admin.field.telefono"
+msgstr "Phone"
+
+msgid "form.setup_admin.field.contrasena"
+msgstr "Password"
+
+msgid "form.empleado.field.nombre"
+msgstr "Name"
+
+msgid "form.empleado.field.usuario"
+msgstr "Username"
+
+msgid "form.empleado.field.contrasena"
+msgstr "Password"
+
+msgid "form.empleado.field.identificacion"
+msgstr "Identification"
+
+msgid "form.empleado.field.telefono"
+msgstr "Phone"
+
+msgid "form.empleado.field.es_admin"
+msgstr "Is administrator"
+
+msgid "form.producto.field.codigo"
+msgstr "Code"
+
+# Error messages for Forms (form.<form_name>.errormsg.<field_name>.<error_type>)
+# form.login
+msgid "form.login.errormsg.usuario.required"
+msgstr "The username field is required."
+
+msgid "form.login.errormsg.usuario.invalid"
+msgstr "Please enter a valid username."
+
+msgid "form.login.errormsg.contrasena.required"
+msgstr "The password field is required."
+
+msgid "form.login.errormsg.contrasena.invalid"
+msgstr "Please enter a valid password."
+
+# form.setup_admin
+msgid "form.setup_admin.errormsg.tipo_documento.required"
+msgstr "Document type is required."
+
+msgid "form.setup_admin.errormsg.tipo_documento.invalid"
+msgstr "Please enter a valid document type."
+
+msgid "form.setup_admin.errormsg.identificacion.required"
+msgstr "Identification number is required."
+
+msgid "form.setup_admin.errormsg.identificacion.invalid"
+msgstr "Please enter a valid identification."
+
+msgid "form.setup_admin.errormsg.usuario.required"
+msgstr "The username field is required."
+
+msgid "form.setup_admin.errormsg.usuario.invalid"
+msgstr "Username can only contain letters and numbers."
+
+msgid "form.setup_admin.errormsg.nombre.required"
+msgstr "The name field is required."
+
+msgid "form.setup_admin.errormsg.nombre.invalid"
+msgstr "Name can only contain letters."
+
+msgid "form.setup_admin.errormsg.telefono.required"
+msgstr "Phone number is required."
+
+msgid "form.setup_admin.errormsg.telefono.invalid"
+msgstr "Please enter a valid phone number."
+
+msgid "form.setup_admin.errormsg.telefono.min_value"
+msgstr "Please enter a valid phone number."
+
+msgid "form.setup_admin.errormsg.telefono.max_value"
+msgstr "Please enter a valid phone number."
+
+msgid "form.setup_admin.errormsg.contrasena.required"
+msgstr "Password is required."
+
+msgid "form.setup_admin.errormsg.contrasena.invalid"
+msgstr "Password does not meet complexity requirements."
+
+# form.empleado
+msgid "form.empleado.errormsg.nombre.required"
+msgstr "The name field is required."
+
+msgid "form.empleado.errormsg.nombre.invalid"
+msgstr "Name can only contain letters."
+
+msgid "form.empleado.errormsg.usuario.required"
+msgstr "The username field is required."
+
+msgid "form.empleado.errormsg.usuario.invalid"
+msgstr "Username can only contain letters and numbers."
+
+msgid "form.empleado.errormsg.contrasena.required"
+msgstr "Password is required for new employees."
+
+msgid "form.empleado.errormsg.contrasena.invalid"
+msgstr "Password does not meet complexity requirements."
+
+msgid "form.empleado.errormsg.identificacion.required"
+msgstr "Identification number is required."
+
+msgid "form.empleado.errormsg.identificacion.invalid"
+msgstr "Please enter a valid identification."
+
+msgid "form.empleado.errormsg.telefono.required"
+msgstr "Phone number is required."
+
+msgid "form.empleado.errormsg.telefono.invalid"
+msgstr "Phone number must match the Colombian format."
+
+msgid "form.empleado.errormsg.tipo_documento.required"
+msgstr "Document type is required."
+
+msgid "form.empleado.errormsg.tipo_documento.invalid"
+msgstr "Please enter a valid document type."
+
+msgid "form.empleado.errormsg.es_admin.required"
+msgstr "Please select a valid value."
+
+msgid "form.empleado.errormsg.es_admin.invalid"
+msgstr "Please select a valid value."
+
+# form.producto
+msgid "form.producto.errormsg.codigo.required"
+msgstr "Code is required."
+
+msgid "form.producto.errormsg.codigo.invalid"
+msgstr "Please enter a valid code."
+
+msgid "form.producto.errormsg.nombre.required"
+msgstr "Product name is required."
+
+msgid "form.producto.errormsg.nombre.invalid"
+msgstr "Please enter a valid name."
+
+msgid "form.producto.errormsg.nombre.unique"
+msgstr "A product with this name already exists."
+
+msgid "form.producto.errormsg.precio_venta.required"
+msgstr "Sale price is required."
+
+msgid "form.producto.errormsg.precio_venta.invalid"
+msgstr "Please enter a valid price."
+
+msgid "form.producto.errormsg.costo_compra.required"
+msgstr "Purchase cost is required."
+
+msgid "form.producto.errormsg.costo_compra.invalid"
+msgstr "Please enter a valid cost."
+
+msgid "form.producto.errormsg.stock_actual.required"
+msgstr "Current stock is required."
+
+msgid "form.producto.errormsg.stock_actual.invalid"
+msgstr "Please enter a valid stock."
+
+msgid "form.producto.errormsg.stock_minimo.required"
+msgstr "Minimum stock is required."
+
+msgid "form.producto.errormsg.stock_minimo.invalid"
+msgstr "Please enter a valid minimum stock."
+
+msgid "form.producto.errormsg.impuesto.required"
+msgstr "Tax is required."
+
+msgid "form.producto.errormsg.impuesto.invalid"
+msgstr "Please select a valid tax."
+
+# form.cliente
+msgid "form.cliente.errormsg.identificacion.required"
+msgstr "Identification number is required."
+
+msgid "form.cliente.errormsg.identificacion.invalid"
+msgstr "Please enter a valid identification."
+
+msgid "form.cliente.errormsg.nombre.required"
+msgstr "Customer name is required."
+
+msgid "form.cliente.errormsg.nombre.invalid"
+msgstr "Please enter a valid name."
+
+msgid "form.cliente.errormsg.telefono.required"
+msgstr "Phone number is required."
+
+msgid "form.cliente.errormsg.telefono.invalid"
+msgstr "Please enter a valid phone number."
+
+msgid "form.cliente.errormsg.direccion.required"
+msgstr "Address is required."
+
+msgid "form.cliente.errormsg.direccion.invalid"
+msgstr "Please enter a valid address."
+
+msgid "form.cliente.errormsg.email.required"
+msgstr "Email is required."
+
+msgid "form.cliente.errormsg.email.invalid"
+msgstr "Please enter a valid email."
+
+# form.proveedor
+msgid "form.proveedor.errormsg.identificacion.required"
+msgstr "Identification number is required."
+
+msgid "form.proveedor.errormsg.identificacion.invalid"
+msgstr "Please enter a valid identification."
+
+msgid "form.proveedor.errormsg.razon_social.required"
+msgstr "Company name is required."
+
+msgid "form.proveedor.errormsg.razon_social.invalid"
+msgstr "Please enter a valid company name."
+
+msgid "form.proveedor.errormsg.telefono.required"
+msgstr "Phone number is required."
+
+msgid "form.proveedor.errormsg.telefono.invalid"
+msgstr "Please enter a valid phone number."
+
+msgid "form.proveedor.errormsg.email.required"
+msgstr "Email is required."
+
+msgid "form.proveedor.errormsg.email.invalid"
+msgstr "Please enter a valid email."
+
+msgid "form.proveedor.errormsg.direccion.required"
+msgstr "Address is required."
+
+msgid "form.proveedor.errormsg.direccion.invalid"
+msgstr "Please enter a valid address."
+
+# form.producto.field.*
+msgid "form.producto.field.nombre"
+msgstr "Name"
+
+msgid "form.producto.field.costo_compra"
+msgstr "Purchase Cost"
+
+msgid "form.producto.field.precio_venta"
+msgstr "Sale Price"
+
+msgid "form.producto.field.stock_actual"
+msgstr "Current Stock"
+
+msgid "form.producto.field.stock_minimo"
+msgstr "Minimum Stock"
+
+msgid "form.producto.field.impuesto"
+msgstr "Tax"
+
+# form.default.errormsg.*
+msgid "form.default.errormsg.required"
+msgstr "This field is required."
+
+msgid "form.default.errormsg.invalid"
+msgstr "Please enter a valid value."
+
+msgid "form.default.errormsg.empty"
+msgstr "This field cannot be empty."

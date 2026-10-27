@@ -1,6 +1,6 @@
 {% load static %}
 <!doctype html>
-<html lang="en" data-bs-theme="dark">
+<html data-bs-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -19,12 +19,16 @@
       integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
       crossorigin="anonymous"
     ></script>
-    <title>{% block title %}{% endblock title %}</title>
+    <title>
+    {% block title %}
+    {% endblock %}
+    </title>
   </head>
   <body class="bg-body d-flex flex-column vh-100 overflow-hidden">
     {% include 'Navbar.html' %}
     <main class="d-flex flex-column flex-grow-1 overflow-hidden">
-      {% block content %} {% endblock content %}
+        {% block content %}
+        {% endblock %}
     </main>
   </body>
 </html>

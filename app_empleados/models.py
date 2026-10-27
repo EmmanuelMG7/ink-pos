@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from app_common.constants import RolUsuario, TipoDocumento
 
@@ -14,14 +15,39 @@ class Empleado(models.Model):
         max_length=2,
         choices=TipoDocumento,
         default=TipoDocumento.CEDULA,
+        verbose_name=_("models.empleado.field.tipo_documento"),
     )
-    identificacion = models.CharField(max_length=20, unique=True)
-    auth_user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="empleado")
-    telefono = models.CharField(max_length=20, blank=True, null=True)
-    salario = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
-    es_admin = models.BooleanField(default=False)
+    identificacion = models.CharField(
+        max_length=20,
+        unique=True,
+        verbose_name=_("models.empleado.field.identificacion"),
+    )
+    auth_user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="empleado",
+        verbose_name=_("models.empleado.field.auth_user"),
+    )
+    telefono = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name=_("models.empleado.field.telefono"),
+    )
+    salario = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        verbose_name=_("models.empleado.field.salario"),
+    )
+    es_admin = models.BooleanField(
+        default=False,
+        verbose_name=_("models.empleado.field.es_admin"),
+    )
 
     class Meta:
+        verbose_name = _("models.empleado.verbose_name")
+        verbose_name_plural = _("models.empleado.verbose_name_plural")
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(salario__gte=0),
@@ -68,8 +94,18 @@ class Empleado(models.Model):
         self.auth_user.is_active = value
 
     @property
+    def nombre(self) -> str:
+        if hasattr(self, "auth_user") and self.auth_user:
+            return self.auth_user.get_full_name() or self.auth_user.first_name or ""
+        return ""
+
+    @property
     def usuario(self):
         return self.auth_user
+
+    @property
+    def es_cajero(self) -> bool:
+        return not self.es_admin
 
     def __str__(self):
         return (

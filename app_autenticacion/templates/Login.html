@@ -1,6 +1,6 @@
-{% load static %}
+{% load i18n static %}
 <!doctype html>
-<html lang="en" data-bs-theme="dark">
+<html data-bs-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -35,7 +35,7 @@
         >
           <div class="toast-header text-bg-danger">
             <i class="bi bi-exclamation-diamond-fill me-2" style="font-size: large;"></i>
-            <strong class="me-auto text-white">Error</strong>
+            <strong class="me-auto text-white">{% trans "Error" %}</strong>
             <button
               type="button"
               class="btn-close btn-close-white"
@@ -74,7 +74,7 @@
           </div>
           
           <button type="submit" id="btnLogin" class="btn btn-primary w-100" data-loading-button>
-            Iniciar Sesión
+            {% trans "Iniciar Sesión" %}
           </button>
         </form>
       </div>

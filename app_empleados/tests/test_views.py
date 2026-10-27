@@ -160,59 +160,59 @@ class EmpleadoViewsTests(TestCase):
         self.assertTrue(self.empleado.auth_user.is_staff)
 
     def test_editar_empleado_usuario_existente(self):
-        """
-        HU8 - Test Case 39: Al intentar editar un empleado con un username existente,
-        la vista re-renderiza con código 200, asigna form_editar con el error en usuario,
-        reabre el modal y no agrega mensajes toast.
-        """
-        data = {
-            "tipo_documento": self.empleado.tipo_documento,
-            "identificacion": self.empleado.identificacion,
-            "nombre": "Nombre Modificado",
-            "usuario": "admin",
-            "telefono": "3112223344",
-            "es_admin": "on",
-        }
-        response = self.client.post(self.url_editar, data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "Gestion_Empleados.html")
-        self.assertIn("form_editar", response.context)
-        form_editar = response.context["form_editar"]
-        self.assertIn("usuario", form_editar.errors)
-        self.assertIn(
-            "Ya existe un empleado con el usuario 'admin'.",
-            form_editar.errors["usuario"],
-        )
-        self.assertContains(response, "Ya existe un empleado con el usuario &#x27;admin&#x27;.")
-        self.assertContains(response, 'id="modal_editar_empleado"')
+            """
+            HU8 - Test Case 39: Al intentar editar un empleado con un username existente,
+            la vista re-renderiza con código 200, asigna form_editar con el error en usuario,
+            reabre el modal y no agrega mensajes toast.
+            """
+            data = {
+                "tipo_documento": self.empleado.tipo_documento,
+                "identificacion": self.empleado.identificacion,
+                "nombre": "Nombre Modificado",
+                "usuario": "admin",
+                "telefono": "3112223344",
+                "es_admin": "on",
+            }
+            response = self.client.post(self.url_editar, data)
+            self.assertEqual(response.status_code, 200)
+            self.assertTemplateUsed(response, "Gestion_Empleados.html")
+            self.assertIn("form_editar", response.context)
+            form_editar = response.context["form_editar"]
+            self.assertIn("usuario", form_editar.errors)
+            self.assertIn(
+                "Ya existe un empleado con el usuario 'admin'.",
+                form_editar.errors["usuario"],
+            )
+            self.assertContains(response, "Ya existe un empleado con el usuario &#x27;admin&#x27;.")
+            self.assertContains(response, 'id="modal_editar_empleado"')
 
-        # Verificar que NO se agregaron mensajes toast de error a messages
-        messages = list(get_messages(response.wsgi_request))
-        self.assertEqual(len(messages), 0)
+            # Verificar que NO se agregaron mensajes toast de error a messages
+            messages = list(get_messages(response.wsgi_request))
+            self.assertEqual(len(messages), 0)
 
-    def test_editar_empleado_identificacion_existente(self):
-        """Al editar con identificación existente de otro empleado, se re-renderiza con error."""
-        otro_user = User.objects.create_user(username="otrouserid", password="123")
-        Empleado.objects.create(
-            auth_user=otro_user,
-            tipo_documento=Empleado.TipoDocumento.CEDULA,
-            identificacion="555666777",
-            telefono="3001112233",
-        )
-        data = {
-            "tipo_documento": self.empleado.tipo_documento,
-            "identificacion": "555666777",
-            "nombre": "Nombre Modificado",
-            "usuario": self.empleado.auth_user.username,
-            "telefono": "3112223344",
-            "es_admin": "on",
-            "contrasena": "Password123*",
-        }
-        response = self.client.post(self.url_editar, data)
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "Gestion_Empleados.html")
-        form_editar = response.context["form_editar"]
-        self.assertIn("identificacion", form_editar.errors)
+      def test_editar_empleado_identificacion_existente(self):
+          """Al editar con identificación existente de otro empleado, se re-renderiza con error."""
+          otro_user = User.objects.create_user(username="otrouserid", password="123")
+          Empleado.objects.create(
+              auth_user=otro_user,
+              tipo_documento=Empleado.TipoDocumento.CEDULA,
+              identificacion="555666777",
+              telefono="3001112233",
+          )
+          data = {
+              "tipo_documento": self.empleado.tipo_documento,
+              "identificacion": "555666777",
+              "nombre": "Nombre Modificado",
+              "usuario": self.empleado.auth_user.username,
+              "telefono": "3112223344",
+              "es_admin": "on",
+              "contrasena": "Password123*",
+          }
+          response = self.client.post(self.url_editar, data)
+          self.assertEqual(response.status_code, 200)
+          self.assertTemplateUsed(response, "Gestion_Empleados.html")
+          form_editar = response.context["form_editar"]
+          self.assertIn("identificacion", form_editar.errors)
 
     def test_editar_empleado_exception_handling(self):
         """Prueba manejo de excepción en editar_empleado."""
@@ -230,6 +230,39 @@ class EmpleadoViewsTests(TestCase):
             self.assertRedirects(response, self.url)
             messages = list(get_messages(response.wsgi_request))
             self.assertTrue(any("Fallo en BD" in m.message for m in messages))
+
+    def test_editar_empleado_actualiza_nombre_y_telefono_en_tabla(self):
+        """
+        HU8 - ID Test Case: 37:
+        Al editar la información de un empleado (nombre y teléfono), el DataGridView
+        debe contar con columna 'Nombre' y reflejar visualmente el nombre y teléfono actualizados.
+        """
+        data = {
+            "tipo_documento": self.empleado.tipo_documento,
+            "identificacion": "111222333",
+            "nombre": "Ana Maria Gomez",
+            "usuario": "basico",
+            "telefono": "3119876543",
+            "contrasena": "",
+        }
+        response = self.client.post(self.url_editar, data, follow=True)
+        self.assertRedirects(response, self.url)
+
+        # Verificar mensaje Toast
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(
+            any("actualizado correctamente" in m.message for m in messages),
+            "Debe mostrar un mensaje toast confirmando la actualización.",
+        )
+
+        # Verificar tabla y columnas en el contexto y HTML
+        table = response.context["table"]
+        self.assertIn("nombre", table.columns)
+        self.assertEqual(table.columns["nombre"].header, "Nombre")
+
+        content = response.content.decode("utf-8")
+        self.assertIn("Ana Maria Gomez", content)
+        self.assertIn("3119876543", content)
 
     def test_gestion_empleados_view_exception_handling(self):
         """Prueba manejo de excepción en gestión_empleados_view."""

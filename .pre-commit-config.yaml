@@ -28,6 +28,13 @@ repos:
 
   - repo: local
     hooks:
+      - id: django-compilemessages
+        name: django-compilemessages
+        entry: python -c "import os, subprocess, sys; py = '.venv/Scripts/python.exe' if os.path.exists('.venv/Scripts/python.exe') else ('.venv/bin/python' if os.path.exists('.venv/bin/python') else sys.executable); res = subprocess.call([py, 'manage.py', 'compilemessages']); subprocess.call(['git', 'add', 'locale']) if res == 0 else None; sys.exit(res)"
+        language: system
+        files: ^locale/.*\.po$
+        pass_filenames: false
+
       - id: django-test
         name: django-test
         entry: python -c "import os, subprocess, sys; py = '.venv/Scripts/python.exe' if os.path.exists('.venv/Scripts/python.exe') else ('.venv/bin/python' if os.path.exists('.venv/bin/python') else sys.executable); sys.exit(subprocess.call([py, 'manage.py', 'test']))"
@@ -36,4 +43,3 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [pre-push]
-

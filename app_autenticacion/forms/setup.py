@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.utils.translation import gettext_lazy as _
 
 from app_common.forms import BootstrapForm, OnlyTextValidator, UsernameValidator
 from app_common.forms.validators import PasswordValidator
@@ -15,53 +16,56 @@ class SetupAdminForm(BootstrapForm):
     """
 
     tipo_documento = forms.ChoiceField(
+        label=_("form.setup_admin.field.tipo_documento"),
         choices=Empleado.TipoDocumento,
         initial=Empleado.TipoDocumento.CEDULA,
         widget=forms.HiddenInput(),
     )
 
     identificacion = forms.CharField(
+        label=_("form.setup_admin.field.identificacion"),
         max_length=20,
-        widget=forms.TextInput(attrs={"placeholder": "Identificación", "class": "number-only"}),
+        widget=forms.TextInput(
+            attrs={
+                "class": "number-only",
+            }
+        ),
     )
 
     usuario = forms.CharField(
-        label="",
+        label=_("form.setup_admin.field.usuario"),
         max_length=150,
         validators=[UsernameValidator],
         widget=forms.TextInput(
             attrs={
-                "placeholder": "Usuario",
                 "class": "username-only",
             }
         ),
     )
 
     nombre = forms.CharField(
-        label="",
+        label=_("form.setup_admin.field.nombre"),
         max_length=150,
         validators=[OnlyTextValidator],
         widget=forms.TextInput(
             attrs={
-                "placeholder": "Nombre Completo",
                 "class": "text-only",
             }
         ),
     )
 
     telefono = forms.IntegerField(
-        label="",
+        label=_("form.setup_admin.field.telefono"),
         min_value=3000000000,
         max_value=3999999999,
         step_size=1,
         error_messages={
-            "min_value": "Ingrese un valor válido.",
-            "max_value": "Ingrese un valor válido.",
-            "invalid": "Ingrese un valor válido.",
+            "min_value": _("form.default.errormsg.invalid"),
+            "max_value": _("form.default.errormsg.invalid"),
+            "invalid": _("form.default.errormsg.invalid"),
         },
         widget=forms.TextInput(
             attrs={
-                "placeholder": "Teléfono",
                 "class": "number-only",
                 # Sobrescribir el pattern para ajustarse al formato de un teléfono
                 "pattern": "^3[0-9]{9}$",
@@ -69,13 +73,12 @@ class SetupAdminForm(BootstrapForm):
         ),
     )
     contrasena = forms.CharField(
-        label="",
+        label=_("form.setup_admin.field.contrasena"),
         min_length=8,
         validators=[PasswordValidator],
         widget=forms.PasswordInput(
             render_value=True,
             attrs={
-                "placeholder": "Contraseña",
                 "minlength": "8",
                 "class": "password-complexity",
             },
@@ -84,14 +87,16 @@ class SetupAdminForm(BootstrapForm):
     setattr(
         contrasena,
         "invalid_feedback",
-        "La contraseña debe contener al menos 8 caracteres, "
-        "una mayúscula, una minúscula, un número y un símbolo.",
+        _(
+            "La contraseña debe contener al menos 8 caracteres, "
+            "una mayúscula, una minúscula, un número y un símbolo."
+        ),
     )
 
     def clean_usuario(self):
         usuario = self.cleaned_data.get("usuario")
         if User.objects.filter(username=usuario).exists():
-            raise forms.ValidationError("Este nombre de usuario ya está registrado.")
+            raise forms.ValidationError(_("Este nombre de usuario ya está registrado."))
         return usuario
 
     def save(self):

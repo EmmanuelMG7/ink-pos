@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django import forms
 from django.db import transaction
+from django.utils.translation import gettext_lazy as _
 
 from app_common.forms import BootstrapModelForm, MultipleTagsField
 from app_inventario.models import Categoria, Marca, Producto
@@ -20,11 +21,11 @@ class ProductoForm(BootstrapModelForm):
 
     # Campo visual para mostrar el código sugerido o actual (solo lectura)
     codigo = forms.CharField(
-        label="",
+        label=_("form.producto.field.codigo"),
         required=False,
         widget=forms.TextInput(
             attrs={
-                "placeholder": "Código",
+                "placeholder": _("form.producto.field.codigo"),
                 "readonly": "readonly",
             }
         ),
@@ -49,18 +50,18 @@ class ProductoForm(BootstrapModelForm):
         # errores de asignación internos con Django, delegando la asignación al método save()
         exclude = ["activo", "marca", "categorias"]
 
+        labels = {
+            "nombre": _("form.producto.field.nombre"),
+            "costo_compra": _("form.producto.field.costo_compra"),
+            "precio_venta": _("form.producto.field.precio_venta"),
+            "stock_actual": _("form.producto.field.stock_actual"),
+            "stock_minimo": _("form.producto.field.stock_minimo"),
+            "impuesto": _("form.producto.field.impuesto"),
+        }
+
         error_messages = {
-            "precio_venta": {
-                "invalid": "Ingrese un precio válido.",
-            },
-            "costo_compra": {
-                "invalid": "Ingrese un costo válido.",
-            },
-            "stock_actual": {
-                "invalid": "Ingrese un stock válido.",
-            },
             "nombre": {
-                "unique": "Ya existe un producto con este nombre.",
+                "unique": _("form.producto.errormsg.nombre.unique"),
             },
         }
 
@@ -68,31 +69,31 @@ class ProductoForm(BootstrapModelForm):
         widgets = {
             "nombre": forms.TextInput(
                 attrs={
-                    "placeholder": "Nombre",
+                    "placeholder": _("Nombre"),
                 }
             ),
             "precio_venta": forms.NumberInput(
                 attrs={
-                    "placeholder": "Precio",
+                    "placeholder": _("Precio de venta"),
                     "min": "0.01",
                     "step": "0.01",
                 }
             ),
             "costo_compra": forms.NumberInput(
                 attrs={
-                    "placeholder": "Costo",
+                    "placeholder": _("Costo de compra"),
                     "min": "0.01",
                     "step": "0.01",
                 }
             ),
             "stock_actual": forms.NumberInput(
                 attrs={
-                    "placeholder": "Stock Actual",
+                    "placeholder": _("Stock actual"),
                     "min": "1",
                     "step": "1",
                 }
             ),
-            "stock_minimo": forms.NumberInput(attrs={"placeholder": "Stock Mínimo"}),
+            "stock_minimo": forms.NumberInput(attrs={"placeholder": _("Stock mínimo")}),
         }
 
     def __init__(self, *args, **kwargs):
