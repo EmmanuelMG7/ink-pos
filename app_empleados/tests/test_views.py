@@ -213,6 +213,7 @@ class EmpleadoViewsTests(TestCase):
         self.assertTemplateUsed(response, "Gestion_Empleados.html")
         form_editar = response.context["form_editar"]
         self.assertIn("identificacion", form_editar.errors)
+
     def test_editar_empleado_exception_handling(self):
         """Prueba manejo de excepción en editar_empleado."""
         data = {
