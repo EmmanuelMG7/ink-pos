@@ -5,6 +5,7 @@ from .models import Empleado
 
 
 class EmpleadoTable(tables.Table):
+    nombre = tables.Column(verbose_name="Nombre")
     acciones = tables.TemplateColumn(
         template_code="""
         <div class="d-flex gap-1">
@@ -24,8 +25,7 @@ class EmpleadoTable(tables.Table):
             <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-empleado"
             title="Eliminar" data-bs-toggle="modal" data-bs-target="#modal_eliminar_empleado"
             data-empleado-id="{{ record.id }}"
-            data-empleado-nombre="{{ record.usuario.get_full_name }}"
-            default:record.usuario.username }}"
+            data-empleado-nombre="{{ record.nombre|default:record.usuario.username }}"
             data-empleado-usuario="{{ record.usuario.username }}"
             data-empleado-identificacion="{{ record.identificacion }}">
                 <i class="bi bi-trash"></i>
@@ -40,7 +40,7 @@ class EmpleadoTable(tables.Table):
     class Meta:
         model = Empleado
         template_name = "django_tables2/bootstrap5.html"
-        fields = ("id", "usuario", "telefono", "es_admin", "acciones")
+        fields = ("id", "nombre", "usuario", "telefono", "es_admin", "acciones")
         empty_text = "Nada que mostrar aún. Puedes crear nuevos empleados usando el botón +"
         orderable = False
         per_page = 10

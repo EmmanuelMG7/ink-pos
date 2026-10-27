@@ -159,6 +159,39 @@ class EmpleadoViewsTests(TestCase):
         self.assertEqual(self.empleado.auth_user.first_name, "Nombre Editado")
         self.assertTrue(self.empleado.auth_user.is_staff)
 
+    def test_editar_empleado_actualiza_nombre_y_telefono_en_tabla(self):
+        """
+        HU8 - ID Test Case: 37:
+        Al editar la información de un empleado (nombre y teléfono), el DataGridView
+        debe contar con columna 'Nombre' y reflejar visualmente el nombre y teléfono actualizados.
+        """
+        data = {
+            "tipo_documento": self.empleado.tipo_documento,
+            "identificacion": "111222333",
+            "nombre": "Ana Maria Gomez",
+            "usuario": "basico",
+            "telefono": "3119876543",
+            "contrasena": "",
+        }
+        response = self.client.post(self.url_editar, data, follow=True)
+        self.assertRedirects(response, self.url)
+
+        # Verificar mensaje Toast
+        messages = list(get_messages(response.wsgi_request))
+        self.assertTrue(
+            any("actualizado correctamente" in m.message for m in messages),
+            "Debe mostrar un mensaje toast confirmando la actualización.",
+        )
+
+        # Verificar tabla y columnas en el contexto y HTML
+        table = response.context["table"]
+        self.assertIn("nombre", table.columns)
+        self.assertEqual(table.columns["nombre"].header, "Nombre")
+
+        content = response.content.decode("utf-8")
+        self.assertIn("Ana Maria Gomez", content)
+        self.assertIn("3119876543", content)
+
     def test_gestion_empleados_view_exception_handling(self):
         """Prueba manejo de excepción en gestión_empleados_view."""
         data = {
