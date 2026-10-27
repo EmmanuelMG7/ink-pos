@@ -8,47 +8,63 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
-      <form action="" method="post" class="needs-validation" novalidate id="form_editar_empleado">
+      {% with f=form_editar|default:form %}
+      <form action="{% if empleado_editando_id %}{% url 'empleados:editar_empleado' empleado_editando_id %}{% endif %}" method="post" class="needs-validation" novalidate id="form_editar_empleado">
         {% csrf_token %}
         
         <!-- Campo Oculto (HiddenInput) según forms.py -->
-        {{ form.tipo_documento }}
+        {{ f.tipo_documento }}
         
         <div class="modal-body m-2">
           <div class="row g-2 mb-2 align-items-start">
             <div class="col">
                 <label class="form-label fw-bold">Identificación</label>
-                {{ form.identificacion }}
+                {{ f.identificacion }}
+                <div class="invalid-feedback text-wrap text-break">
+                    {% firstof f.identificacion.errors.0 "Por favor ingresa un valor valido" %}
+                </div>
             </div>
             <div class="col">
                 <label class="form-label fw-bold">Nombre Completo</label>
-                {{ form.nombre }}
+                {{ f.nombre }}
+                <div class="invalid-feedback text-wrap text-break">
+                    {% firstof f.nombre.errors.0 "Por favor ingresa un valor valido" %}
+                </div>
             </div>
           </div>
           
           <div class="row g-2 mb-2 align-items-start">
             <div class="col">
                 <label class="form-label fw-bold">Usuario</label>
-                {{ form.usuario }}
+                {{ f.usuario }}
+                <div class="invalid-feedback text-wrap text-break">
+                    {% firstof f.usuario.errors.0 "Por favor ingresa un valor valido" %}
+                </div>
             </div>
             <div class="col">
                 <label class="form-label fw-bold">Teléfono</label>
-                {{ form.telefono }}
+                {{ f.telefono }}
+                <div class="invalid-feedback text-wrap text-break">
+                    {% firstof f.telefono.errors.0 "Por favor ingresa un valor valido" %}
+                </div>
             </div>
           </div>
 
           <div class="row g-2 mb-2 align-items-start">
             <div class="col">
                 <label class="form-label fw-bold">Nueva Contraseña</label>
-                {{ form.contrasena }}
+                {{ f.contrasena }}
                 <div class="form-text text-muted" style="font-size: 0.85em;">Déjalo en blanco para conservar la actual.</div>
+                <div class="invalid-feedback text-wrap text-break">
+                    {% firstof f.contrasena.errors.0 "Por favor ingresa un valor valido" %}
+                </div>
             </div>
           </div>
 
           <div class="row g-2 mt-3 align-items-center">
             <div class="col form-check ms-2">
-                {{ form.es_admin }}
-                <label class="form-check-label fw-bold" for="{{ form.es_admin.id_for_label }}">
+                {{ f.es_admin }}
+                <label class="form-check-label fw-bold" for="{{ f.es_admin.id_for_label }}">
                     Es usuario administrador
                 </label>
             </div>
@@ -60,6 +76,7 @@
           <button type="submit" class="btn btn-primary">Guardar Empleado</button>
         </div>
       </form>
+      {% endwith %}
     </div>
   </div>
 </div>
