@@ -2,6 +2,7 @@ from typing import Any
 
 from django import forms
 from django.core.validators import RegexValidator
+from django.utils.translation import gettext_lazy as _
 
 from .validators import (
     AlphanumericValidator,
@@ -19,9 +20,10 @@ class BootstrapFormMixin:
     de validación (is-valid e is-invalid) para mostrar los labels de feedback.
     """
 
-    default_messages: dict[str, str] = {
-        "required": "Este campo es obligatorio.",
-        "invalid": "Por favor ingresa un valor válido.",
+    default_messages: dict[str, Any] = {
+        "required": _("form.default.errormsg.required"),
+        "invalid": _("form.default.errormsg.invalid"),
+        "empty": _("form.default.errormsg.empty"),
     }
     fields: dict[str, forms.Field]
     is_bound: bool
@@ -59,6 +61,12 @@ class BootstrapFormMixin:
             if clase_bootstrap not in clases_existentes:
                 widget.attrs["class"] = f"{clases_existentes} {clase_bootstrap}".strip()
 
+            # Asegurar placeholder a partir del label (requerido por Bootstrap 5 form-floating)
+            if field.label and not isinstance(
+                widget, (forms.CheckboxInput, forms.RadioSelect, forms.Select)
+            ):
+                widget.attrs.setdefault("placeholder", field.label)
+
             # Aplicar mensajes por defecto (validez y errores) desde default_messages
             self.aplicar_default_messages(field, widget)
 
@@ -76,7 +84,7 @@ class BootstrapFormMixin:
         """
         valid_text = getattr(field, "valid_feedback", None)
         if valid_text:
-            widget.attrs["data-valid-feedback"] = str(valid_text)
+            widget.attrs["data-valid-feedback"] = valid_text
 
         for code, default_text in self.default_messages.items():
             if not default_text or code == "valid":
@@ -93,7 +101,7 @@ class BootstrapFormMixin:
             if current_msg is None or current_msg == default_django_msg:
                 field.error_messages[code] = default_text
 
-            widget.attrs[f"data-{code}-feedback"] = str(field.error_messages[code])
+            widget.attrs[f"data-{code}-feedback"] = field.error_messages[code]
 
     def sincronizar_clases_validadores(self):
         """
@@ -123,11 +131,11 @@ class BootstrapFormMixin:
 
                     # Usar los error_messages de Django para el feedback
                     if validator.message:
-                        msg = str(validator.message)
+                        msg = validator.message
                         field.error_messages["invalid"] = msg
                         widget.attrs["data-invalid-feedback"] = msg
                     elif "invalid" in field.error_messages:
-                        widget.attrs["data-invalid-feedback"] = str(field.error_messages["invalid"])
+                        widget.attrs["data-invalid-feedback"] = field.error_messages["invalid"]
 
                     # Si es validador de contraseña o campo password
                     if (

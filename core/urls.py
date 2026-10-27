@@ -28,6 +28,7 @@ def root_redirect(request):
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("i18n/", include("django.conf.urls.i18n")),
     path("", root_redirect, name="root"),
     path("common/", include("app_common.urls")),
     path("clientes/", include("app_clientes.urls")),

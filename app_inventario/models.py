@@ -2,14 +2,21 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from app_empleados.models import Empleado
 
 
 class Categoria(models.Model):
-    nombre = models.CharField(max_length=50, unique=True)
+    nombre = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name=_("models.categoria.field.nombre"),
+    )
 
     class Meta:
+        verbose_name = _("models.categoria.verbose_name")
+        verbose_name_plural = _("models.categoria.verbose_name_plural")
         constraints = [
             models.CheckConstraint(
                 condition=~models.Q(nombre=""),
@@ -34,9 +41,15 @@ class Categoria(models.Model):
 
 
 class Marca(models.Model):
-    nombre = models.CharField(max_length=50, unique=True)
+    nombre = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name=_("models.marca.field.nombre"),
+    )
 
     class Meta:
+        verbose_name = _("models.marca.verbose_name")
+        verbose_name_plural = _("models.marca.verbose_name_plural")
         constraints = [
             models.CheckConstraint(
                 condition=~models.Q(nombre=""),
@@ -63,20 +76,38 @@ class Marca(models.Model):
 class Impuesto(models.Model):
 
     class TipoImpuesto(models.TextChoices):
-        PORCENTAJE = "PORCENTAJE", "Porcentaje (%)"
-        FIJO = "FIJO", "Monto Fijo por Unidad"
+        PORCENTAJE = "PORCENTAJE", _("Porcentaje (%)")
+        FIJO = "FIJO", _("Monto Fijo por Unidad")
 
-    nombre = models.CharField(max_length=100)
-    codigo_tributario = models.CharField(max_length=10, unique=True)
-    tarifa = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    nombre = models.CharField(
+        max_length=100,
+        verbose_name=_("models.impuesto.field.nombre"),
+    )
+    codigo_tributario = models.CharField(
+        max_length=10,
+        unique=True,
+        verbose_name=_("models.impuesto.field.codigo_tributario"),
+    )
+    tarifa = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        verbose_name=_("models.impuesto.field.tarifa"),
+    )
     tipo_impuesto = models.CharField(
         max_length=20,
         choices=TipoImpuesto.choices,
         default=TipoImpuesto.PORCENTAJE,
+        verbose_name=_("models.impuesto.field.tipo_impuesto"),
     )
-    activo = models.BooleanField(default=True)
+    activo = models.BooleanField(
+        default=True,
+        verbose_name=_("models.impuesto.field.activo"),
+    )
 
     class Meta:
+        verbose_name = _("models.impuesto.verbose_name")
+        verbose_name_plural = _("models.impuesto.verbose_name_plural")
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(tarifa__gte=0),
@@ -130,27 +161,58 @@ class Impuesto(models.Model):
 
 
 class Producto(models.Model):
-    nombre = models.CharField(max_length=150, unique=True)
-    marca = models.ForeignKey(Marca, on_delete=models.PROTECT, related_name="productos")
+    nombre = models.CharField(
+        max_length=150,
+        unique=True,
+        verbose_name=_("models.producto.field.nombre"),
+    )
+    marca = models.ForeignKey(
+        Marca,
+        on_delete=models.PROTECT,
+        related_name="productos",
+        verbose_name=_("models.producto.field.marca"),
+    )
     categorias = models.ManyToManyField(
         Categoria,
         blank=True,
         related_name="productos",
+        verbose_name=_("models.producto.field.categorias"),
     )
-    costo_compra = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
-    precio_venta = models.DecimalField(max_digits=10, decimal_places=2)
+    costo_compra = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        verbose_name=_("models.producto.field.costo_compra"),
+    )
+    precio_venta = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_("models.producto.field.precio_venta"),
+    )
     impuesto = models.ForeignKey(
         Impuesto,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="productos",
+        verbose_name=_("models.producto.field.impuesto"),
     )
-    stock_actual = models.IntegerField(default=0)
-    stock_minimo = models.IntegerField(default=5)
-    activo = models.BooleanField(default=True)
+    stock_actual = models.IntegerField(
+        default=0,
+        verbose_name=_("models.producto.field.stock_actual"),
+    )
+    stock_minimo = models.IntegerField(
+        default=5,
+        verbose_name=_("models.producto.field.stock_minimo"),
+    )
+    activo = models.BooleanField(
+        default=True,
+        verbose_name=_("models.producto.field.activo"),
+    )
 
     class Meta:
+        verbose_name = _("models.producto.verbose_name")
+        verbose_name_plural = _("models.producto.verbose_name_plural")
         constraints = [
             # costo_compra >= 0
             models.CheckConstraint(
@@ -195,23 +257,54 @@ class Producto(models.Model):
 
 class MovimientoInventario(models.Model):
     class TipoMovimiento(models.TextChoices):
-        COMPRA = "COMPRA", "Compra"
-        VENTA = "VENTA", "Venta"
-        DEVOLUCION = "DEVOLUCION", "Devolución"
-        AJUSTE = "AJUSTE", "Ajuste"
-        MERMA = "MERMA", "Merma"
+        COMPRA = "COMPRA", _("Compra")
+        VENTA = "VENTA", _("Venta")
+        DEVOLUCION = "DEVOLUCION", _("Devolución")
+        AJUSTE = "AJUSTE", _("Ajuste")
+        MERMA = "MERMA", _("Merma")
 
-    producto = models.ForeignKey(Producto, on_delete=models.PROTECT, related_name="movimientos")
-    tipo_movimiento = models.CharField(max_length=20, choices=TipoMovimiento.choices)
-    referencia_origen = models.CharField(max_length=50, blank=True, null=True)
-    cantidad = models.IntegerField()
-    stock_anterior = models.IntegerField()
-    stock_posterior = models.IntegerField()
-    motivo = models.TextField(blank=True, default="")
-    empleado = models.ForeignKey(Empleado, on_delete=models.PROTECT)
-    fecha_hora = models.DateTimeField(auto_now_add=True)
+    producto = models.ForeignKey(
+        Producto,
+        on_delete=models.PROTECT,
+        related_name="movimientos",
+        verbose_name=_("models.movimiento_inventario.field.producto"),
+    )
+    tipo_movimiento = models.CharField(
+        max_length=20,
+        choices=TipoMovimiento.choices,
+        verbose_name=_("models.movimiento_inventario.field.tipo_movimiento"),
+    )
+    referencia_origen = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        verbose_name=_("models.movimiento_inventario.field.referencia_origen"),
+    )
+    cantidad = models.IntegerField(verbose_name=_("models.movimiento_inventario.field.cantidad"))
+    stock_anterior = models.IntegerField(
+        verbose_name=_("models.movimiento_inventario.field.stock_anterior")
+    )
+    stock_posterior = models.IntegerField(
+        verbose_name=_("models.movimiento_inventario.field.stock_posterior")
+    )
+    motivo = models.TextField(
+        blank=True,
+        default="",
+        verbose_name=_("models.movimiento_inventario.field.motivo"),
+    )
+    empleado = models.ForeignKey(
+        Empleado,
+        on_delete=models.PROTECT,
+        verbose_name=_("models.movimiento_inventario.field.empleado"),
+    )
+    fecha_hora = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("models.movimiento_inventario.field.fecha_hora"),
+    )
 
     class Meta:
+        verbose_name = _("models.movimiento_inventario.verbose_name")
+        verbose_name_plural = _("models.movimiento_inventario.verbose_name_plural")
         constraints = [
             models.CheckConstraint(
                 condition=models.Q(cantidad__gt=0),

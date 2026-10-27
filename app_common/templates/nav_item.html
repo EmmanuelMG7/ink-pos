@@ -1,7 +1,8 @@
+{% load i18n %}
 <li class="nav-item">
   <a
     class="nav-link {% if request.resolver_match.view_name == url_name or request.resolver_match.url_name == url_name %}active{% endif %}"
     href="{% url url_name %}"
-    >{{ label }}</a
+    >{% trans label %}</a
   >
 </li>

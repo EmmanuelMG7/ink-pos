@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from app_common.constants import TipoDocumento
 
@@ -11,14 +12,38 @@ class Cliente(models.Model):
         max_length=2,
         choices=TipoDocumento,
         default=TipoDocumento.CEDULA,
+        verbose_name=_("models.cliente.field.tipo_documento"),
     )
-    identificacion = models.CharField(max_length=20, unique=True)
-    nombre = models.CharField(max_length=100)
-    direccion = models.CharField(max_length=200, blank=True, null=True)
-    telefono = models.CharField(max_length=20, blank=True, null=True)
-    email = models.EmailField(blank=True, null=True)
+    identificacion = models.CharField(
+        max_length=20,
+        unique=True,
+        verbose_name=_("models.cliente.field.identificacion"),
+    )
+    nombre = models.CharField(
+        max_length=100,
+        verbose_name=_("models.cliente.field.nombre"),
+    )
+    direccion = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        verbose_name=_("models.cliente.field.direccion"),
+    )
+    telefono = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name=_("models.cliente.field.telefono"),
+    )
+    email = models.EmailField(
+        blank=True,
+        null=True,
+        verbose_name=_("models.cliente.field.email"),
+    )
 
     class Meta:
+        verbose_name = _("models.cliente.verbose_name")
+        verbose_name_plural = _("models.cliente.verbose_name_plural")
         constraints = [
             models.CheckConstraint(
                 condition=~models.Q(identificacion=""),
@@ -44,10 +69,12 @@ class Cliente(models.Model):
         if not self.nombre:
             raise ValidationError({"nombre": "El nombre del cliente no puede estar vacío."})
 
-        if self.telefono:
-            self.telefono = self.telefono.strip()
         if self.direccion:
             self.direccion = self.direccion.strip()
+
+        if self.telefono:
+            self.telefono = self.telefono.strip()
+
         if self.email:
             self.email = self.email.strip().lower()
 
