@@ -103,6 +103,9 @@ class ProductoForm(BootstrapModelForm):
         """
         super().__init__(*args, **kwargs)
 
+        if "nombre" in self.fields:
+            self.fields["nombre"].widget.attrs.pop("maxlength", None)
+
         if "costo_compra" in self.fields:
             self.fields["costo_compra"].required = False
 
