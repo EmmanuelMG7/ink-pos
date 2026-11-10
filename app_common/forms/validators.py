@@ -2,8 +2,8 @@ from django.core.validators import RegexValidator
 
 # Validador reutilizable para campos que solo acepten letras, acentos y espacios
 OnlyTextValidator = RegexValidator(
-    regex=r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$",
-    message="Solo se permiten letras y espacios.",
+    regex=r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-]+$",
+    message="Solo se permiten letras, espacios y guiones.",
 )
 
 # Validador para nombres de usuario: mayúsculas, minúsculas y números (sin espacios ni símbolos)
