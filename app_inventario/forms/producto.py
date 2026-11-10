@@ -163,7 +163,7 @@ class ProductoForm(BootstrapModelForm):
             if precio_venta < costo_compra:
                 self.add_error(
                     "precio_venta",
-                    "El precio debe ser superior al costo.",
+                    "El precio debe ser superior al valor de compra.",
                 )
         return cleaned_data
 

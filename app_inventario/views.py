@@ -33,7 +33,6 @@ def gestion_productos(request):
     marcas = Marca.objects.all().order_by("nombre")
     categorias = Categoria.objects.all().order_by("nombre")
 
-    # Consultar productos optimizado con prefetch_related para categorías
     productos_queryset = (
         Producto.objects.filter(activo=True)
         .select_related("marca", "impuesto")
@@ -41,8 +40,6 @@ def gestion_productos(request):
         .order_by("-id")
     )
     tabla_productos = ProductoTable(productos_queryset)
-
-    # Configurar paginación a 10 registros por página
     RequestConfig(request, paginate=True).configure(tabla_productos)
 
     return render(
@@ -54,6 +51,7 @@ def gestion_productos(request):
             "marcas": marcas,
             "categorias": categorias,
             "form": form,
+            "form_editar": ProductoForm(),
         },
     )
 
@@ -71,12 +69,39 @@ def editar_producto(request, pk):
                 messages.success(
                     request, f"Producto '{producto.nombre}' actualizado correctamente."
                 )
+                return redirect("inventario:gestion")
             except Exception as e:
                 messages.error(request, f"Hubo un error al actualizar el producto: {str(e)}")
+                return redirect("inventario:gestion")
         else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"Error de validación: {error}")
+            last_product = Producto.objects.order_by("id").last()
+            next_id = 1 if not last_product else last_product.pk + 1
+
+            marcas = Marca.objects.all().order_by("nombre")
+            categorias = Categoria.objects.all().order_by("nombre")
+
+            productos_queryset = (
+                Producto.objects.filter(activo=True)
+                .select_related("marca", "impuesto")
+                .prefetch_related("categorias")
+                .order_by("-id")
+            )
+            tabla_productos = ProductoTable(productos_queryset)
+            RequestConfig(request, paginate=True).configure(tabla_productos)
+
+            return render(
+                request,
+                "Gestion_Productos.html",
+                {
+                    "siguiente_codigo": f"{next_id:03d}",
+                    "table": tabla_productos,
+                    "marcas": marcas,
+                    "categorias": categorias,
+                    "form": ProductoForm(),  # Modal crear limpio
+                    "form_editar": form,  # Modal editar CON ERRORES
+                    "producto_edit_id": pk,  # ID del producto fallido
+                },
+            )
 
     return redirect("inventario:gestion")
 

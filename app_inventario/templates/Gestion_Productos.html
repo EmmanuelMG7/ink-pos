@@ -214,4 +214,28 @@
   </script>
 {% endif %}
 
+<!-- NUEVO: Detecta errores en edición y reabre el modal de modificar -->
+{% if form_editar.errors %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var modalEditEl = document.getElementById('modal_editar_producto');
+      if (modalEditEl) {
+        var modal = new bootstrap.Modal(modalEditEl);
+        modal.show();
+        
+        // Si el error ocurrió en la página 2 (ej. impuesto), saltar directamente a ella
+        var tieneErrorImpuesto = "{% if form_editar.impuesto.errors %}true{% else %}false{% endif %}" === "true";
+        if (tieneErrorImpuesto) {
+          setTimeout(function() {
+            var btnSiguiente = document.getElementById('btn_modal_edit_siguiente');
+            if (btnSiguiente) {
+              btnSiguiente.click();
+            }
+          }, 100);
+        }
+      }
+    });
+  </script>
+{% endif %}
+
 {% endblock %}
