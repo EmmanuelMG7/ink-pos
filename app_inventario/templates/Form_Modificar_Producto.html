@@ -14,7 +14,7 @@
         </div>
       </div>
 
-      <form action="" method="post" class="needs-validation" novalidate id="form_editar_producto">
+      <form action="{% if producto_edit_id %}/inventario/editar/{{ producto_edit_id }}/{% endif %}" method="post" class="needs-validation" novalidate id="form_editar_producto">
         {% csrf_token %}
         <div class="modal-body m-2">
           
@@ -32,12 +32,12 @@
               <div class="col-12 col-md-8">
                 <div class="row g-2 mb-2">
                   <div class="col-4">
-                    {% with field=form.codigo span_text="ID" %}
+                    {% with field=form_editar.codigo span_text="ID" %}
                       {% include 'bootstrap_input_field.html' %}
                     {% endwith %}
                   </div>
                   <div class="col-8">
-                    {% with field=form.nombre span_icon="bi bi-fonts" %}
+                    {% with field=form_editar.nombre span_icon="bi bi-fonts" %}
                       {% include 'bootstrap_input_field.html' %}
                     {% endwith %}
                   </div>
@@ -45,12 +45,12 @@
 
                 <div class="row g-2 mb-2">
                   <div class="col">
-                    {% with field=form.precio_venta span_icon="bi bi-tags-fill" %}
+                    {% with field=form_editar.precio_venta span_icon="bi bi-tags-fill" %}
                       {% include 'bootstrap_input_field.html' %}
                     {% endwith %}
                   </div>
                   <div class="col">
-                    {% with field=form.costo_compra span_icon="bi bi-cash-stack" %}
+                    {% with field=form_editar.costo_compra span_icon="bi bi-cash-stack" %}
                       {% include 'bootstrap_input_field.html' %}
                     {% endwith %}
                   </div>
@@ -58,12 +58,12 @@
 
                 <div class="row g-2">
                   <div class="col">
-                    {% with field=form.stock_actual span_icon="bi bi-box-seam-fill" %}
+                    {% with field=form_editar.stock_actual span_icon="bi bi-box-seam-fill" %}
                       {% include 'bootstrap_input_field.html' %}
                     {% endwith %}
                   </div>
                   <div class="col">
-                    {% with field=form.stock_minimo span_icon="bi bi-box-arrow-in-down" %}
+                    {% with field=form_editar.stock_minimo span_icon="bi bi-box-arrow-in-down" %}
                       {% include 'bootstrap_input_field.html' %}
                     {% endwith %}
                   </div>
@@ -93,7 +93,7 @@
 
             <div class="row g-2">
               <div class="col-12">
-                {% with field=form.impuesto span_icon="bi bi-receipt" %}
+                {% with field=form_editar.impuesto span_icon="bi bi-receipt" %}
                   {% include 'bootstrap_input_field.html' %} 
                 {% endwith %}
               </div>
