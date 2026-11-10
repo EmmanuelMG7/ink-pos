@@ -80,20 +80,41 @@
     </div>
   </div>
   <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      const inputs = document.querySelectorAll('#form_editar_empleado input');
-      
-      inputs.forEach(input => {
-        input.addEventListener('blur', function() {
-          if (!this.checkValidity()) {
-            this.classList.add('is-invalid');
-            this.classList.remove('is-valid');
-          } else {
-            this.classList.add('is-valid');
-            this.classList.remove('is-invalid');
-          }
-        });
+  document.addEventListener("DOMContentLoaded", function() {
+    const form = document.getElementById('form_editar_empleado');
+    const inputs = form.querySelectorAll('input');
+    const actualizarMensajeVacio = (input) => {
+        if (input.validity.valueMissing) {
+            const feedback = input.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.innerText = "Este campo es obligatorio.";
+            }
+        }
+    };
+    inputs.forEach(input => {
+      input.addEventListener('blur', function() {
+        if (!this.checkValidity()) {
+          this.classList.add('is-invalid');
+          this.classList.remove('is-valid');
+          actualizarMensajeVacio(this);
+        } else {
+          this.classList.add('is-valid');
+          this.classList.remove('is-invalid');
+        }
       });
     });
-  </script>
+    form.addEventListener('submit', function(event) {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+        inputs.forEach(input => {
+          if (!input.checkValidity()) {
+              actualizarMensajeVacio(input);
+          }
+        });
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+</script>
 </div>
