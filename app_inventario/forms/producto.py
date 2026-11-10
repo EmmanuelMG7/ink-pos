@@ -106,6 +106,9 @@ class ProductoForm(BootstrapModelForm):
         if "costo_compra" in self.fields:
             self.fields["costo_compra"].required = False
 
+        if "costo_compra" in self.fields:
+            self.fields["costo_compra"].widget.attrs["min"] = "0.00"
+
         if self.instance and self.instance.pk and not self.is_bound:
             if "codigo" in self.fields:
                 self.fields["codigo"].initial = self.instance.codigo
