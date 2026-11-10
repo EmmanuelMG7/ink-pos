@@ -122,6 +122,12 @@ class ProductoForm(BootstrapModelForm):
                     self.instance.categorias.values_list("nombre", flat=True)
                 )
 
+        if self.instance and self.instance.pk:
+            if "categoria" in self.fields and self.instance.categoria:
+                self.initial["categoria"] = self.instance.categoria_id
+            if "marca" in self.fields and self.instance.marca:
+                self.initial["marca"] = self.instance.marca_id
+
     def clean_nombre(self):
         """
         Garantiza que el nombre del producto sea único,
