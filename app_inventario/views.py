@@ -51,7 +51,7 @@ def gestion_productos(request):
             "marcas": marcas,
             "categorias": categorias,
             "form": form,
-            "form_editar": ProductoForm(), 
+            "form_editar": ProductoForm(),
         },
     )
 
@@ -66,7 +66,9 @@ def editar_producto(request, pk):
         if form.is_valid():
             try:
                 form.save()
-                messages.success(request, f"Producto '{producto.nombre}' actualizado correctamente.")
+                messages.success(
+                    request, f"Producto '{producto.nombre}' actualizado correctamente."
+                )
                 return redirect("inventario:gestion")
             except Exception as e:
                 messages.error(request, f"Hubo un error al actualizar el producto: {str(e)}")
@@ -74,11 +76,16 @@ def editar_producto(request, pk):
         else:
             last_product = Producto.objects.order_by("id").last()
             next_id = 1 if not last_product else last_product.pk + 1
-            
+
             marcas = Marca.objects.all().order_by("nombre")
             categorias = Categoria.objects.all().order_by("nombre")
-            
-            productos_queryset = Producto.objects.filter(activo=True).select_related("marca", "impuesto").prefetch_related("categorias").order_by("-id")
+
+            productos_queryset = (
+                Producto.objects.filter(activo=True)
+                .select_related("marca", "impuesto")
+                .prefetch_related("categorias")
+                .order_by("-id")
+            )
             tabla_productos = ProductoTable(productos_queryset)
             RequestConfig(request, paginate=True).configure(tabla_productos)
 
@@ -90,9 +97,9 @@ def editar_producto(request, pk):
                     "table": tabla_productos,
                     "marcas": marcas,
                     "categorias": categorias,
-                    "form": ProductoForm(), # Modal crear limpio
-                    "form_editar": form,    # Modal editar CON ERRORES
-                    "producto_edit_id": pk, # ID del producto fallido
+                    "form": ProductoForm(),  # Modal crear limpio
+                    "form_editar": form,  # Modal editar CON ERRORES
+                    "producto_edit_id": pk,  # ID del producto fallido
                 },
             )
 

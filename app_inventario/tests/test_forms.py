@@ -229,7 +229,9 @@ class ProductoFormTests(TestCase):
         form = ProductoForm(data)
         self.assertFalse(form.is_valid())
         self.assertIn("precio_venta", form.errors)
-        self.assertEqual(form.errors["precio_venta"][0], "El precio debe ser superior al costo.")
+        self.assertEqual(
+            form.errors["precio_venta"][0], "El precio debe ser superior al valor de compra."
+        )
 
     def test_edicion_mismo_nombre_permitida(self):
         """HU7: Permite guardar el producto conservando su propio nombre."""
