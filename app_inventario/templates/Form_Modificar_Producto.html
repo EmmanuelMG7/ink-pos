@@ -77,7 +77,7 @@
             <div class="row g-2 mb-3">
               <div class="col-12">
                 <!-- Se usan IDs _edit para evitar conflicto con el modal de creación -->
-                {% with id='marca_edit' name='marca' label='Marca' default_value='' value='' items=marcas %}
+                {% with id='marca_edit' name='marca' label='Marca' default_value='Genérico' value=form_editar.marca.value|default:'Genérico' items=marcas %}
                   {% include 'search_and_create_dropdown.html' %}
                 {% endwith %}
               </div>

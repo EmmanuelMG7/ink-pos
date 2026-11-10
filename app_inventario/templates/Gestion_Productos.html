@@ -155,20 +155,39 @@
                     const selectImpuesto = formEditar.querySelector('[name="impuesto"]');
                     if (selectImpuesto) selectImpuesto.value = data.impuesto;
 
-                    // Precarga de componentes de Búsqueda (Marca)
-                    const hiddenMarca = document.getElementById('marca_edit');
-                    if(hiddenMarca) {
-                        hiddenMarca.value = data.marca;
-                        const visibleMarca = document.getElementById('marca_edit_search');
-                        if(visibleMarca) visibleMarca.value = data.marca;
+                    // Precarga de Marca (search_and_create_dropdown)
+                    const marcaContainer = document.getElementById('dropdown_marca_edit_container');
+                    if (marcaContainer) {
+                        const hiddenMarca = marcaContainer.querySelector('.searchable-hidden-input');
+                        const labelMarca = marcaContainer.querySelector('.searchable-label');
+                        const marcaVal = data.marca || 'Genérico';
+                        if (hiddenMarca) hiddenMarca.value = data.marca || '';
+                        if (labelMarca) {
+                            labelMarca.textContent = marcaVal;
+                            if (data.marca && data.marca !== 'Ninguna' && data.marca !== 'Genérico') {
+                                labelMarca.classList.remove('text-secondary');
+                            } else {
+                                labelMarca.classList.add('text-secondary');
+                            }
+                        }
+                        marcaContainer.querySelectorAll('.searchable-item, .dropdown-item').forEach(btn => {
+                            if ((btn.getAttribute('data-valor') || '').trim() === data.marca) {
+                                btn.classList.add('active');
+                            } else {
+                                btn.classList.remove('active');
+                            }
+                        });
                     }
 
-                    // Precarga de componentes Multi-Select (Categorías) a formato JSON para MultipleTagsField
-                    const hiddenCat = document.getElementById('categorias_edit');
-                    if(hiddenCat) {
-                        hiddenCat.value = JSON.stringify(data.categorias);
-                        // Emitimos evento change para que el script de tu compañero reconstruya los chips visuales
-                        hiddenCat.dispatchEvent(new Event('change', { bubbles: true }));
+                    // Precarga de Categorías (multi_search_and_create_dropdown)
+                    const catContainer = document.getElementById('dropdown_categorias_edit_container');
+                    if (catContainer) {
+                        if (typeof catContainer.clearAllTags === 'function') {
+                            catContainer.clearAllTags();
+                            if (Array.isArray(data.categorias)) {
+                                data.categorias.forEach(cat => catContainer.addTag(cat));
+                            }
+                        }
                     }
                 })
                 .catch(error => console.error('Error al cargar datos:', error));
@@ -181,6 +200,14 @@
                 formEditar.reset();
                 formEditar.action = "";
                 formEditar.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                const catContainer = document.getElementById('dropdown_categorias_edit_container');
+                if (catContainer && typeof catContainer.clearAllTags === 'function') {
+                    catContainer.clearAllTags();
+                }
+                const marcaContainer = document.getElementById('dropdown_marca_edit_container');
+                if (marcaContainer && typeof marcaContainer.resetToDefault === 'function') {
+                    marcaContainer.resetToDefault();
+                }
             });
         }
     }
