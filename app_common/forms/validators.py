@@ -8,8 +8,8 @@ OnlyTextValidator = RegexValidator(
 
 # Validador para nombres de usuario: mayúsculas, minúsculas y números (sin espacios ni símbolos)
 UsernameValidator = RegexValidator(
-    regex=r"^[a-zA-Z0-9]+$",
-    message="El nombre de usuario solo puede contener letras y números, sin espacios ni símbolos.",
+    regex=r"^[a-zA-Z0-9_-]+$",
+    message="El nombre de usuario solo puede contener letras, números, guiones y guiones bajos.",
 )
 
 # Validador para campos alfanuméricos: letras (con acentos y ñ/ü), números y espacios (sin símbolos)

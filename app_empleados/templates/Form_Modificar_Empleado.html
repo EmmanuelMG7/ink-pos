@@ -38,14 +38,14 @@
                 <label class="form-label fw-bold">Usuario</label>
                 {{ f.usuario }}
                 <div class="invalid-feedback text-wrap text-break">
-                    {% firstof f.usuario.errors.0 "Por favor ingresa un valor valido" %}
+                    {% firstof f.usuario.errors.0 "El usuario solo debe contener letras, números o guiones permitidos." %}
                 </div>
             </div>
             <div class="col">
                 <label class="form-label fw-bold">Teléfono</label>
                 {{ f.telefono }}
                 <div class="invalid-feedback text-wrap text-break">
-                    {% firstof f.telefono.errors.0 "Por favor ingresa un valor valido" %}
+                    {% firstof f.telefono.errors.0 "El número debe ser un celular de 10 dígitos que inicie con 3." %}
                 </div>
             </div>
           </div>
@@ -79,4 +79,21 @@
       {% endwith %}
     </div>
   </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const inputs = document.querySelectorAll('#form_editar_empleado input');
+      
+      inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+          if (!this.checkValidity()) {
+            this.classList.add('is-invalid');
+            this.classList.remove('is-valid');
+          } else {
+            this.classList.add('is-valid');
+            this.classList.remove('is-invalid');
+          }
+        });
+      });
+    });
+  </script>
 </div>
