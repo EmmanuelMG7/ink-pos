@@ -6,6 +6,11 @@ from django.utils.translation import gettext_lazy as _
 
 from app_common.forms import BootstrapModelForm, MultipleTagsField
 from app_inventario.models import Categoria, Marca, Producto
+from app_inventario.utils.image_processing import (
+    eliminar_archivo_imagen_anterior,
+    optimizar_imagen,
+    validar_imagen_producto,
+)
 
 
 class ProductoForm(BootstrapModelForm):
@@ -57,11 +62,18 @@ class ProductoForm(BootstrapModelForm):
             "stock_actual": _("form.producto.field.stock_actual"),
             "stock_minimo": _("form.producto.field.stock_minimo"),
             "impuesto": _("form.producto.field.impuesto"),
+            "imagen": _("form.producto.field.imagen"),
         }
 
         error_messages = {
             "nombre": {
                 "unique": _("form.producto.errormsg.nombre.unique"),
+            },
+            "imagen": {
+                "invalid_image": _(
+                    "Formato de archivo no permitido. "
+                    "Formatos fotográficos permitidos: JPG, JPEG, PNG, WEBP."
+                ),
             },
         }
 
@@ -94,6 +106,12 @@ class ProductoForm(BootstrapModelForm):
                 }
             ),
             "stock_minimo": forms.NumberInput(attrs={"placeholder": _("Stock mínimo")}),
+            "imagen": forms.FileInput(
+                attrs={
+                    "accept": "image/jpeg,image/png,image/webp",
+                    "class": "form-control",
+                }
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -146,6 +164,21 @@ class ProductoForm(BootstrapModelForm):
             raise forms.ValidationError("Este producto ya existe.")
 
         return nombre
+
+    def clean_imagen(self):
+        """Valida tamaño máximo (5MB), formato permitido, bloqueo de archivos maliciosos
+        o doble extensión, y optimiza la imagen fotográfica (SCRUM-148 a SCRUM-157).
+        """
+        imagen = self.cleaned_data.get("imagen")
+        if not imagen:
+            return imagen
+
+        # Si es un nuevo archivo subido
+        if hasattr(imagen, "file") and (hasattr(imagen, "_name") or hasattr(imagen, "name")):
+            validar_imagen_producto(imagen)
+            imagen = optimizar_imagen(imagen)
+
+        return imagen
 
     def clean(self):
         """
@@ -205,6 +238,11 @@ class ProductoForm(BootstrapModelForm):
         with transaction.atomic():
             instance = super().save(commit=False)
             es_creacion = instance.pk is None
+
+            # Reemplazo de imagen previa (SCRUM-149): eliminar la anterior si se sube una nueva
+            nueva_imagen = self.cleaned_data.get("imagen")
+            if not es_creacion and nueva_imagen and hasattr(nueva_imagen, "file"):
+                eliminar_archivo_imagen_anterior(instance, nueva_imagen)
 
             # Resolución de marca
             marca = str(self.cleaned_data.get("marca") or "").strip()
