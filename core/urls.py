@@ -18,20 +18,15 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.shortcuts import redirect
 from django.urls import include, path
 
-
-def root_redirect(request):
-    if not request.user.is_authenticated:
-        return redirect("autenticacion:login")
-    return redirect("ventas:reportes" if request.user.is_staff else "ventas:pos")
-
+from app_inventario import views as inventario_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("i18n/", include("django.conf.urls.i18n")),
-    path("", root_redirect, name="root"),
+    path("", inventario_views.catalogo, name="catalogo"),
+    path("", inventario_views.catalogo, name="root"),
     path("common/", include("app_common.urls")),
     path("clientes/", include("app_clientes.urls")),
     path("empleados/", include("app_empleados.urls")),

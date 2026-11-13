@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -145,3 +146,48 @@ def eliminar_producto(request, pk):
         messages.error(request, f"Hubo un error al eliminar el producto: {str(e)}")
 
     return redirect("inventario:gestion")
+
+
+def catalogo(request):
+    """
+    Vista pública del Catálogo Virtual de Productos (HU20 - SCRUM-35).
+    Despliega productos activos en bloques paginados de 20 artículos.
+    Implementa sanitización de parámetros (SCRUM-145) y redirección suave (SCRUM-142).
+    """
+    productos_qs = (
+        Producto.objects.filter(activo=True)
+        .select_related("marca", "impuesto")
+        .prefetch_related("categorias")
+        .order_by("nombre", "id")
+    )
+
+    paginator = Paginator(productos_qs, 20)
+    page_param = request.GET.get("page")
+    page_number = 1
+
+    if page_param is not None and page_param != "":
+        try:
+            val = int(page_param)
+            if val <= 0:
+                # Valor no permitido (cero o negativo) -> sanitizar a página 1 (SCRUM-145)
+                page_number = 1
+            elif paginator.num_pages > 0 and val > paginator.num_pages:
+                # Salto a página inexistente -> redirección suave a la
+                # última página válida (SCRUM-142)
+                query_params = request.GET.copy()
+                query_params["page"] = paginator.num_pages
+                return redirect(f"{request.path}?{query_params.urlencode()}")
+            else:
+                page_number = val
+        except (ValueError, TypeError):
+            # Valor inválido (texto, decimal o inyección) -> sanitizar a página 1 (SCRUM-145)
+            page_number = 1
+
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "page_obj": page_obj,
+        "productos": page_obj.object_list,
+        "total_productos": paginator.count,
+    }
+    return render(request, "catalogo/catalogo.html", context)
