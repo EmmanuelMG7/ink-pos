@@ -903,3 +903,46 @@ msgstr "Volver al catálogo"
 
 msgid "Detalle de Producto"
 msgstr "Detalle de Producto"
+
+# Búsqueda por Nombre en Catálogo (HU31 - SCRUM-134)
+msgid "Buscar productos..."
+msgstr "Buscar productos..."
+
+msgid "Buscar productos por nombre..."
+msgstr "Buscar productos por nombre..."
+
+msgid "Buscar productos"
+msgstr "Buscar productos"
+
+msgid "Limpiar búsqueda"
+msgstr "Limpiar búsqueda"
+
+msgid "Buscar"
+msgstr "Buscar"
+
+msgid "No se encontraron productos con ese nombre"
+msgstr "No se encontraron productos con ese nombre"
+
+#, python-format
+msgid "No encontramos coincidencias para \"%(search_term)s\"."
+msgstr "No encontramos coincidencias para \"%(search_term)s\"."
+
+msgid "Sugerencias de búsqueda:"
+msgstr "Sugerencias de búsqueda:"
+
+msgid "Revisa que todas las palabras estén escritas correctamente."
+msgstr "Revisa que todas las palabras estén escritas correctamente."
+
+msgid "Intenta utilizar términos más generales o sinónimos."
+msgstr "Intenta utilizar términos más generales o sinónimos."
+
+msgid "Prueba buscando por palabras clave (ej. cuaderno, bolígrafo, lápiz)."
+msgstr "Prueba buscando por palabras clave (ej. cuaderno, bolígrafo, lápiz)."
+
+msgid "Ver todos los productos"
+msgstr "Ver todos los productos"
+
+#, python-format
+msgid "Resultados de búsqueda para: <strong class=\"text-light\">\"%(search_term)s\"</strong>"
+msgstr "Resultados de búsqueda para: <strong class=\"text-light\">\"%(search_term)s\"</strong>"
+
