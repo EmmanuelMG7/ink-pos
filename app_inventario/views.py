@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -15,7 +16,9 @@ from .tables import ProductoTable
 @permission_required("app_inventario.view_producto", raise_exception=True)
 def gestion_productos(request):
     if request.method == "POST" and "nombre" in request.POST:
-        form = ProductoForm(request.POST)
+        if not request.user.has_perm("app_inventario.add_producto"):
+            raise PermissionDenied
+        form = ProductoForm(request.POST, request.FILES)
         if form.is_valid():
             try:
                 producto = form.save()
@@ -62,7 +65,7 @@ def editar_producto(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
 
     if request.method == "POST":
-        form = ProductoForm(request.POST, instance=producto)
+        form = ProductoForm(request.POST, request.FILES, instance=producto)
         if form.is_valid():
             try:
                 form.save()
@@ -121,6 +124,8 @@ def obtener_producto(request, pk):
         "marca": producto.marca.nombre if producto.marca else "",
         "categorias": list(producto.categorias.values_list("nombre", flat=True)),
         "impuesto": producto.impuesto_id if producto.impuesto else "",
+        "imagen_url": producto.imagen_url,
+        "tiene_imagen": producto.tiene_imagen,
     }
     return JsonResponse(data)
 
