@@ -413,39 +413,41 @@ class CatalogoAdversarialQueryCountAndPerformanceTests(TestCase):
             p.categorias.add(self.cat1, self.cat2, self.cat3)
 
     def test_sql_query_count_constant_with_20_products(self):
-        """Con 20 productos y relaciones M2M múltiples, las consultas deben ser exactamente 3."""
+        """Con 20 productos y relaciones M2M múltiples, las consultas deben ser exactamente 4."""
         self._crear_lote_completo(20)
 
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.get("/")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(len(response.context["page_obj"]), 20)
 
     def test_sql_query_count_constant_with_60_products(self):
-        """Con 60 productos, las consultas en cualquier página se mantienen estrictamente en 3."""
+        """Con 60 productos, las consultas en cualquier página se mantienen estrictamente en 4."""
         self._crear_lote_completo(60)
 
         # Página 1
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.get("/?page=1")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(len(response.context["page_obj"]), 20)
 
         # Página 2
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.get("/?page=2")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(len(response.context["page_obj"]), 20)
 
         # Página 3
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.get("/?page=3")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(len(response.context["page_obj"]), 20)
 
     def test_sql_query_count_when_catalog_empty(self):
-        """Con 0 productos en catálogo, se ejecuta 1 sola consulta (COUNT) vía Paginator."""
-        with self.assertNumQueries(1):
+        """Con 0 productos en catálogo, se ejecutan 2 consultas
+        (Categorias y COUNT) vía Paginator.
+        """
+        with self.assertNumQueries(2):
             response = self.client.get("/")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.context["total_productos"], 0)
