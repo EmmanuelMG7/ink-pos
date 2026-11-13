@@ -1,0 +1,57 @@
+{% extends 'Master.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Catálogo de Productos" %} - InkPOS{% endblock %}
+
+{% block content %}
+<style>
+  .catalogo-card-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 2.8em;
+    line-height: 1.4em;
+    word-break: break-word;
+  }
+</style>
+
+<div class="d-flex flex-column flex-grow-1 overflow-y-auto py-4 px-3 px-md-5">
+  <div class="container-fluid max-w-7xl">
+    
+    <!-- Encabezado del Catálogo -->
+    <header class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-2 border-bottom border-secondary-subtle gap-3">
+      <div>
+        <h1 class="h3 mb-1 text-light fw-bold d-flex align-items-center gap-2">
+          <i class="bi bi-grid-3x3-gap-fill text-primary"></i>
+          {% trans "Catálogo de Productos" %}
+        </h1>
+        <p class="text-secondary mb-0 small">
+          {% trans "Explora nuestros artículos y existencias disponibles." %}
+        </p>
+      </div>
+    </header>
+
+    {% if page_obj.object_list %}
+      <!-- Cuadrícula Simétrica de Productos (SCRUM-136, SCRUM-139) -->
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4 mb-4">
+        {% for producto in productos %}
+          <div class="col">
+            {% include 'catalogo/components/producto_card.html' with producto=producto %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Barra de Paginación Estructurada (SCRUM-137) -->
+      {% include 'catalogo/components/paginador.html' %}
+
+    {% else %}
+      <!-- Panel de Catálogo Vacío / Empty State Amigable (SCRUM-143) -->
+      {% include 'catalogo/components/empty_state.html' %}
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

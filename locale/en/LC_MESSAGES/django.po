@@ -643,3 +643,38 @@ msgstr "Please enter a valid value."
 
 msgid "form.default.errormsg.empty"
 msgstr "This field cannot be empty."
+
+# Product Catalog (HU20 - SCRUM-35)
+msgid "Catálogo de Productos"
+msgstr "Product Catalog"
+
+msgid "Explora nuestros artículos y existencias disponibles."
+msgstr "Explore our available items and stock."
+
+msgid "Actualmente no hay artículos disponibles y pronto habrá novedades."
+msgstr "Currently there are no items available and there will be news soon."
+
+msgid "Agotado"
+msgstr "Out of stock"
+
+msgid "disponibles"
+msgstr "available"
+
+msgid "Anterior"
+msgstr "Previous"
+
+msgid "Siguiente"
+msgstr "Next"
+
+msgid "Navegación del catálogo"
+msgstr "Catalog navigation"
+
+msgid "Catálogo vacío"
+msgstr "Empty catalog"
+
+#, python-format
+msgid "Página %(current)s de %(total)s (%(total_count)s producto en total)"
+id_plural "Página %(current)s de %(total)s (%(total_count)s productos en total)"
+msgstr[0] "Page %(current)s of %(total)s (%(total_count)s product in total)"
+msgstr[1] "Page %(current)s of %(total)s (%(total_count)s products in total)"
+
