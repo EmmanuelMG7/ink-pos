@@ -27,6 +27,9 @@ urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
     path("", inventario_views.catalogo, name="catalogo"),
     path("", inventario_views.catalogo, name="root"),
+    path(
+        "catalogo/sugerencias/", inventario_views.catalogo_sugerencias, name="catalogo_sugerencias"
+    ),
     path("catalogo/<int:pk>/", inventario_views.producto_detalle, name="producto_detalle"),
     path("common/", include("app_common.urls")),
     path("clientes/", include("app_clientes.urls")),
