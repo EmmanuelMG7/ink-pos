@@ -150,17 +150,45 @@ def eliminar_producto(request, pk):
 
 def catalogo(request):
     """
-    Vista pública del Catálogo Virtual de Productos (HU20 - SCRUM-35).
+    Vista pública del Catálogo Virtual de Productos (HU20 - SCRUM-35, HU27 - SCRUM-128).
     Despliega productos activos en bloques paginados de 20 artículos.
-    Implementa sanitización de parámetros (SCRUM-145) y redirección suave (SCRUM-142).
+    Permite filtrar por categoría mediante el parámetro GET '?categoria=<id>'.
+    Implementa sanitización de parámetros (SCRUM-145, SCRUM-166) y redirección suave (SCRUM-142).
     """
+    # 1. Obtener lista de categorías para la barra de navegación (SCRUM-159)
+    categorias = list(Categoria.objects.all().order_by("nombre"))
+
+    # 2. Sanitización y validación del parámetro de categoría (SCRUM-166)
+    categoria_param = request.GET.get("categoria")
+    categoria_actual = None
+
+    if categoria_param is not None and categoria_param != "":
+        try:
+            cat_id = int(categoria_param)
+            if cat_id <= 0:
+                return redirect(request.path)
+            # Búsqueda en memoria sin consultas extra a la base de datos (SCRUM-168)
+            categoria_actual = next((c for c in categorias if c.id == cat_id), None)
+            if not categoria_actual:
+                return redirect(request.path)
+        except (ValueError, TypeError):
+            return redirect(request.path)
+
+    # 3. Base queryset con optimización select_related y prefetch_related (SCRUM-167, SCRUM-168)
     productos_qs = (
         Producto.objects.filter(activo=True)
         .select_related("marca", "impuesto")
         .prefetch_related("categorias")
-        .order_by("nombre", "id")
     )
 
+    # 4. Filtrado por categoría si fue seleccionada (SCRUM-159)
+    if categoria_actual:
+        productos_qs = productos_qs.filter(categorias=categoria_actual)
+
+    # 5. Evitar duplicados por relaciones ManyToMany y ordenar de forma determinística (SCRUM-160)
+    productos_qs = productos_qs.order_by("nombre", "id").distinct()
+
+    # 6. Paginación estructurada de 20 artículos por página (SCRUM-163, SCRUM-164)
     paginator = Paginator(productos_qs, 20)
     page_param = request.GET.get("page")
     page_number = 1
@@ -172,15 +200,15 @@ def catalogo(request):
                 # Valor no permitido (cero o negativo) -> sanitizar a página 1 (SCRUM-145)
                 page_number = 1
             elif paginator.num_pages > 0 and val > paginator.num_pages:
-                # Salto a página inexistente -> redirección suave a la
-                # última página válida (SCRUM-142)
+                # Salto a página inexistente -> redirección suave
+                # preservando parámetros (SCRUM-142, SCRUM-163)
                 query_params = request.GET.copy()
                 query_params["page"] = paginator.num_pages
                 return redirect(f"{request.path}?{query_params.urlencode()}")
             else:
                 page_number = val
         except (ValueError, TypeError):
-            # Valor inválido (texto, decimal o inyección) -> sanitizar a página 1 (SCRUM-145)
+            # Valor inválido -> sanitizar a página 1 (SCRUM-145)
             page_number = 1
 
     page_obj = paginator.get_page(page_number)
@@ -189,5 +217,7 @@ def catalogo(request):
         "page_obj": page_obj,
         "productos": page_obj.object_list,
         "total_productos": paginator.count,
+        "categorias": categorias,
+        "categoria_actual": categoria_actual,
     }
     return render(request, "catalogo/catalogo.html", context)
