@@ -1,7 +1,27 @@
 {% load i18n %}
 <div class="col-12 py-5 text-center my-auto">
-  <div class="p-5 mx-auto bg-dark-subtle border border-secondary-subtle rounded-4 shadow-sm" style="max-width: 540px;">
-    {% if categoria_actual %}
+  <div class="p-5 mx-auto bg-dark-subtle border border-secondary-subtle rounded-4 shadow-sm" style="max-width: 560px;">
+    {% if query %}
+      <!-- Empty state específico de búsqueda sin coincidencias (SCRUM-187) -->
+      <div class="display-3 text-secondary mb-3">
+        <i class="bi bi-search"></i>
+      </div>
+      <h2 class="h4 text-light fw-bold mb-2">{% trans "No se encontraron productos con ese nombre" %}</h2>
+      <p class="text-secondary mb-3">
+        {% blocktrans with search_term=query %}No encontramos coincidencias para "{{ search_term }}".{% endblocktrans %}
+      </p>
+      <div class="text-start bg-body-tertiary p-3 rounded-3 mb-4 border border-secondary-subtle">
+        <p class="small text-secondary fw-semibold mb-2">{% trans "Sugerencias de búsqueda:" %}</p>
+        <ul class="small text-secondary mb-0 ps-3">
+          <li>{% trans "Revisa que todas las palabras estén escritas correctamente." %}</li>
+          <li>{% trans "Intenta utilizar términos más generales o sinónimos." %}</li>
+          <li>{% trans "Prueba buscando por palabras clave (ej. cuaderno, bolígrafo, lápiz)." %}</li>
+        </ul>
+      </div>
+      <a href="{% url 'catalogo' %}" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm">
+        <i class="bi bi-arrow-counterclockwise me-1"></i>{% trans "Ver todos los productos" %}
+      </a>
+    {% elif categoria_actual %}
       <div class="display-3 text-secondary mb-3">
         <i class="bi bi-tags"></i>
       </div>
