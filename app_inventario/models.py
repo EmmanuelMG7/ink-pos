@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from app_empleados.models import Empleado
@@ -215,6 +216,11 @@ class Producto(models.Model):
         blank=True,
         verbose_name=_("models.producto.field.imagen"),
     )
+    fecha_creacion = models.DateTimeField(
+        default=timezone.now,
+        editable=False,
+        verbose_name=_("models.producto.field.fecha_creacion"),
+    )
 
     class Meta:
         verbose_name = _("models.producto.verbose_name")
@@ -275,6 +281,15 @@ class Producto(models.Model):
     def tiene_imagen(self) -> bool:
         """Indica si el producto tiene una imagen personalizada asignada (SCRUM-154)."""
         return bool(self.imagen and hasattr(self.imagen, "name") and self.imagen.name)
+
+    @property
+    def es_novedad(self) -> bool:
+        """Determina si el producto fue registrado dentro de los últimos 30 días calendario
+        (SCRUM-170, SCRUM-174)."""
+        if not self.fecha_creacion:
+            return False
+        dias = (timezone.now().date() - self.fecha_creacion.date()).days
+        return 0 <= dias <= 30
 
 
 class MovimientoInventario(models.Model):
