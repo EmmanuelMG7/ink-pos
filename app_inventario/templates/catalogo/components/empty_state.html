@@ -1,12 +1,25 @@
 {% load i18n %}
 <div class="col-12 py-5 text-center my-auto">
   <div class="p-5 mx-auto bg-dark-subtle border border-secondary-subtle rounded-4 shadow-sm" style="max-width: 540px;">
-    <div class="display-3 text-secondary mb-3">
-      <i class="bi bi-box-seam"></i>
-    </div>
-    <h2 class="h4 text-light fw-bold mb-2">{% trans "Catálogo vacío" %}</h2>
-    <p class="text-secondary mb-0">
-      {% trans "Actualmente no hay artículos disponibles y pronto habrá novedades." %}
-    </p>
+    {% if categoria_actual %}
+      <div class="display-3 text-secondary mb-3">
+        <i class="bi bi-tags"></i>
+      </div>
+      <h2 class="h4 text-light fw-bold mb-2">{% trans "No hay productos disponibles en esta categoría" %}</h2>
+      <p class="text-secondary mb-4">
+        {% trans "Actualmente no hay artículos disponibles y pronto habrá novedades." %}
+      </p>
+      <a href="{% url 'catalogo' %}" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm">
+        <i class="bi bi-arrow-left me-1"></i>{% trans "Ver todos" %}
+      </a>
+    {% else %}
+      <div class="display-3 text-secondary mb-3">
+        <i class="bi bi-box-seam"></i>
+      </div>
+      <h2 class="h4 text-light fw-bold mb-2">{% trans "Catálogo vacío" %}</h2>
+      <p class="text-secondary mb-0">
+        {% trans "Actualmente no hay artículos disponibles y pronto habrá novedades." %}
+      </p>
+    {% endif %}
   </div>
 </div>
