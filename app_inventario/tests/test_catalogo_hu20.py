@@ -443,17 +443,18 @@ class CatalogoPerformanceAndQueriesTests(TestCase):
 
     def test_scrum_146_147_eficiencia_consultas_sin_problema_n_mas_1(self):
         """La vista utiliza consultas optimizadas (select_related / prefetch_related).
-        El número de queries para 20 productos es acotado (exactamente 3) y no escala linealmente.
+        El número de queries para 20 productos es acotado (exactamente 4 con barra de categorías)
+        y no escala linealmente.
         """
         # Ejecuta la consulta de la página 1
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.get("/")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(len(response.context["page_obj"]), 20)
 
     def test_scrum_147_transicion_entre_paginas_consultas_constantes(self):
         """El cambio a page=2 ejecuta exactamente el mismo número acotado de consultas."""
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(4):
             response = self.client.get("/?page=2")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(len(response.context["page_obj"]), 5)

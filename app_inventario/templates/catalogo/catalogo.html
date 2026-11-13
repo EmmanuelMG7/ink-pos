@@ -34,6 +34,9 @@
       </div>
     </header>
 
+    <!-- Barra de Navegación de Categorías (SCRUM-159, SCRUM-161, SCRUM-162) -->
+    {% include 'catalogo/components/barra_categorias.html' %}
+
     {% if page_obj.object_list %}
       <!-- Cuadrícula Simétrica de Productos (SCRUM-136, SCRUM-139) -->
       <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4 mb-4">
