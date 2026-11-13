@@ -1,13 +1,24 @@
 {% load i18n %}
 <div class="card h-100 bg-dark-subtle border-secondary-subtle shadow-sm d-flex flex-column position-relative overflow-hidden">
+  {# Sello de Novedad en esquina superior (SCRUM-170, SCRUM-172, SCRUM-176) #}
+  {% if producto.es_novedad %}
+    <div class="position-absolute top-0 start-0 m-2 z-2">
+      <span class="badge rounded-pill bg-warning text-dark fw-bold shadow-sm px-2 py-1">
+        <i class="bi bi-stars me-1"></i>{% trans "Novedad" %}
+      </span>
+    </div>
+  {% endif %}
+
   <!-- Imagen del Producto con Fallback y Aspect Ratio Fijo (SCRUM-136, SCRUM-146) -->
   <div class="ratio ratio-4x3 bg-dark d-flex align-items-center justify-content-center overflow-hidden border-bottom border-secondary-subtle">
-    <img
-      src="{{ producto.imagen_url }}"
-      alt="{{ producto.nombre }}"
-      class="object-fit-contain p-2 w-100 h-100 {% if producto.stock_actual <= 0 %}opacity-50{% endif %}"
-      loading="lazy"
-    />
+    <a href="{% url 'inventario:producto_detalle' producto.pk %}" class="d-block w-100 h-100 text-decoration-none">
+      <img
+        src="{{ producto.imagen_url }}"
+        alt="{{ producto.nombre }}"
+        class="object-fit-contain p-2 w-100 h-100 {% if producto.stock_actual <= 0 %}opacity-50{% endif %}"
+        loading="lazy"
+      />
+    </a>
   </div>
 
   <!-- Cuerpo de la Tarjeta -->
@@ -17,7 +28,9 @@
       class="card-title h6 fw-semibold text-light mb-2 catalogo-card-title text-truncate"
       title="{{ producto.nombre }}"
     >
-      {{ producto.nombre }}
+      <a href="{% url 'inventario:producto_detalle' producto.pk %}" class="text-decoration-none text-light">
+        {{ producto.nombre }}
+      </a>
     </h2>
 
     <!-- Marca opcional -->

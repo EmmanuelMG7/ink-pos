@@ -1,0 +1,105 @@
+{% extends 'Master.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ producto.nombre }} - InkPOS{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-grow-1 overflow-y-auto py-4 px-3 px-md-5">
+  <div class="container-fluid max-w-7xl">
+
+    <!-- Enlace de retorno al catálogo -->
+    <div class="mb-4">
+      <a href="{% url 'catalogo' %}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1">
+        <i class="bi bi-arrow-left"></i>
+        <span>{% trans "Volver al catálogo" %}</span>
+      </a>
+    </div>
+
+    <!-- Ficha Técnica y Detalle del Producto (SCRUM-173) -->
+    <div class="card bg-dark-subtle border-secondary-subtle shadow-sm p-4">
+      <div class="row g-4 align-items-start">
+        
+        <!-- Fotografía del Producto con Aspect Ratio Fijo -->
+        <div class="col-12 col-md-5 col-lg-4">
+          <div class="ratio ratio-4x3 bg-dark d-flex align-items-center justify-content-center overflow-hidden rounded border border-secondary-subtle position-relative">
+            {# Sello de Novedad en esquina superior de la foto #}
+            {% if producto.es_novedad %}
+              <div class="position-absolute top-0 start-0 m-2 z-2">
+                <span class="badge rounded-pill bg-warning text-dark fw-bold shadow-sm px-2 py-1">
+                  <i class="bi bi-stars me-1"></i>{% trans "Novedad" %}
+                </span>
+              </div>
+            {% endif %}
+            <img
+              src="{{ producto.imagen_url }}"
+              alt="{{ producto.nombre }}"
+              class="object-fit-contain p-3 w-100 h-100 {% if producto.stock_actual <= 0 %}opacity-50{% endif %}"
+            />
+          </div>
+        </div>
+
+        <!-- Información Detallada del Producto -->
+        <div class="col-12 col-md-7 col-lg-8">
+          {# Titulo comercial y distintivo #}
+          <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+            <h1 class="h2 fw-bold text-light mb-0">{{ producto.nombre }}</h1>
+            {% if producto.es_novedad %}
+              <span class="badge rounded-pill bg-warning text-dark fw-bold shadow-sm px-3 py-2 fs-6">
+                <i class="bi bi-stars me-1"></i>{% trans "Novedad" %}
+              </span>
+            {% endif %}
+          </div>
+
+          <!-- Marca -->
+          {% if producto.marca %}
+            <p class="text-secondary mb-3">
+              <span class="fw-semibold text-light">{% trans "Marca" %}:</span> {{ producto.marca.nombre }}
+            </p>
+          {% endif %}
+
+          <!-- Categorías asociadas -->
+          {% if producto.categorias.all %}
+            <div class="mb-3 d-flex align-items-center gap-2 flex-wrap">
+              <span class="fw-semibold text-light">{% trans "Categorías" %}:</span>
+              {% for cat in producto.categorias.all %}
+                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">
+                  {{ cat.nombre }}
+                </span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <hr class="border-secondary-subtle my-3" />
+
+          <!-- Precio de Venta -->
+          <div class="mb-3">
+            <span class="text-secondary d-block small mb-1">{% trans "Precio" %}</span>
+            <span class="fs-2 fw-bold text-success">${{ producto.precio_venta|floatformat:2 }}</span>
+          </div>
+
+          <!-- Disponibilidad de Stock -->
+          <div class="mb-4">
+            {% if producto.stock_actual > 0 %}
+              <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle fs-6 px-3 py-2">
+                <i class="bi bi-box-seam me-1"></i>{{ producto.stock_actual }} {% trans "disponibles" %}
+              </span>
+            {% else %}
+              <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle fs-6 px-3 py-2">
+                <i class="bi bi-x-circle me-1"></i>{% trans "Agotado" %}
+              </span>
+            {% endif %}
+          </div>
+
+          <!-- Código Interno -->
+          <p class="text-muted small mb-0">
+            {% trans "Código" %}: <span class="font-monospace text-secondary">{{ producto.codigo }}</span>
+          </p>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
