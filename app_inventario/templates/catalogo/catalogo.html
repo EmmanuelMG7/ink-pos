@@ -29,8 +29,18 @@
           {% trans "Catálogo de Productos" %}
         </h1>
         <p class="text-secondary mb-0 small">
-          {% trans "Explora nuestros artículos y existencias disponibles." %}
+          {% if query %}
+            {% blocktrans with search_term=query %}Resultados de búsqueda para: <strong class="text-light">"{{ search_term }}"</strong>{% endblocktrans %}
+            <a href="{% url 'catalogo' %}" class="ms-2 text-decoration-none text-primary"><i class="bi bi-x-circle me-1"></i>{% trans "Limpiar búsqueda" %}</a>
+          {% else %}
+            {% trans "Explora nuestros artículos y existencias disponibles." %}
+          {% endif %}
         </p>
+      </div>
+
+      <!-- Buscador en cabecera del catálogo (SCRUM-134) -->
+      <div class="ms-md-auto w-100" style="max-width: 420px;">
+        {% include 'catalogo/components/buscador.html' %}
       </div>
     </header>
 
