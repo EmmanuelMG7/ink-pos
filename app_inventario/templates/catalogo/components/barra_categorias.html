@@ -1,0 +1,24 @@
+{% load i18n %}
+{% if categorias %}
+<nav class="mb-4 d-flex flex-wrap gap-2 align-items-center" aria-label="{% trans 'Filtrar por categoría' %}">
+  <!-- Opción para restablecer vista global (SCRUM-162) -->
+  <a
+    href="{% url 'catalogo' %}"
+    class="btn btn-sm {% if not categoria_actual %}btn-primary active{% else %}btn-outline-secondary text-light{% endif %} rounded-pill px-3 shadow-sm"
+    {% if not categoria_actual %}aria-current="page"{% endif %}
+  >
+    <i class="bi bi-grid me-1"></i>{% trans "Ver todos" %}
+  </a>
+
+  <!-- Categorías asignadas en el modelo (SCRUM-159, SCRUM-161) -->
+  {% for cat in categorias %}
+    <a
+      href="?categoria={{ cat.id }}"
+      class="btn btn-sm {% if categoria_actual and categoria_actual.id == cat.id %}btn-primary active{% else %}btn-outline-secondary text-light{% endif %} rounded-pill px-3 shadow-sm"
+      {% if categoria_actual and categoria_actual.id == cat.id %}aria-current="page"{% endif %}
+    >
+      {{ cat.nombre }}
+    </a>
+  {% endfor %}
+</nav>
+{% endif %}
