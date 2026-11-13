@@ -1,0 +1,49 @@
+{% load i18n %}
+<div class="card h-100 bg-dark-subtle border-secondary-subtle shadow-sm d-flex flex-column position-relative overflow-hidden">
+  <!-- Imagen del Producto con Fallback y Aspect Ratio Fijo (SCRUM-136, SCRUM-146) -->
+  <div class="ratio ratio-4x3 bg-dark d-flex align-items-center justify-content-center overflow-hidden border-bottom border-secondary-subtle">
+    <img
+      src="{{ producto.imagen_url }}"
+      alt="{{ producto.nombre }}"
+      class="object-fit-contain p-2 w-100 h-100 {% if producto.stock_actual <= 0 %}opacity-50{% endif %}"
+      loading="lazy"
+    />
+  </div>
+
+  <!-- Cuerpo de la Tarjeta -->
+  <div class="card-body d-flex flex-column p-3">
+    <!-- Título con Elipsis Tipográfica Fija (SCRUM-141) -->
+    <h2
+      class="card-title h6 fw-semibold text-light mb-2 catalogo-card-title text-truncate"
+      title="{{ producto.nombre }}"
+    >
+      {{ producto.nombre }}
+    </h2>
+
+    <!-- Marca opcional -->
+    {% if producto.marca %}
+      <p class="text-secondary small mb-2 text-truncate" title="{{ producto.marca.nombre }}">
+        {{ producto.marca.nombre }}
+      </p>
+    {% endif %}
+
+    <!-- Disponibilidad de Stock y Badge de Agotado (SCRUM-138, SCRUM-140) -->
+    <div class="mb-3 mt-auto">
+      {% if producto.stock_actual > 0 %}
+        <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">
+          <i class="bi bi-box-seam me-1"></i>{{ producto.stock_actual }} {% trans "disponibles" %}
+        </span>
+      {% else %}
+        <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">
+          <i class="bi bi-x-circle me-1"></i>{% trans "Agotado" %}
+        </span>
+      {% endif %}
+    </div>
+
+    <!-- Precio en Posición Inferior Fija (SCRUM-136, SCRUM-141) -->
+    <div class="pt-2 border-top border-secondary-subtle d-flex justify-content-between align-items-center">
+      <span class="text-secondary small">{% trans "Precio" %}</span>
+      <span class="fs-5 fw-bold text-success">${{ producto.precio_venta|floatformat:2 }}</span>
+    </div>
+  </div>
+</div>
