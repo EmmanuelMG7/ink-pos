@@ -170,10 +170,10 @@ class CatalogoAdversarialFuzzingTests(TestCase):
         self.assertIn("page=3", response.url)
 
         # Con otros parámetros adicionales, deben preservarse en la redirección
-        response_multi = self.client.get("/?filtro=papeleria&q=lapiz&page=999999")
+        response_multi = self.client.get("/?filtro=papeleria&q=Fuzzing&page=999999")
         self.assertEqual(response_multi.status_code, 302)
         self.assertIn("filtro=papeleria", response_multi.url)
-        self.assertIn("q=lapiz", response_multi.url)
+        self.assertIn("q=Fuzzing", response_multi.url)
         self.assertIn("page=3", response_multi.url)
 
 
