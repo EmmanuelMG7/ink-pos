@@ -879,3 +879,14 @@ id_plural "Página %(current)s de %(total)s (%(total_count)s productos en total)
 msgstr[0] "Página %(current)s de %(total)s (%(total_count)s producto en total)"
 msgstr[1] "Página %(current)s de %(total)s (%(total_count)s productos en total)"
 
+# Category Navigation (HU27 - SCRUM-128)
+msgid "Ver todos"
+msgstr "Ver todos"
+
+msgid "Filtrar por categoría"
+msgstr "Filtrar por categoría"
+
+msgid "No hay productos disponibles en esta categoría"
+msgstr "No hay productos disponibles en esta categoría"
+
+
