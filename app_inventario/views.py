@@ -127,6 +127,7 @@ def obtener_producto(request, pk):
         "impuesto": producto.impuesto_id if producto.impuesto else "",
         "imagen_url": producto.imagen_url,
         "tiene_imagen": producto.tiene_imagen,
+        "es_novedad": producto.es_novedad,
     }
     return JsonResponse(data)
 
@@ -221,3 +222,17 @@ def catalogo(request):
         "categoria_actual": categoria_actual,
     }
     return render(request, "catalogo/catalogo.html", context)
+
+
+def producto_detalle(request, pk):
+    """
+    Ficha técnica y vista de detalle individual del producto (SCRUM-173).
+    Excluye productos inactivos retornando error 404.
+    """
+    producto = get_object_or_404(
+        Producto.objects.filter(activo=True)
+        .select_related("marca", "impuesto")
+        .prefetch_related("categorias"),
+        pk=pk,
+    )
+    return render(request, "catalogo/producto_detalle.html", {"producto": producto})
