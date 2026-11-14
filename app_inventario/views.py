@@ -275,3 +275,71 @@ def agregar_al_carrito_api(request):
         return JsonResponse({"success": False, "error": "Producto no encontrado."})
     except Exception:
         return JsonResponse({"success": False, "error": "Error interno del servidor."})
+
+
+def ver_carrito(request):
+    """
+    Vista para desplegar la pantalla completa del carrito de compras.
+    """
+    carrito = obtener_carrito(request)
+    items = carrito.items.select_related("producto")
+
+    # Recálculo de totales
+    subtotal = sum((item.producto.precio_venta * item.cantidad) for item in items)
+    total_unidades = sum(item.cantidad for item in items)
+
+    # Regla de Negocio (HU29): Inhabilitación de Domicilio por saldo menor a $20.000
+    aplica_domicilio = subtotal >= 20000
+
+    context = {
+        "carrito": carrito,
+        "items": items,
+        "subtotal": subtotal,
+        "total_unidades": total_unidades,
+        "aplica_domicilio": aplica_domicilio,
+    }
+    return render(request, "carrito/ver_carrito.html", context)
+
+
+@require_POST
+def eliminar_del_carrito_api(request, item_id):
+    """
+    Endpoint AJAX para eliminar un producto del carrito.
+    Cumple con la HU29: Seguridad de pertenencia, atomicidad y recálculo instantáneo.
+    """
+    carrito = obtener_carrito(request)
+    try:
+        with transaction.atomic():
+            # Seguridad: Valida la pertenencia del carrito al mismo tiempo que bloquea la fila
+            # Mitiga condición de carrera si el usuario elimina y paga al mismo tiempo en
+            # otra pestaña
+            item = ItemCarrito.objects.select_for_update().get(id=item_id, carrito=carrito)
+            nombre_producto = item.producto.nombre
+            item.delete()
+
+            # Rendimiento: Recálculo inmediato tras la eliminación
+            items_restantes = carrito.items.select_related("producto")
+            subtotal = sum((i.producto.precio_venta * i.cantidad) for i in items_restantes)
+            total_unidades = sum(i.cantidad for i in items_restantes)
+            aplica_domicilio = subtotal >= 20000
+
+            return JsonResponse(
+                {
+                    "success": True,
+                    "mensaje": f"'{nombre_producto}' retirado satisfactoriamente.",
+                    "subtotal": subtotal,
+                    "total_unidades": total_unidades,
+                    "aplica_domicilio": aplica_domicilio,
+                    "carrito_vacio": total_unidades == 0,
+                }
+            )
+
+    except ItemCarrito.DoesNotExist:
+        # Seguridad: Falla silenciosamente descartando acciones no autorizadas o IDs ajenos
+        return JsonResponse(
+            {"success": False, "error": "El artículo no existe o no pertenece a tu sesión."}
+        )
+    except Exception:
+        return JsonResponse(
+            {"success": False, "error": "Error interno al intentar eliminar el artículo."}
+        )

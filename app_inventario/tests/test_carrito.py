@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -166,3 +167,69 @@ class CarritoViewsTest(TestCase):
         )
         self.assertFalse(response.json()["success"])
         self.assertEqual(response.json()["error"], "Error interno del servidor.")
+
+    def test_ver_carrito_auth_y_domicilio(self):
+        self.client.force_login(self.user)
+        carrito = Carrito.objects.create(usuario=self.user)
+
+        # Prueba sin domicilio (Subtotal < $20.000)
+        item1 = ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=2)
+        url_ver = reverse("inventario:ver_carrito")
+        response = self.client.get(url_ver)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["subtotal"], 3000)
+        self.assertFalse(response.context["aplica_domicilio"])
+
+        # Prueba con domicilio (Subtotal >= $20.000)
+        self.producto.precio_venta = 15000
+        self.producto.save()
+        item1.cantidad = 2  # Total: 30000
+        item1.save()
+        response = self.client.get(url_ver)
+        self.assertTrue(response.context["aplica_domicilio"])
+
+    def test_ver_carrito_anon_vacio(self):
+        url_ver = reverse("inventario:ver_carrito")
+        response = self.client.get(url_ver)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["total_unidades"], 0)
+
+    def test_api_eliminar_carrito_success(self):
+        self.client.force_login(self.user)
+        carrito = Carrito.objects.create(usuario=self.user)
+        item = ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=2)
+
+        url = reverse("inventario:api_eliminar_carrito", args=[item.id])
+        response = self.client.post(url)
+        data = response.json()
+
+        self.assertTrue(data["success"])
+        self.assertTrue(data["carrito_vacio"])
+        self.assertEqual(data["subtotal"], 0)
+        self.assertFalse(ItemCarrito.objects.filter(id=item.id).exists())
+
+    def test_api_eliminar_carrito_no_pertenece_o_no_existe(self):
+        self.client.force_login(self.user)
+        # Intentar eliminar un ID que no existe
+        url = reverse("inventario:api_eliminar_carrito", args=[9999])
+        response = self.client.post(url)
+        self.assertFalse(response.json()["success"])
+        self.assertEqual(
+            response.json()["error"], "El artículo no existe o no pertenece a tu sesión."
+        )
+
+    @patch("app_inventario.views.ItemCarrito.objects.select_for_update")
+    def test_api_eliminar_exception(self, mock_select):
+        # Simular una falla de base de datos durante la transacción atómica
+        mock_select.side_effect = Exception("Error forzado BD")
+        self.client.force_login(self.user)
+        carrito = Carrito.objects.create(usuario=self.user)
+        item = ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=1)
+
+        url = reverse("inventario:api_eliminar_carrito", args=[item.id])
+        response = self.client.post(url)
+
+        self.assertFalse(response.json()["success"])
+        self.assertEqual(
+            response.json()["error"], "Error interno al intentar eliminar el artículo."
+        )

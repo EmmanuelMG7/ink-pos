@@ -1,0 +1,237 @@
+{% extends 'Master.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Mi Carrito" %} - InkPOS{% endblock %}
+
+{% block content %}
+<div class="container py-5 max-w-7xl overflow-y-auto">
+  <header class="mb-4 pb-2 border-bottom border-secondary-subtle">
+    <h1 class="h3 text-light fw-bold">
+      <i class="bi bi-cart3 text-primary me-2"></i>{% trans "Mi Carrito de Compras" %}
+    </h1>
+  </header>
+
+  <!-- Contenedor Principal (Oculto dinámicamente si se vacía) -->
+  <div id="cart-content" class="row g-4 {% if not items %}d-none{% endif %}">
+    
+    <!-- Lista de Productos -->
+    <div class="col-lg-8">
+      <div class="card bg-dark-subtle border-secondary-subtle">
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush" id="lista-carrito">
+            {% for item in items %}
+            <div class="list-group-item bg-transparent border-secondary-subtle p-3 carrito-item-row" data-item-id="{{ item.id }}">
+              <div class="row align-items-center">
+                
+                <!-- Imagen -->
+                <div class="col-3 col-md-2">
+                  <div class="ratio ratio-1x1 bg-dark rounded overflow-hidden">
+                    <img src="{{ item.producto.imagen_url }}" alt="{{ item.producto.nombre }}" class="object-fit-contain p-1 w-100 h-100">
+                  </div>
+                </div>
+                
+                <!-- Info Producto -->
+                <div class="col-9 col-md-4 mb-3 mb-md-0">
+                  <h6 class="text-light mb-1 text-truncate" title="{{ item.producto.nombre }}">{{ item.producto.nombre }}</h6>
+                  <span class="text-success fw-bold">${{ item.producto.precio_venta|floatformat:2 }}</span> 
+                  <span class="text-secondary small">/u</span>
+                </div>
+                
+                <!-- Controles de Cantidad (Estático en HU29, se volverá interactivo en HU32) -->
+                <div class="col-6 col-md-3">
+                  <div class="text-light text-center">
+                    <span class="d-block text-secondary small mb-1">{% trans "Cantidad" %}</span>
+                    <span class="fw-medium fs-5">{{ item.cantidad }}</span>
+                  </div>
+                </div>
+                
+                <!-- Acciones y Botón Eliminar -->
+                <div class="col-6 col-md-3 text-end">
+                  <button class="btn btn-outline-danger btn-sm" onclick="prepararEliminacion('{{ item.id }}', this)" title="{% trans 'Eliminar producto' %}">
+                    <i class="bi bi-trash3"></i> {% trans "Eliminar" %}
+                  </button>
+                </div>
+
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen del Pedido -->
+    <div class="col-lg-4">
+      <div class="card bg-dark border-secondary-subtle sticky-top" style="top: 1rem;">
+        <div class="card-body">
+          <h5 class="card-title text-light mb-4">{% trans "Resumen del Pedido" %}</h5>
+          
+          <div class="d-flex justify-content-between mb-3 text-light fs-5">
+            <span>{% trans "Subtotal" %}</span>
+            <span class="fw-bold" id="cart-subtotal">${{ subtotal|floatformat:2 }}</span>
+          </div>
+          
+          <hr class="border-secondary-subtle">
+          
+          <!-- Notificación Dinámica de Domicilio (Caso Límite HU29) -->
+          <div id="cart-domicilio-text" class="mb-4 small fw-medium">
+            {% if aplica_domicilio %}
+              <span class="text-success"><i class="bi bi-truck me-1"></i> {% trans "Aplica para envío a domicilio" %}</span>
+            {% else %}
+              <span class="text-warning"><i class="bi bi-shop me-1"></i> {% trans "Solo recogida en tienda (Monto inferior a $20.000)" %}</span>
+            {% endif %}
+          </div>
+          
+          <button class="btn btn-primary w-100 fw-bold py-2" disabled>
+            {% trans "Proceder al Pago" %} <i class="bi bi-arrow-right ms-2"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estado Vacío Ilustrado (Caso Límite HU29) -->
+  <div id="cart-empty-state" class="container text-center py-5 {% if items %}d-none{% endif %}">
+    <div class="mb-4">
+      <i class="bi bi-cart-x text-secondary" style="font-size: 6rem; opacity: 0.5;"></i>
+    </div>
+    <h2 class="h4 text-light fw-bold mb-3">{% trans "Tu carrito está vacío" %}</h2>
+    <p class="text-secondary mb-4">
+      {% trans "Aún no has agregado artículos a tu pedido. Explora nuestro catálogo y encuentra lo que necesitas." %}
+    </p>
+    <a href="{% url 'catalogo' %}" class="btn btn-primary px-4 py-2 fw-bold">
+      <i class="bi bi-search me-2"></i> {% trans "Ir al Catálogo" %}
+    </a>
+  </div>
+
+</div>
+
+<!-- Inyección del CSRF -->
+<div style="display: none;">{% csrf_token %}</div>
+
+<!-- Modal de Confirmación de Eliminación -->
+<div class="modal fade" id="modalConfirmarEliminacion" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark border-secondary-subtle shadow-lg">
+      <div class="modal-header border-secondary-subtle">
+        <h5 class="modal-title text-light fw-bold">
+          <i class="bi bi-exclamation-circle text-warning me-2"></i>{% trans "Retirar Producto" %}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-light">
+        {% trans "¿Estás seguro de que deseas retirar este artículo de tu carrito de compras?" %}
+      </div>
+      <div class="modal-footer border-secondary-subtle">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans "Cancelar" %}</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmarEliminar">
+          <i class="bi bi-trash3 me-1"></i>{% trans "Sí, retirarlo" %}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Script de Eliminación AJAX -->
+<script>
+  let itemAEliminarId = null;
+  let botonAEliminar = null;
+  let modalEliminar = null;
+
+  document.addEventListener('DOMContentLoaded', function() {
+      // Inicializar el modal de Bootstrap
+      modalEliminar = new bootstrap.Modal(document.getElementById('modalConfirmarEliminacion'));
+      
+      // Escuchar el clic en el botón rojo de confirmación dentro del modal
+      document.getElementById('btnConfirmarEliminar').addEventListener('click', function() {
+          if (itemAEliminarId && botonAEliminar) {
+              modalEliminar.hide(); // Ocultar el modal
+              ejecutarEliminacion(itemAEliminarId, botonAEliminar); // Proceder con la petición
+          }
+      });
+  });
+
+  // Función que gatilla el botón HTML de cada fila
+  function prepararEliminacion(itemId, btnElement) {
+      itemAEliminarId = itemId;
+      botonAEliminar = btnElement;
+      modalEliminar.show();
+  }
+
+  // Lógica de eliminación (Antiguo eliminarItem)
+  function ejecutarEliminacion(itemId, btnElement) {
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      const fila = btnElement.closest('.carrito-item-row');
+      
+      btnElement.disabled = true;
+      const originalHtml = btnElement.innerHTML;
+      btnElement.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+      fetch(`/inventario/carrito/eliminar/${itemId}/`, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken
+          }
+      })
+      .then(response => {
+          if (!response.ok) throw new Error("Error HTTP " + response.status);
+          return response.json();
+      })
+      .then(data => {
+          if (data.success) {
+              // Transición visual suave
+              fila.style.transition = "opacity 0.3s ease-out, transform 0.3s ease-out";
+              fila.style.opacity = "0";
+              fila.style.transform = "translateX(-20px)";
+              
+              setTimeout(() => {
+                  fila.remove();
+                  
+                  document.getElementById('cart-subtotal').innerText = "$" + data.subtotal.toLocaleString('es-CO', {minimumFractionDigits: 2});
+                  
+                  const domText = document.getElementById('cart-domicilio-text');
+                  if (data.aplica_domicilio) {
+                      domText.innerHTML = '<span class="text-success"><i class="bi bi-truck me-1"></i> Aplica para envío a domicilio</span>';
+                  } else {
+                      domText.innerHTML = '<span class="text-warning"><i class="bi bi-shop me-1"></i> Solo recogida en tienda (Monto inferior a $20.000)</span>';
+                  }
+
+                  const badge = document.getElementById('badge-carrito-count');
+                  if (badge) {
+                      badge.innerText = data.total_unidades;
+                      if (data.total_unidades === 0) badge.classList.add('d-none');
+                  }
+
+                  if (data.carrito_vacio) {
+                      document.getElementById('cart-content').classList.add('d-none');
+                      document.getElementById('cart-empty-state').classList.remove('d-none');
+                  }
+                  
+                  mostrarToastCarrito(data.mensaje, 'success');
+              }, 300);
+          } else {
+              btnElement.disabled = false;
+              btnElement.innerHTML = originalHtml;
+              mostrarToastCarrito(data.error, 'danger');
+          }
+      })
+      .catch(error => {
+          btnElement.disabled = false;
+          btnElement.innerHTML = originalHtml;
+          mostrarToastCarrito("Error de conexión al eliminar.", 'danger');
+      });
+  }
+
+  function mostrarToastCarrito(mensaje, tipo) {
+      const toastEl = document.getElementById('carritoToast');
+      const toastMessage = document.getElementById('carritoToastMessage');
+      if (toastEl && toastMessage) {
+          toastEl.className = `toast align-items-center text-bg-${tipo} border-0`;
+          toastMessage.innerText = mensaje;
+          const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+          toast.show();
+      }
+  }
+</script>
+{% endblock %}
