@@ -138,7 +138,14 @@
     "csrfmiddlewaretoken",
     "redirección",
     "sanitizar",
-    "consolidarlo"
+    "consolidarlo",
+    "eliminacion",
+    "boton",
+    "gatilla",
+    "vacio",
+    "RECÁLCULO",
+    "recálculo",
+    "atomicidad"
   ],
   "patterns": [
     {
