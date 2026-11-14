@@ -30,5 +30,92 @@
         {% block content %}
         {% endblock %}
     </main>
+
+    <!-- Contenedor del Toast Flotante (HU21) -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
+      <div id="carritoToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body fw-bold" id="carritoToastMessage">
+            <!-- El mensaje se inyecta por JS -->
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inyección del Token CSRF para peticiones AJAX -->
+    <div style="display: none;">
+        {% csrf_token %}
+    </div>
+
+    <!-- Script Funcionalidad Carrito AJAX -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+          const btnsAgregar = document.querySelectorAll('.btn-agregar-carrito');
+          const toastEl = document.getElementById('carritoToast');
+          const toastMessage = document.getElementById('carritoToastMessage');
+          const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+          const badgeCarrito = document.getElementById('badge-carrito-count'); 
+          
+          // Capturamos el token de seguridad directamente del DOM
+          const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+          btnsAgregar.forEach(btn => {
+              btn.addEventListener('click', function() {
+                  const productoId = this.dataset.productoId;
+                  const inputCantidad = this.previousElementSibling;
+                  const cantidad = parseInt(inputCantidad.value);
+
+                  // Deshabilitar botón temporalmente
+                  this.disabled = true;
+                  const originalHtml = this.innerHTML;
+                  this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+                  fetch("{% url 'inventario:api_agregar_carrito' %}", {
+                      method: 'POST',
+                      headers: {
+                          'Content-Type': 'application/json',
+                          'X-CSRFToken': csrfToken
+                      },
+                      body: JSON.stringify({
+                          producto_id: productoId,
+                          cantidad: cantidad
+                      })
+                  })
+                  .then(response => {
+                      if (!response.ok) throw new Error("Error HTTP " + response.status);
+                      return response.json();
+                  })
+                  .then(data => {
+                      if (data.success) {
+                          if (badgeCarrito) {
+                              badgeCarrito.innerText = data.total_unidades;
+                              badgeCarrito.classList.remove('d-none');
+                          }
+                          toastEl.className = 'toast align-items-center text-bg-success border-0';
+                          toastMessage.innerText = data.mensaje;
+                      } else {
+                          toastEl.className = 'toast align-items-center text-bg-danger border-0';
+                          toastMessage.innerText = data.error;
+                      }
+                      toast.show();
+                  })
+                  .catch(error => {
+                      toastEl.className = 'toast align-items-center text-bg-danger border-0';
+                      toastMessage.innerText = "Error de conexión con el servidor.";
+                      toast.show();
+                      console.error(error);
+                  })
+                  .finally(() => {
+                      // Restaurar estado del botón
+                      this.innerHTML = originalHtml;
+                      if (parseInt(inputCantidad.max) > 0) {
+                          this.disabled = false;
+                      }
+                  });
+              });
+          });
+      });
+    </script>
   </body>
 </html>

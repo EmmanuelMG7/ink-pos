@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -419,3 +420,63 @@ class MovimientoInventario(models.Model):
 
     def __str__(self):
         return f"{self.tipo_movimiento}: {self.cantidad} de {self.producto.nombre}"
+
+
+class Carrito(models.Model):
+    # Relacionado al usuario autenticado o a una sesión anónima
+    usuario = models.OneToOneField(
+        User, on_delete=models.CASCADE, null=True, blank=True, related_name="carrito"
+    )
+    session_id = models.CharField(max_length=255, null=True, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Carrito")
+        verbose_name_plural = _("Carritos")
+
+    def __str__(self):
+        return (
+            f"Carrito {self.pk} - Usuario: {self.usuario.username if self.usuario else 'Anónimo'}"
+        )
+
+
+class ItemCarrito(models.Model):
+    carrito = models.ForeignKey(Carrito, on_delete=models.CASCADE, related_name="items")
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    cantidad = models.PositiveIntegerField(default=1)
+    agregado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Item de Carrito")
+        verbose_name_plural = _("Items de Carrito")
+        constraints = [
+            # Seguridad: Prevención de Cantidades Negativas o Nulas (HU21)
+            models.CheckConstraint(
+                condition=models.Q(cantidad__gt=0), name="chk_itemcarrito_cantidad_gt_0"
+            ),
+            # Evita duplicar el mismo producto en el mismo carrito (se debe sumar la cantidad)
+            models.UniqueConstraint(fields=["carrito", "producto"], name="uq_itemcarrito_producto"),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.cantidad is not None and self.cantidad <= 0:
+            raise ValidationError({"cantidad": "La cantidad debe ser mayor a 0."})
+
+        if self.producto:
+            # Caso Límite: Intento de Compra con Inventario en Cero o Superando Límite
+            if self.producto.stock_actual <= 0:
+                raise ValidationError("Este producto se encuentra agotado.")
+            if self.cantidad > self.producto.stock_actual:
+                raise ValidationError(
+                    f"Solo hay {self.producto.stock_actual} unidades disponibles."
+                )
+
+    def save(self, *args, skip_clean=False, **kwargs):
+        if not skip_clean:
+            self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.cantidad}x {self.producto.nombre} en Carrito {self.carrito.pk}"

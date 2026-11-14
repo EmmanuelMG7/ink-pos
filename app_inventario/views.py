@@ -1,3 +1,5 @@
+import json
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import PermissionDenied
@@ -9,7 +11,7 @@ from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
 
 from .forms import ProductoForm
-from .models import Categoria, Marca, Producto
+from .models import Carrito, Categoria, ItemCarrito, Marca, Producto
 from .tables import ProductoTable
 
 
@@ -191,3 +193,85 @@ def catalogo(request):
         "total_productos": paginator.count,
     }
     return render(request, "catalogo/catalogo.html", context)
+
+
+def obtener_carrito(request):
+    """Función auxiliar para obtener o crear el carrito de la sesión actual."""
+    if request.user.is_authenticated:
+        carrito, _ = Carrito.objects.get_or_create(usuario=request.user)
+    else:
+        if not request.session.session_key:
+            request.session.create()
+        carrito, _ = Carrito.objects.get_or_create(session_id=request.session.session_key)
+    return carrito
+
+
+@require_POST
+def agregar_al_carrito_api(request):
+    try:
+        data = json.loads(request.body)
+        producto_id = data.get("producto_id")
+        cantidad_agregar = int(data.get("cantidad", 1))
+
+        if cantidad_agregar <= 0:
+            return JsonResponse({"success": False, "error": "La cantidad debe ser mayor a 0."})
+
+        carrito = obtener_carrito(request)
+
+        with transaction.atomic():
+            # Bloqueo select_for_update para evitar condición de carrera (Seguridad HU21)
+            producto = Producto.objects.select_for_update().get(pk=producto_id)
+
+            if not producto.activo:
+                return JsonResponse({"success": False, "error": "El producto no está disponible."})
+
+            if producto.stock_actual <= 0:
+                return JsonResponse(
+                    {"success": False, "error": "Este producto se encuentra agotado."}
+                )
+
+            # Buscar si el producto ya está en el carrito para consolidarlo
+            item, created = ItemCarrito.objects.get_or_create(
+                carrito=carrito,
+                producto=producto,
+                defaults={"cantidad": cantidad_agregar},  # Pasamos una cantidad válida > 0
+            )
+
+            if not created:
+                # Si ya existía, le sumamos lo nuevo
+                nueva_cantidad = item.cantidad + cantidad_agregar
+                if nueva_cantidad > producto.stock_actual:
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "error": f"Solo hay {producto.stock_actual} unidades disponibles.",
+                        }
+                    )
+                item.cantidad = nueva_cantidad
+                item.save()
+            else:
+                # Si se acaba de crear, verificamos que la cantidad inicial no supere el stock
+                if cantidad_agregar > producto.stock_actual:
+                    item.delete()  # Revertimos la creación
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "error": f"Solo hay {producto.stock_actual} unidades disponibles.",
+                        }
+                    )
+
+            # Calcular total de unidades en el carrito para actualizar la UI
+            total_unidades = sum(i.cantidad for i in carrito.items.all())
+
+            return JsonResponse(
+                {
+                    "success": True,
+                    "mensaje": "Agregado al carrito.",
+                    "total_unidades": total_unidades,
+                }
+            )
+
+    except Producto.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Producto no encontrado."})
+    except Exception:
+        return JsonResponse({"success": False, "error": "Error interno del servidor."})
