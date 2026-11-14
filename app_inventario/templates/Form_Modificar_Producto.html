@@ -14,18 +14,44 @@
         </div>
       </div>
 
-      <form action="{% if producto_edit_id %}/inventario/editar/{{ producto_edit_id }}/{% endif %}" method="post" class="needs-validation" novalidate id="form_editar_producto">
+      <form action="{% if producto_edit_id %}/inventario/editar/{{ producto_edit_id }}/{% endif %}" method="post" enctype="multipart/form-data" class="needs-validation" novalidate id="form_editar_producto">
         {% csrf_token %}
         <div class="modal-body m-2">
           
           <!-- PÁGINA 1 -->
           <div id="modal_producto_edit_page_1">
             <div class="row g-3 align-items-stretch">
+              <!-- Selector interactivo de imagen del producto para edición (SCRUM-149, SCRUM-150) -->
               <div class="col-12 col-md-4">
-                <div class="border border-secondary-subtle rounded bg-body-tertiary d-flex flex-column align-items-center justify-content-center h-100 p-3 text-body-secondary text-center" style="min-height: 180px; border-style: dashed !important;">
-                  <i class="bi bi-image fs-1 text-secondary mb-2"></i>
-                  <span class="small fw-semibold text-body-secondary">Imagen del producto</span>
-                  <span class="text-body-tertiary" style="font-size: 0.75rem;">(Próximamente)</span>
+                <div class="border border-secondary-subtle rounded bg-body-tertiary d-flex flex-column align-items-center justify-content-between h-100 p-2 text-center position-relative" 
+                     style="min-height: 190px;">
+                  <div class="w-100 d-flex flex-column align-items-center justify-content-center flex-grow-1 overflow-hidden rounded bg-body p-1" style="min-height: 130px; max-height: 140px;">
+                    <img id="preview_imagen_editar" 
+                         src="{% static 'img/default_producto.svg' %}" 
+                         data-default="{% static 'img/default_producto.svg' %}"
+                         alt="Previsualización de producto" 
+                         class="img-fluid rounded" 
+                         style="max-height: 130px; width: 100%; object-fit: contain;">
+                  </div>
+                  <input type="file" 
+                         name="imagen" 
+                         id="input_imagen_editar" 
+                         accept="image/jpeg,image/png,image/webp" 
+                         class="d-none">
+                  <div class="mt-2 w-100 d-flex gap-1">
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-primary w-100 text-truncate" 
+                            id="btn_seleccionar_imagen_editar">
+                      <i class="bi bi-upload me-1"></i> Cambiar Foto
+                    </button>
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-danger d-none" 
+                            id="btn_quitar_imagen_editar" 
+                            title="Restablecer a imagen previa">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                  <div id="alerta_imagen_editar" class="text-danger small mt-1 d-none text-start" style="font-size: 0.72rem; line-height: 1.1;"></div>
                 </div>
               </div>
 
@@ -174,9 +200,112 @@
       btnAnterior.addEventListener('click', irAPagina1Edit);
     }
 
+    // Control de Imagen y Previsualización Instantánea en Edición (SCRUM-149, SCRUM-150, SCRUM-153, SCRUM-155)
+    const btnFotoEdit = document.getElementById('btn_seleccionar_imagen_editar');
+    const inputFotoEdit = document.getElementById('input_imagen_editar');
+    const previewFotoEdit = document.getElementById('preview_imagen_editar');
+    const btnQuitarFotoEdit = document.getElementById('btn_quitar_imagen_editar');
+    const alertaFotoEdit = document.getElementById('alerta_imagen_editar');
+    let fotoOriginalUrl = previewFotoEdit ? (previewFotoEdit.getAttribute('data-original') || previewFotoEdit.getAttribute('data-default')) : '';
+
+    function resetearFotoEdit() {
+      if (inputFotoEdit) inputFotoEdit.value = '';
+      if (previewFotoEdit) {
+        previewFotoEdit.src = previewFotoEdit.getAttribute('data-original') || previewFotoEdit.getAttribute('data-default');
+      }
+      if (btnQuitarFotoEdit) btnQuitarFotoEdit.classList.add('d-none');
+      if (alertaFotoEdit) {
+        alertaFotoEdit.textContent = '';
+        alertaFotoEdit.classList.add('d-none');
+      }
+    }
+
+    if (btnFotoEdit && inputFotoEdit) {
+      btnFotoEdit.addEventListener('click', function () {
+        inputFotoEdit.click();
+      });
+    }
+
+    if (btnQuitarFotoEdit) {
+      btnQuitarFotoEdit.addEventListener('click', resetearFotoEdit);
+    }
+
+    if (inputFotoEdit) {
+      inputFotoEdit.addEventListener('change', function () {
+        if (!inputFotoEdit.files || inputFotoEdit.files.length === 0) return;
+        const archivo = inputFotoEdit.files[0];
+
+        // 1. Validación de tamaño máx: 5MB (SCRUM-153)
+        const maxBytes = 5 * 1024 * 1024;
+        if (archivo.size > maxBytes) {
+          if (alertaFotoEdit) {
+            alertaFotoEdit.textContent = 'El archivo es muy pesado (máx 5 MB). Optimícelo antes de continuar.';
+            alertaFotoEdit.classList.remove('d-none');
+          }
+          resetearFotoEdit();
+          return;
+        }
+
+        // 2. Validación de extensiones permitidas y seguridad (SCRUM-152, SCRUM-155)
+        const nombre = archivo.name.toLowerCase();
+        const partes = nombre.split('.');
+        const extensionesPermitidas = ['jpg', 'jpeg', 'png', 'webp'];
+        const extensionesPeligrosas = ['exe', 'bat', 'cmd', 'sh', 'php', 'phtml', 'py', 'js', 'vbs', 'msi', 'dll', 'html', 'htm', 'svg'];
+
+        if (partes.length < 2) {
+          if (alertaFotoEdit) {
+            alertaFotoEdit.textContent = 'Formato no permitido. Use JPG, PNG o WEBP.';
+            alertaFotoEdit.classList.remove('d-none');
+          }
+          resetearFotoEdit();
+          return;
+        }
+
+        for (let i = 1; i < partes.length - 1; i++) {
+          if (extensionesPeligrosas.includes(partes[i]) || extensionesPermitidas.includes(partes[i])) {
+            if (alertaFotoEdit) {
+              alertaFotoEdit.textContent = 'Archivo bloqueado por seguridad: doble extensión detectada.';
+              alertaFotoEdit.classList.remove('d-none');
+            }
+            resetearFotoEdit();
+            return;
+          }
+        }
+
+        const extFinal = partes[partes.length - 1];
+        if (!extensionesPermitidas.includes(extFinal)) {
+          if (alertaFotoEdit) {
+            alertaFotoEdit.textContent = 'Formato no permitido. Formatos permitidos: JPG, JPEG, PNG, WEBP.';
+            alertaFotoEdit.classList.remove('d-none');
+          }
+          resetearFotoEdit();
+          return;
+        }
+
+        // 3. Previsualización instantánea (SCRUM-150)
+        if (alertaFotoEdit) {
+          alertaFotoEdit.textContent = '';
+          alertaFotoEdit.classList.add('d-none');
+        }
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          if (previewFotoEdit) {
+            previewFotoEdit.src = e.target.result;
+          }
+          if (btnQuitarFotoEdit) {
+            btnQuitarFotoEdit.classList.remove('d-none');
+          }
+        };
+        reader.readAsDataURL(archivo);
+      });
+    }
+
     const modalEditEl = document.getElementById('modal_editar_producto');
     if (modalEditEl) {
-      modalEditEl.addEventListener('hidden.bs.modal', irAPagina1Edit);
+      modalEditEl.addEventListener('hidden.bs.modal', function () {
+        resetearFotoEdit();
+        irAPagina1Edit();
+      });
     }
   })();
 </script>

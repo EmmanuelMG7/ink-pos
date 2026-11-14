@@ -20,20 +20,44 @@
         </div>
       </div>
 
-      <form action="" method="post" class="needs-validation" novalidate id="form_crear_producto">
+      <form action="" method="post" enctype="multipart/form-data" class="needs-validation" novalidate id="form_crear_producto">
         {% csrf_token %}
 
         <div class="modal-body m-2">
-          <!-- PÁGINA 1: Datos principales del producto y placeholder de imagen -->
+          <!-- PÁGINA 1: Datos principales del producto y selector de imagen -->
           <div id="modal_producto_page_1">
             <div class="row g-3 align-items-stretch">
-              <!-- Placeholder para futura imagen del producto con integración en tema oscuro -->
+              <!-- Selector interactivo de imagen del producto con previsualización instantánea (SCRUM-150) -->
               <div class="col-12 col-md-4">
-                <div class="border border-secondary-subtle rounded bg-body-tertiary d-flex flex-column align-items-center justify-content-center h-100 p-3 text-body-secondary text-center" 
-                     style="min-height: 180px; border-style: dashed !important;">
-                  <i class="bi bi-image fs-1 text-secondary mb-2"></i>
-                  <span class="small fw-semibold text-body-secondary">Imagen del producto</span>
-                  <span class="text-body-tertiary" style="font-size: 0.75rem;">(Próximamente)</span>
+                <div class="border border-secondary-subtle rounded bg-body-tertiary d-flex flex-column align-items-center justify-content-between h-100 p-2 text-center position-relative" 
+                     style="min-height: 190px;">
+                  <div class="w-100 d-flex flex-column align-items-center justify-content-center flex-grow-1 overflow-hidden rounded bg-body p-1" style="min-height: 130px; max-height: 140px;">
+                    <img id="preview_imagen_crear" 
+                         src="{% static 'img/default_producto.svg' %}" 
+                         data-default="{% static 'img/default_producto.svg' %}"
+                         alt="Previsualización de producto" 
+                         class="img-fluid rounded" 
+                         style="max-height: 130px; width: 100%; object-fit: contain;">
+                  </div>
+                  <input type="file" 
+                         name="imagen" 
+                         id="input_imagen_crear" 
+                         accept="image/jpeg,image/png,image/webp" 
+                         class="d-none">
+                  <div class="mt-2 w-100 d-flex gap-1">
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-primary w-100 text-truncate" 
+                            id="btn_seleccionar_imagen_crear">
+                      <i class="bi bi-upload me-1"></i> Foto
+                    </button>
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-danger d-none" 
+                            id="btn_quitar_imagen_crear" 
+                            title="Quitar imagen seleccionada">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                  <div id="alerta_imagen_crear" class="text-danger small mt-1 d-none text-start" style="font-size: 0.72rem; line-height: 1.1;"></div>
                 </div>
               </div>
 
@@ -188,12 +212,112 @@
       });
     }
 
+    // Control de Imagen y Previsualización Instantánea (SCRUM-150, SCRUM-152, SCRUM-153, SCRUM-155)
+    const btnFoto = document.getElementById('btn_seleccionar_imagen_crear');
+    const inputFoto = document.getElementById('input_imagen_crear');
+    const previewFoto = document.getElementById('preview_imagen_crear');
+    const btnQuitarFoto = document.getElementById('btn_quitar_imagen_crear');
+    const alertaFoto = document.getElementById('alerta_imagen_crear');
+    const defaultSrc = previewFoto ? previewFoto.getAttribute('data-default') : '';
+
+    function resetearFoto() {
+      if (inputFoto) inputFoto.value = '';
+      if (previewFoto && defaultSrc) previewFoto.src = defaultSrc;
+      if (btnQuitarFoto) btnQuitarFoto.classList.add('d-none');
+      if (alertaFoto) {
+        alertaFoto.textContent = '';
+        alertaFoto.classList.add('d-none');
+      }
+    }
+
+    if (btnFoto && inputFoto) {
+      btnFoto.addEventListener('click', function () {
+        inputFoto.click();
+      });
+    }
+
+    if (btnQuitarFoto) {
+      btnQuitarFoto.addEventListener('click', resetearFoto);
+    }
+
+    if (inputFoto) {
+      inputFoto.addEventListener('change', function () {
+        if (!inputFoto.files || inputFoto.files.length === 0) return;
+        const archivo = inputFoto.files[0];
+
+        // 1. Validación de tamaño máx: 5MB (SCRUM-153)
+        const maxBytes = 5 * 1024 * 1024;
+        if (archivo.size > maxBytes) {
+          if (alertaFoto) {
+            alertaFoto.textContent = 'El archivo es muy pesado (máx 5 MB). Optimícelo antes de continuar.';
+            alertaFoto.classList.remove('d-none');
+          }
+          resetearFoto();
+          return;
+        }
+
+        // 2. Validación de extensiones permitidas y seguridad (SCRUM-152, SCRUM-155)
+        const nombre = archivo.name.toLowerCase();
+        const partes = nombre.split('.');
+        const extensionesPermitidas = ['jpg', 'jpeg', 'png', 'webp'];
+        const extensionesPeligrosas = ['exe', 'bat', 'cmd', 'sh', 'php', 'phtml', 'py', 'js', 'vbs', 'msi', 'dll', 'html', 'htm', 'svg'];
+
+        if (partes.length < 2) {
+          if (alertaFoto) {
+            alertaFoto.textContent = 'Formato no permitido. Use JPG, PNG o WEBP.';
+            alertaFoto.classList.remove('d-none');
+          }
+          resetearFoto();
+          return;
+        }
+
+        for (let i = 1; i < partes.length - 1; i++) {
+          if (extensionesPeligrosas.includes(partes[i]) || extensionesPermitidas.includes(partes[i])) {
+            if (alertaFoto) {
+              alertaFoto.textContent = 'Archivo bloqueado por seguridad: doble extensión detectada.';
+              alertaFoto.classList.remove('d-none');
+            }
+            resetearFoto();
+            return;
+          }
+        }
+
+        const extFinal = partes[partes.length - 1];
+        if (!extensionesPermitidas.includes(extFinal)) {
+          if (alertaFoto) {
+            alertaFoto.textContent = 'Formato no permitido. Formatos permitidos: JPG, JPEG, PNG, WEBP.';
+            alertaFoto.classList.remove('d-none');
+          }
+          resetearFoto();
+          return;
+        }
+
+        // 3. Previsualización instantánea (SCRUM-150)
+        if (alertaFoto) {
+          alertaFoto.textContent = '';
+          alertaFoto.classList.add('d-none');
+        }
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          if (previewFoto) {
+            previewFoto.src = e.target.result;
+          }
+          if (btnQuitarFoto) {
+            btnQuitarFoto.classList.remove('d-none');
+          }
+        };
+        reader.readAsDataURL(archivo);
+      });
+    }
+
     // Volver a la página 1 cuando se limpie o cierre el modal
     modalEl.addEventListener('reset', function () {
+      resetearFoto();
       setTimeout(irAPagina1, 0);
     });
 
     modalEl.addEventListener('hidden.bs.modal', function () {
+      resetearFoto();
       irAPagina1();
     });
   })();

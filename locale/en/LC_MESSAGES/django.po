@@ -643,3 +643,105 @@ msgstr "Please enter a valid value."
 
 msgid "form.default.errormsg.empty"
 msgstr "This field cannot be empty."
+
+# Product Catalog (HU20 - SCRUM-35)
+msgid "Catálogo de Productos"
+msgstr "Product Catalog"
+
+msgid "Explora nuestros artículos y existencias disponibles."
+msgstr "Explore our available items and stock."
+
+msgid "Actualmente no hay artículos disponibles y pronto habrá novedades."
+msgstr "Currently there are no items available and there will be news soon."
+
+msgid "Agotado"
+msgstr "Out of stock"
+
+msgid "disponibles"
+msgstr "available"
+
+msgid "Anterior"
+msgstr "Previous"
+
+msgid "Siguiente"
+msgstr "Next"
+
+msgid "Navegación del catálogo"
+msgstr "Catalog navigation"
+
+msgid "Catálogo vacío"
+msgstr "Empty catalog"
+
+#, python-format
+msgid "Página %(current)s de %(total)s (%(total_count)s producto en total)"
+id_plural "Página %(current)s de %(total)s (%(total_count)s productos en total)"
+msgstr[0] "Page %(current)s of %(total)s (%(total_count)s product in total)"
+msgstr[1] "Page %(current)s of %(total)s (%(total_count)s products in total)"
+
+# Category Navigation (HU27 - SCRUM-128)
+msgid "Ver todos"
+msgstr "View all"
+
+msgid "Filtrar por categoría"
+msgstr "Filter by category"
+
+msgid "No hay productos disponibles en esta categoría"
+msgstr "No products available in this category"
+
+
+
+# Sello de Novedad (HU28 - SCRUM-130)
+msgid "Novedad"
+msgstr "New"
+
+msgid "models.producto.field.fecha_creacion"
+msgstr "Creation date"
+
+msgid "Volver al catálogo"
+msgstr "Back to catalog"
+
+msgid "Detalle de Producto"
+msgstr "Product Detail"
+
+# Búsqueda por Nombre en Catálogo (HU31 - SCRUM-134)
+msgid "Buscar productos..."
+msgstr "Search products..."
+
+msgid "Buscar productos por nombre..."
+msgstr "Search products by name..."
+
+msgid "Buscar productos"
+msgstr "Search products"
+
+msgid "Limpiar búsqueda"
+msgstr "Clear search"
+
+msgid "Buscar"
+msgstr "Search"
+
+msgid "No se encontraron productos con ese nombre"
+msgstr "No products found with that name"
+
+#, python-format
+msgid "No encontramos coincidencias para \"%(search_term)s\"."
+msgstr "No matches found for \"%(search_term)s\"."
+
+msgid "Sugerencias de búsqueda:"
+msgstr "Search suggestions:"
+
+msgid "Revisa que todas las palabras estén escritas correctamente."
+msgstr "Check that all words are spelled correctly."
+
+msgid "Intenta utilizar términos más generales o sinónimos."
+msgstr "Try using more general terms or synonyms."
+
+msgid "Prueba buscando por palabras clave (ej. cuaderno, bolígrafo, lápiz)."
+msgstr "Try searching by keywords (e.g. notebook, pen, pencil)."
+
+msgid "Ver todos los productos"
+msgstr "View all products"
+
+#, python-format
+msgid "Resultados de búsqueda para: <strong class=\"text-light\">\"%(search_term)s\"</strong>"
+msgstr "Search results for: <strong class=\"text-light\">\"%(search_term)s\"</strong>"
+
