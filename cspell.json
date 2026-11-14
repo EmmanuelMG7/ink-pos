@@ -145,7 +145,11 @@
     "vacio",
     "RECÁLCULO",
     "recálculo",
-    "atomicidad"
+    "atomicidad",
+    "renderizado",
+    "modificacion",
+    "MODIFICACION",
+    "maximo"
   ],
   "patterns": [
     {
