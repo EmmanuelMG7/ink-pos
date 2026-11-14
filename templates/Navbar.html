@@ -24,6 +24,11 @@
         {% for item in nav_items %}
         {% include 'nav_item.html' with url_name=item.url_name label=item.label %}
         {% endfor %}
+        {% if user.is_authenticated %}
+          {% if user.is_staff or user.is_superuser %}
+            {% include 'nav_item.html' with url_name='clientes:gestion' label=_('Clientes') %}
+          {% endif %}
+        {% endif %}
       </ul>
       {% include 'catalogo/components/buscador.html' %}
       <div class="d-flex align-items-center gap-2">
@@ -42,6 +47,14 @@
             </button>
 
             <ul class="dropdown-menu">
+              {% if user.is_staff or user.is_superuser %}
+              <li>
+                <a class="dropdown-item d-flex align-items-center" href="{% url 'clientes:gestion' %}">
+                  <i class="bi bi-buildings me-2"></i>
+                  {% trans "Gestión de Clientes" %}
+                </a>
+              </li>
+              {% endif %}
               <li>
                 <a class="dropdown-item d-flex align-items-center" href="#">
                   <i class="bi bi-gear-fill me-2"></i>
@@ -51,7 +64,7 @@
 
               <li>
                 <form
-                  action="{% if user.first_name %}{% url 'clientes:logout' %}{% else %}{% url 'autenticacion:logout' %}{% endif %}"
+                  action="{% if user.first_name and not user.is_staff and not user.is_superuser %}{% url 'clientes:logout' %}{% else %}{% url 'autenticacion:logout' %}{% endif %}"
                   method="post"
                   class="m-0 p-0 w-100"
                 >

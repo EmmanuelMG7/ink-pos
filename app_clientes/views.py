@@ -1,20 +1,32 @@
-﻿# cspell:disable
+# cspell:disable
+import logging
 import time
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.db import IntegrityError
+from django.core.exceptions import PermissionDenied
+from django.db import IntegrityError, transaction
 from django.db.models import Q
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import NoReverseMatch, reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
+from django.views.decorators.http import require_POST
+from django_tables2 import RequestConfig
 
-from app_clientes.forms import ClienteLoginForm, ClienteRegistroForm
+from app_clientes.forms import (
+    ClienteCategoriaInstitucionalForm,
+    ClienteLoginForm,
+    ClienteRegistroForm,
+)
 from app_clientes.models import Cliente
+from app_clientes.tables import ClienteTable
+
+audit_logger = logging.getLogger("security.audit.clientes")
 
 MAX_INTENTOS_POR_MINUTO = 10
 VENTANA_SEGUNDOS = 60
@@ -64,6 +76,17 @@ def _obtener_url_retorno_segura(request) -> str:
     ):
         return next_url
     return _obtener_url_tienda()
+
+
+def _tiene_permiso_admin_clientes(user) -> bool:
+    if not user or not user.is_authenticated:
+        return False
+    return bool(
+        user.is_superuser
+        or user.is_staff
+        or user.has_perm("app_clientes.change_cliente")
+        or user.has_perm("app_clientes.view_cliente")
+    )
 
 
 def registro_cliente_view(request):
@@ -218,3 +241,140 @@ def bienvenida_cliente_view(request):
         "Bienvenida_Cliente.html",
         {"cliente": cliente},
     )
+
+
+@login_required
+def gestion_clientes_view(request):
+    """Listado y búsqueda ágil de clientes para asignación de categoría Institucional (HU30)."""
+    if not _tiene_permiso_admin_clientes(request.user):
+        ip = _obtener_ip_cliente(request)
+        audit_logger.warning(
+            "Intento no autorizado de acceso a gestion_clientes por user=%s ip=%s",
+            request.user.username,
+            ip,
+        )
+        raise PermissionDenied("No tienes permisos administrativos para gestionar clientes.")
+
+    raw_query = (request.GET.get("q") or "").replace("\x00", "").strip()[:100]
+    filtro_categoria = (request.GET.get("categoria") or "").strip().lower()
+    if filtro_categoria not in ("institucional", "natural"):
+        filtro_categoria = ""
+
+    clientes_qs = Cliente.objects.select_related("auth_user").all()
+
+    if filtro_categoria == "institucional":
+        clientes_qs = clientes_qs.filter(es_institucional=True)
+    elif filtro_categoria == "natural":
+        clientes_qs = clientes_qs.filter(es_institucional=False)
+
+    if raw_query:
+        clientes_qs = clientes_qs.filter(
+            Q(identificacion__icontains=raw_query)
+            | Q(nombre__icontains=raw_query)
+            | Q(email__icontains=raw_query)
+        )
+
+    clientes_qs = clientes_qs.order_by("-es_institucional", "nombre", "id")
+    tiene_resultados = clientes_qs.exists()
+
+    tabla = ClienteTable(clientes_qs)
+    RequestConfig(request, paginate={"per_page": 20}).configure(tabla)
+
+    return render(
+        request,
+        "Gestion_Clientes.html",
+        {
+            "table": tabla,
+            "query": raw_query,
+            "filtro_categoria": filtro_categoria,
+            "tiene_resultados": tiene_resultados,
+            "total_clientes": Cliente.objects.count(),
+            "total_institucionales": Cliente.objects.filter(es_institucional=True).count(),
+        },
+    )
+
+
+@login_required
+@require_POST
+def asignar_categoria_institucional_view(request, pk: int):
+    """Asigna o revoca atómicamente la categoría Institucional de un cliente (HU30)."""
+    es_admin = bool(
+        request.user.is_superuser
+        or request.user.is_staff
+        or request.user.has_perm("app_clientes.change_cliente")
+    )
+    if not es_admin:
+        ip = _obtener_ip_cliente(request)
+        audit_logger.warning(
+            "ALERTA SEGURIDAD (HU30): Intento de autoasignacion o modificacion de "
+            "categoria institucional rechazado. user=%s cliente_objetivo=%s ip=%s",
+            request.user.username,
+            pk,
+            ip,
+        )
+        raise PermissionDenied(
+            "Operación rechazada: Se requieren permisos administrativos para modificar "
+            "la categoría institucional."
+        )
+
+    with transaction.atomic():
+        cliente = get_object_or_404(Cliente.objects.select_for_update(), pk=pk)
+        estado_previo = cliente.es_institucional
+
+        datos_post = request.POST.copy()
+        for campo in (
+            "tipo_documento",
+            "identificacion",
+            "nombre",
+            "direccion",
+            "telefono",
+            "email",
+        ):
+            if campo not in datos_post:
+                datos_post[campo] = getattr(cliente, campo) or ""
+
+        if "clasificacion_selector" in datos_post and "es_institucional" not in datos_post:
+            datos_post["es_institucional"] = (
+                "on" if datos_post["clasificacion_selector"] == "institucional" else ""
+            )
+
+        form = ClienteCategoriaInstitucionalForm(datos_post, instance=cliente)
+        if form.is_valid():
+            cliente_actualizado = form.save()
+            if cliente_actualizado.auth_user:
+                cliente_actualizado.auth_user.first_name = cliente_actualizado.nombre[:150]
+                cliente_actualizado.auth_user.email = cliente_actualizado.email or ""
+                cliente_actualizado.auth_user.save(update_fields=["first_name", "email"])
+
+            ip = _obtener_ip_cliente(request)
+            audit_logger.info(
+                "AUDITORIA (HU30): Admin=%s actualizo cliente_id=%s (%s) "
+                "es_institucional: %s -> %s desde ip=%s",
+                request.user.username,
+                cliente_actualizado.pk,
+                cliente_actualizado.identificacion,
+                estado_previo,
+                cliente_actualizado.es_institucional,
+                ip,
+            )
+
+            if cliente_actualizado.es_institucional:
+                messages.success(
+                    request,
+                    f"Se asignó la categoría 'Institucional' a '{cliente_actualizado.nombre}' "
+                    "exitosamente.",
+                )
+            else:
+                messages.success(
+                    request,
+                    f"Se revocó la categoría institucional de '{cliente_actualizado.nombre}'. "
+                    "El perfil pasó a estado natural.",
+                )
+        else:
+            errores_planos = "; ".join(f"{err}" for lista in form.errors.values() for err in lista)
+            messages.error(
+                request,
+                f"No fue posible actualizar la categoría del cliente: {errores_planos}",
+            )
+
+    return redirect("clientes:gestion")
