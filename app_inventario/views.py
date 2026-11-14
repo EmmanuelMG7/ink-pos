@@ -1,3 +1,4 @@
+# cspell:disable
 import re
 import unicodedata
 
@@ -11,6 +12,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
+
+from app_promociones.services.engine import PromotionEngineService
 
 from .forms import ProductoForm
 from .models import Categoria, Marca, Producto
@@ -269,7 +272,9 @@ def catalogo(request):
 
     context = {
         "page_obj": page_obj,
-        "productos": page_obj.object_list,
+        "productos": PromotionEngineService.resolve_catalog_institutional_prices(
+            list(page_obj.object_list), request.user
+        ),
         "total_productos": paginator.count,
         "categorias": categorias,
         "categoria_actual": categoria_actual,
@@ -332,4 +337,5 @@ def producto_detalle(request, pk):
         .prefetch_related("categorias"),
         pk=pk,
     )
+    PromotionEngineService.resolve_catalog_institutional_prices([producto], request.user)
     return render(request, "catalogo/producto_detalle.html", {"producto": producto})

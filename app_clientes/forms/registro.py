@@ -1,4 +1,4 @@
-# cspell:disable
+﻿# cspell:disable
 import re
 
 from django import forms
@@ -164,6 +164,8 @@ class ClienteRegistroForm(BootstrapModelForm):
         datos = self.cleaned_data
         with transaction.atomic():
             cliente = super().save(commit=False)
+            if cliente.tipo_documento == TipoDocumento.NIT:
+                cliente.es_institucional = True
             user = User(
                 username=datos["identificacion"],
                 first_name=datos["nombre"][:150],

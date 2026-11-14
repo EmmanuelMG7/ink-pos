@@ -1,3 +1,4 @@
+# cspell:disable
 import io
 import shutil
 import tempfile

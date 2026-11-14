@@ -1,3 +1,4 @@
+<!-- cspell:disable -->
 <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300" fill="none">
   <rect width="300" height="300" rx="16" fill="#f1f5f9"/>
   <rect x="1.5" y="1.5" width="297" height="297" rx="14.5" stroke="#cbd5e1" stroke-width="3" stroke-dasharray="6 6"/>

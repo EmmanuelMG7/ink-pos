@@ -1,3 +1,4 @@
+# cspell:disable
 import time
 from decimal import Decimal
 

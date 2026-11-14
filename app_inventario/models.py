@@ -1,3 +1,4 @@
+# cspell:disable
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
@@ -190,6 +191,17 @@ class Producto(models.Model):
         decimal_places=2,
         verbose_name=_("models.producto.field.precio_venta"),
     )
+    es_institucional = models.BooleanField(
+        default=False,
+        verbose_name=_("models.producto.field.es_institucional"),
+    )
+    precio_institucional = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("models.producto.field.precio_institucional"),
+    )
     impuesto = models.ForeignKey(
         Impuesto,
         on_delete=models.SET_NULL,
@@ -226,50 +238,59 @@ class Producto(models.Model):
         verbose_name = _("models.producto.verbose_name")
         verbose_name_plural = _("models.producto.verbose_name_plural")
         constraints = [
-            # costo_compra >= 0
             models.CheckConstraint(
                 condition=models.Q(costo_compra__gte=0),
                 name="chk_producto_costo_gte_0",
             ),
-            # precio_venta >= costo_compra
             models.CheckConstraint(
                 condition=models.Q(precio_venta__gte=models.F("costo_compra")),
                 name="chk_producto_precio_gte_costo",
             ),
-            # stock_actual >= 0
             models.CheckConstraint(
                 condition=models.Q(stock_actual__gte=0),
                 name="chk_producto_stock_actual_gte_0",
             ),
-            # stock_mínimo >= 0
             models.CheckConstraint(
                 condition=models.Q(stock_minimo__gte=0),
                 name="chk_producto_stock_minimo_gte_0",
             ),
-            # nombre no puede estar vacío
             models.CheckConstraint(
                 condition=~models.Q(nombre=""),
                 name="chk_producto_nombre_no_vacio",
             ),
         ]
 
+    def clean(self):
+        super().clean()
+        if self.precio_institucional is not None:
+            if self.costo_compra is not None and self.precio_institucional < self.costo_compra:
+                raise ValidationError(
+                    {
+                        "precio_institucional": (
+                            "El precio institucional no puede ser inferior al costo de compra."
+                        )
+                    }
+                )
+            if self.precio_venta is not None and self.precio_institucional > self.precio_venta:
+                raise ValidationError(
+                    {
+                        "precio_institucional": (
+                            "El precio institucional no puede ser superior al precio de venta."
+                        )
+                    }
+                )
+
     def save(self, *args, skip_clean=False, **kwargs):
-        """Función llamada para hacer INSERT o UPDATE en la base de datos, se encarga de que se
-        llamen a las funciones de validación de campos usando `self.full_clean()` y permite
-        saltarse las validaciones para testing de base de datos"""
         if not skip_clean:
             self.full_clean()
         super().save(*args, **kwargs)
 
-    # Formatear automáticamente el id del producto a 5 dígitos
     @property
     def codigo(self) -> str:
         return f"{self.pk:05d}" if self.pk else ""
 
     @property
     def imagen_url(self) -> str:
-        """Retorna la URL de la imagen del producto si existe, o la imagen ilustrativa
-        elegante por defecto con el emblema de la papelería (SCRUM-151)."""
         if self.imagen:
             try:
                 return self.imagen.url
@@ -279,13 +300,10 @@ class Producto(models.Model):
 
     @property
     def tiene_imagen(self) -> bool:
-        """Indica si el producto tiene una imagen personalizada asignada (SCRUM-154)."""
         return bool(self.imagen and hasattr(self.imagen, "name") and self.imagen.name)
 
     @property
     def es_novedad(self) -> bool:
-        """Determina si el producto fue registrado dentro de los últimos 30 días calendario
-        (SCRUM-170, SCRUM-174)."""
         if not self.fecha_creacion:
             return False
         dias = (timezone.now().date() - self.fecha_creacion.date()).days
@@ -366,7 +384,6 @@ class MovimientoInventario(models.Model):
             if self.stock_anterior is None:
                 self.stock_anterior = self.producto.stock_actual
 
-            # Validar salidas contra stock anterior
             if self.tipo_movimiento in [
                 MovimientoInventario.TipoMovimiento.VENTA,
                 MovimientoInventario.TipoMovimiento.MERMA,

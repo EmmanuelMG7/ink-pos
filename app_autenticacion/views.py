@@ -1,3 +1,4 @@
+# cspell:disable
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
@@ -18,6 +19,8 @@ def Login(request):
             if getattr(user, "is_staff", False):
                 return redirect("ventas:reportes")
             else:
+                if hasattr(request.user, "cliente"):
+                    return redirect("catalogo")
                 return redirect("ventas:pos")
         else:
             candidato = User.objects.filter(username=usuario_input).first()
