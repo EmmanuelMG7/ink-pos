@@ -11,7 +11,7 @@
     </h1>
   </header>
 
-  <!-- Contenedor Principal (Oculto dinámicamente si se vacía) -->
+  <!-- Contenedor Principal -->
   <div id="cart-content" class="row g-4 {% if not items %}d-none{% endif %}">
     
     <!-- Lista de Productos -->
@@ -30,25 +30,43 @@
                   </div>
                 </div>
                 
-                <!-- Info Producto -->
+                <!-- Info Producto y Etiqueta de Descuento -->
                 <div class="col-9 col-md-4 mb-3 mb-md-0">
                   <h6 class="text-light mb-1 text-truncate" title="{{ item.producto.nombre }}">{{ item.producto.nombre }}</h6>
-                  <span class="text-success fw-bold">${{ item.producto.precio_venta|floatformat:2 }}</span> 
-                  <span class="text-secondary small">/u</span>
-                </div>
-                
-                <!-- Controles de Cantidad (Estático en HU29, se volverá interactivo en HU32) -->
-                <div class="col-6 col-md-3">
-                  <div class="text-light text-center">
-                    <span class="d-block text-secondary small mb-1">{% trans "Cantidad" %}</span>
-                    <span class="fw-medium fs-5">{{ item.cantidad }}</span>
+                  <span class="text-secondary small">${{ item.producto.precio_venta|floatformat:2 }} /u</span>
+                  
+                  <!-- Renderizado Inicial del Descuento SC-001 -->
+                  <div id="badge-descuento-{{ item.id }}" class="mt-1" style="min-height: 22px;">
+                    {% if item.cantidad >= 50 %}
+                      <span class="badge bg-success">-25% volumen</span>
+                    {% elif item.cantidad >= 12 %}
+                      <span class="badge bg-success">-15% volumen</span>
+                    {% endif %}
                   </div>
                 </div>
                 
-                <!-- Acciones y Botón Eliminar -->
-                <div class="col-6 col-md-3 text-end">
+                <!-- Controles Interactivos de Cantidad (HU32) -->
+                <div class="col-6 col-md-4">
+                  <div class="input-group input-group-sm justify-content-center" style="max-width: 140px; margin: 0 auto;">
+                    <button class="btn btn-outline-secondary" type="button" onclick="cambiarCantidad('{{ item.id }}', -1)" title="{% trans 'Disminuir' %}">
+                      <i class="bi bi-dash"></i>
+                    </button>
+                    <!-- Input con validación de vacío y protección de negativos -->
+                    <input type="number" id="input-cantidad-{{ item.id }}" class="form-control text-center bg-dark text-light border-secondary fw-bold" 
+                           value="{{ item.cantidad }}" min="1" data-last-val="{{ item.cantidad }}" 
+                           onblur="validarVacio('{{ item.id }}', this)" onchange="inputCambio('{{ item.id }}', this)">
+                    <button class="btn btn-outline-secondary" type="button" onclick="cambiarCantidad('{{ item.id }}', 1)" title="{% trans 'Aumentar' %}">
+                      <i class="bi bi-plus"></i>
+                    </button>
+                  </div>
+                  <!-- Subtotal de línea dinámico -->
+                  <div class="text-center mt-2 text-success fw-bold" id="linea-subtotal-{{ item.id }}"></div>
+                </div>
+                
+                <!-- Botón Eliminar -->
+                <div class="col-6 col-md-2 text-end">
                   <button class="btn btn-outline-danger btn-sm" onclick="prepararEliminacion('{{ item.id }}', this)" title="{% trans 'Eliminar producto' %}">
-                    <i class="bi bi-trash3"></i> {% trans "Eliminar" %}
+                    <i class="bi bi-trash3"></i>
                   </button>
                 </div>
 
@@ -65,15 +83,11 @@
       <div class="card bg-dark border-secondary-subtle sticky-top" style="top: 1rem;">
         <div class="card-body">
           <h5 class="card-title text-light mb-4">{% trans "Resumen del Pedido" %}</h5>
-          
           <div class="d-flex justify-content-between mb-3 text-light fs-5">
             <span>{% trans "Subtotal" %}</span>
             <span class="fw-bold" id="cart-subtotal">${{ subtotal|floatformat:2 }}</span>
           </div>
-          
           <hr class="border-secondary-subtle">
-          
-          <!-- Notificación Dinámica de Domicilio (Caso Límite HU29) -->
           <div id="cart-domicilio-text" class="mb-4 small fw-medium">
             {% if aplica_domicilio %}
               <span class="text-success"><i class="bi bi-truck me-1"></i> {% trans "Aplica para envío a domicilio" %}</span>
@@ -81,7 +95,6 @@
               <span class="text-warning"><i class="bi bi-shop me-1"></i> {% trans "Solo recogida en tienda (Monto inferior a $20.000)" %}</span>
             {% endif %}
           </div>
-          
           <button class="btn btn-primary w-100 fw-bold py-2" disabled>
             {% trans "Proceder al Pago" %} <i class="bi bi-arrow-right ms-2"></i>
           </button>
@@ -90,7 +103,7 @@
     </div>
   </div>
 
-  <!-- Estado Vacío Ilustrado (Caso Límite HU29) -->
+  <!-- Estado Vacío Ilustrado -->
   <div id="cart-empty-state" class="container text-center py-5 {% if items %}d-none{% endif %}">
     <div class="mb-4">
       <i class="bi bi-cart-x text-secondary" style="font-size: 6rem; opacity: 0.5;"></i>
@@ -99,15 +112,12 @@
     <p class="text-secondary mb-4">
       {% trans "Aún no has agregado artículos a tu pedido. Explora nuestro catálogo y encuentra lo que necesitas." %}
     </p>
-    <a href="{% url 'catalogo' %}" class="btn btn-primary px-4 py-2 fw-bold">
+    <a href="{% url 'inventario:catalogo' %}" class="btn btn-primary px-4 py-2 fw-bold">
       <i class="bi bi-search me-2"></i> {% trans "Ir al Catálogo" %}
     </a>
   </div>
 
 </div>
-
-<!-- Inyección del CSRF -->
-<div style="display: none;">{% csrf_token %}</div>
 
 <!-- Modal de Confirmación de Eliminación -->
 <div class="modal fade" id="modalConfirmarEliminacion" tabindex="-1" aria-hidden="true">
@@ -132,70 +142,58 @@
   </div>
 </div>
 
-<!-- Script de Eliminación AJAX -->
+<div style="display: none;">{% csrf_token %}</div>
+
+<!-- Script Principal -->
 <script>
+  // -----------------------------------------------------
+  // LÓGICA DE ELIMINACIÓN (Mantenida de HU29)
+  // -----------------------------------------------------
   let itemAEliminarId = null;
   let botonAEliminar = null;
   let modalEliminar = null;
 
   document.addEventListener('DOMContentLoaded', function() {
-      // Inicializar el modal de Bootstrap
       modalEliminar = new bootstrap.Modal(document.getElementById('modalConfirmarEliminacion'));
-      
-      // Escuchar el clic en el botón rojo de confirmación dentro del modal
       document.getElementById('btnConfirmarEliminar').addEventListener('click', function() {
           if (itemAEliminarId && botonAEliminar) {
-              modalEliminar.hide(); // Ocultar el modal
-              ejecutarEliminacion(itemAEliminarId, botonAEliminar); // Proceder con la petición
+              modalEliminar.hide();
+              ejecutarEliminacion(itemAEliminarId, botonAEliminar);
           }
       });
   });
 
-  // Función que gatilla el botón HTML de cada fila
   function prepararEliminacion(itemId, btnElement) {
       itemAEliminarId = itemId;
       botonAEliminar = btnElement;
       modalEliminar.show();
   }
 
-  // Lógica de eliminación (Antiguo eliminarItem)
   function ejecutarEliminacion(itemId, btnElement) {
       const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
       const fila = btnElement.closest('.carrito-item-row');
-      
       btnElement.disabled = true;
       const originalHtml = btnElement.innerHTML;
       btnElement.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
       fetch(`/inventario/carrito/eliminar/${itemId}/`, {
           method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': csrfToken
-          }
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
       })
-      .then(response => {
-          if (!response.ok) throw new Error("Error HTTP " + response.status);
-          return response.json();
-      })
+      .then(response => response.json())
       .then(data => {
           if (data.success) {
-              // Transición visual suave
               fila.style.transition = "opacity 0.3s ease-out, transform 0.3s ease-out";
               fila.style.opacity = "0";
               fila.style.transform = "translateX(-20px)";
-              
               setTimeout(() => {
                   fila.remove();
-                  
                   document.getElementById('cart-subtotal').innerText = "$" + data.subtotal.toLocaleString('es-CO', {minimumFractionDigits: 2});
                   
                   const domText = document.getElementById('cart-domicilio-text');
-                  if (data.aplica_domicilio) {
-                      domText.innerHTML = '<span class="text-success"><i class="bi bi-truck me-1"></i> Aplica para envío a domicilio</span>';
-                  } else {
-                      domText.innerHTML = '<span class="text-warning"><i class="bi bi-shop me-1"></i> Solo recogida en tienda (Monto inferior a $20.000)</span>';
-                  }
+                  domText.innerHTML = data.aplica_domicilio ? 
+                      '<span class="text-success"><i class="bi bi-truck me-1"></i> Aplica para envío a domicilio</span>' : 
+                      '<span class="text-warning"><i class="bi bi-shop me-1"></i> Solo recogida en tienda (Monto inferior a $20.000)</span>';
 
                   const badge = document.getElementById('badge-carrito-count');
                   if (badge) {
@@ -207,7 +205,6 @@
                       document.getElementById('cart-content').classList.add('d-none');
                       document.getElementById('cart-empty-state').classList.remove('d-none');
                   }
-                  
                   mostrarToastCarrito(data.mensaje, 'success');
               }, 300);
           } else {
@@ -215,11 +212,114 @@
               btnElement.innerHTML = originalHtml;
               mostrarToastCarrito(data.error, 'danger');
           }
-      })
-      .catch(error => {
+      }).catch(error => {
           btnElement.disabled = false;
           btnElement.innerHTML = originalHtml;
           mostrarToastCarrito("Error de conexión al eliminar.", 'danger');
+      });
+  }
+
+  // -----------------------------------------------------
+  // LÓGICA DE MODIFICACIÓN (HU32) - Debounce y Validación
+  // -----------------------------------------------------
+  const modificacionTimers = {};
+
+  // Disparado por los botones + y -
+  function cambiarCantidad(itemId, delta) {
+      const input = document.getElementById(`input-cantidad-${itemId}`);
+      let actual = parseInt(input.value) || parseInt(input.getAttribute('data-last-val'));
+      let nueva = actual + delta;
+
+      if (nueva < 1) {
+          mostrarToastCarrito("La cantidad mínima es 1. Usa el botón de papelera para retirar el artículo.", "warning");
+          return;
+      }
+      input.value = nueva;
+      agendarModificacion(itemId, nueva);
+  }
+
+  // Disparado si el usuario borra todo el campo y hace clic fuera
+  function validarVacio(itemId, inputElement) {
+      if (inputElement.value.trim() === "" || parseInt(inputElement.value) < 1) {
+          inputElement.value = inputElement.getAttribute('data-last-val');
+      }
+  }
+
+  // Disparado si el usuario escribe un número directamente
+  function inputCambio(itemId, inputElement) {
+      let nueva = parseInt(inputElement.value);
+      if (isNaN(nueva) || nueva < 1) {
+          inputElement.value = inputElement.getAttribute('data-last-val');
+          return;
+      }
+      agendarModificacion(itemId, nueva);
+  }
+
+  // Patrón Debounce: Espera 400ms tras el último clic para evitar saturar el servidor
+  function agendarModificacion(itemId, nuevaCantidad) {
+      if (modificacionTimers[itemId]) clearTimeout(modificacionTimers[itemId]);
+      
+      const fila = document.querySelector(`.carrito-item-row[data-item-id="${itemId}"]`);
+      if (fila) fila.style.opacity = '0.6';
+
+      modificacionTimers[itemId] = setTimeout(() => {
+          enviarModificacionAlServidor(itemId, nuevaCantidad, fila);
+      }, 400);
+  }
+
+  function enviarModificacionAlServidor(itemId, cantidad, fila) {
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      const input = document.getElementById(`input-cantidad-${itemId}`);
+
+      fetch(`/inventario/carrito/modificar/${itemId}/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify({ cantidad: cantidad })
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (fila) fila.style.opacity = '1';
+
+          if (data.success) {
+              // 1. Ajuste por límites de stock
+              input.value = data.nueva_cantidad;
+              input.setAttribute('data-last-val', data.nueva_cantidad);
+              if (data.stock_superado) {
+                  mostrarToastCarrito(`Stock ajustado: solo quedan ${data.stock_maximo} unidades.`, "warning");
+              }
+
+              // 2. Actualización de Totales y Domicilio
+              document.getElementById('cart-subtotal').innerText = "$" + data.subtotal_carrito.toLocaleString('es-CO', {minimumFractionDigits: 2});
+              const badge = document.getElementById('badge-carrito-count');
+              if (badge) badge.innerText = data.total_unidades;
+
+              const domText = document.getElementById('cart-domicilio-text');
+              domText.innerHTML = data.aplica_domicilio ? 
+                  '<span class="text-success"><i class="bi bi-truck me-1"></i> Aplica para envío a domicilio</span>' : 
+                  '<span class="text-warning"><i class="bi bi-shop me-1"></i> Solo recogida en tienda (Monto inferior a $20.000)</span>';
+
+              // 3. UI de la Fila (Subtotal calculado y Descuento SC-001)
+              const lineaSubtotal = document.getElementById(`linea-subtotal-${itemId}`);
+              if (lineaSubtotal) {
+                  lineaSubtotal.innerText = "Total: $" + data.item_subtotal.toLocaleString('es-CO', {minimumFractionDigits: 2});
+              }
+
+              const badgeDescuento = document.getElementById(`badge-descuento-${itemId}`);
+              if (data.descuento_pct > 0) {
+                  badgeDescuento.innerHTML = `<span class="badge bg-success">-${data.descuento_pct}% volumen</span>`;
+              } else {
+                  badgeDescuento.innerHTML = '';
+              }
+
+          } else {
+              input.value = input.getAttribute('data-last-val'); // Rollback visual
+              mostrarToastCarrito(data.error, "danger");
+          }
+      })
+      .catch(error => {
+          if (fila) fila.style.opacity = '1';
+          input.value = input.getAttribute('data-last-val');
+          mostrarToastCarrito("Error al modificar la cantidad.", "danger");
       });
   }
 

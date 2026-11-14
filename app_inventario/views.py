@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -343,3 +344,100 @@ def eliminar_del_carrito_api(request, item_id):
         return JsonResponse(
             {"success": False, "error": "Error interno al intentar eliminar el artículo."}
         )
+
+
+@require_POST
+def modificar_cantidad_api(request, item_id):
+    """
+    Endpoint AJAX para modificar la cantidad de un artículo en el carrito.
+    Cumple con la HU32: Descuentos por volumen, mitigación de concurrencia y límites de stock.
+    """
+    carrito = obtener_carrito(request)
+    try:
+        data = json.loads(request.body)
+        nueva_cantidad = int(data.get("cantidad", 1))
+
+        # Protección: Evitar cantidades nulas o negativas
+        if nueva_cantidad < 1:
+            return JsonResponse({"success": False, "error": "La cantidad mínima es 1 unidad."})
+
+        with transaction.atomic():
+            # Bloqueo atómico del ítem y su producto para evitar ventas fantasmas
+            # y garantizar que se usa el precio oficial más reciente (HU32)
+            item = ItemCarrito.objects.select_for_update().get(id=item_id, carrito=carrito)
+            producto = Producto.objects.select_for_update().get(id=item.producto_id)
+
+            if not producto.activo:
+                return JsonResponse(
+                    {"success": False, "error": "El producto ya no está disponible."}
+                )
+
+            # Ajuste automático al stock máximo disponible
+            stock_superado = False
+            if nueva_cantidad > producto.stock_actual:
+                nueva_cantidad = producto.stock_actual
+                stock_superado = True
+
+            if nueva_cantidad == 0:
+                return JsonResponse(
+                    {"success": False, "error": "Producto agotado en este momento."}
+                )
+
+            # Guardar nueva cantidad
+            item.cantidad = nueva_cantidad
+            item.save()
+
+            # Recálculo integral del carrito aplicando Regla de Negocio SC-001
+            items_actualizados = carrito.items.select_related("producto")
+            subtotal_carrito = 0
+            total_unidades = 0
+
+            # Variables de respuesta para la UI del ítem modificado
+            item_subtotal_calculado = 0
+            descuento_aplicado = 0
+
+            for i in items_actualizados:
+                prod = i.producto
+                precio_base = prod.precio_venta
+
+                # Regla SC-001: Descuentos por volumen usando Decimal
+                descuento_pct = Decimal("0.00")
+                if i.cantidad >= 50:
+                    descuento_pct = Decimal("0.25")
+                elif i.cantidad >= 12:
+                    descuento_pct = Decimal("0.15")
+
+                precio_con_descuento = precio_base * (Decimal("1.00") - descuento_pct)
+                linea_total = precio_con_descuento * i.cantidad
+
+                subtotal_carrito += linea_total
+                total_unidades += i.cantidad
+
+                # Guardar datos específicos si es la línea que acabamos de modificar
+                if i.id == item.id:
+                    item_subtotal_calculado = linea_total
+                    if descuento_pct > 0:
+                        descuento_aplicado = int(descuento_pct * 100)
+
+            aplica_domicilio = subtotal_carrito >= 20000
+
+            return JsonResponse(
+                {
+                    "success": True,
+                    "nueva_cantidad": nueva_cantidad,
+                    "stock_superado": stock_superado,
+                    "stock_maximo": producto.stock_actual,
+                    "item_subtotal": float(item_subtotal_calculado),  # Cast a float
+                    "descuento_pct": descuento_aplicado,
+                    "subtotal_carrito": float(subtotal_carrito),  # Cast a float
+                    "total_unidades": total_unidades,
+                    "aplica_domicilio": aplica_domicilio,
+                }
+            )
+
+    except ItemCarrito.DoesNotExist:
+        return JsonResponse({"success": False, "error": "El artículo no existe en tu carrito."})
+    except (ValueError, TypeError):
+        return JsonResponse({"success": False, "error": "Cantidad inválida."})
+    except Exception:
+        return JsonResponse({"success": False, "error": "Error interno del servidor."})

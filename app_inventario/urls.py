@@ -17,4 +17,9 @@ urlpatterns = [
         views.eliminar_del_carrito_api,
         name="api_eliminar_carrito",
     ),
+    path(
+        "carrito/modificar/<int:item_id>/",
+        views.modificar_cantidad_api,
+        name="api_modificar_carrito",
+    ),
 ]

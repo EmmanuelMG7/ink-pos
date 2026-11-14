@@ -233,3 +233,67 @@ class CarritoViewsTest(TestCase):
         self.assertEqual(
             response.json()["error"], "Error interno al intentar eliminar el artículo."
         )
+
+    def test_api_modificar_carrito_success(self):
+        self.client.force_login(self.user)
+        carrito = Carrito.objects.create(usuario=self.user)
+        item = ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=2)
+
+        url = reverse("inventario:api_modificar_carrito", args=[item.id])
+        response = self.client.post(
+            url, data=json.dumps({"cantidad": 5}), content_type="application/json"
+        )
+        data = response.json()
+
+        self.assertTrue(data["success"])
+        self.assertEqual(data["nueva_cantidad"], 5)
+        self.assertEqual(data["total_unidades"], 5)
+
+    def test_api_modificar_carrito_descuentos_sc001(self):
+        self.client.force_login(self.user)
+        self.producto.stock_actual = 100
+        self.producto.save()
+        carrito = Carrito.objects.create(usuario=self.user)
+        item = ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=1)
+        url = reverse("inventario:api_modificar_carrito", args=[item.id])
+
+        # Evaluar salto al 15% (12 unidades)
+        response = self.client.post(
+            url, data=json.dumps({"cantidad": 12}), content_type="application/json"
+        )
+        self.assertEqual(response.json()["descuento_pct"], 15)
+
+        # Evaluar salto al 25% (50 unidades)
+        response = self.client.post(
+            url, data=json.dumps({"cantidad": 50}), content_type="application/json"
+        )
+        self.assertEqual(response.json()["descuento_pct"], 25)
+
+    def test_api_modificar_carrito_limite_stock(self):
+        self.client.force_login(self.user)
+        carrito = Carrito.objects.create(usuario=self.user)
+        item = ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=1)
+
+        url = reverse("inventario:api_modificar_carrito", args=[item.id])
+        # stock_actual en el setUp es 10, solicitamos 15
+        response = self.client.post(
+            url, data=json.dumps({"cantidad": 15}), content_type="application/json"
+        )
+        data = response.json()
+
+        self.assertTrue(data["success"])
+        self.assertTrue(data["stock_superado"])
+        self.assertEqual(data["nueva_cantidad"], 10)
+
+    def test_api_modificar_carrito_cantidad_invalida(self):
+        self.client.force_login(self.user)
+        carrito = Carrito.objects.create(usuario=self.user)
+        item = ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=2)
+        url = reverse("inventario:api_modificar_carrito", args=[item.id])
+
+        # Intento de bypass a cantidad nula
+        response = self.client.post(
+            url, data=json.dumps({"cantidad": 0}), content_type="application/json"
+        )
+        self.assertFalse(response.json()["success"])
+        self.assertEqual(response.json()["error"], "La cantidad mínima es 1 unidad.")
