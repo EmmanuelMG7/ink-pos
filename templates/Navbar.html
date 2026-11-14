@@ -1,4 +1,4 @@
-{% load i18n %}
+﻿{% load i18n %}
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
   <div class="container-fluid">
     <a class="navbar-brand d-flex align-items-center gap-2 mb-0" href="{% url 'catalogo' %}">
@@ -27,7 +27,9 @@
       {% include 'catalogo/components/buscador.html' %}
       <div class="d-flex align-items-center gap-2">
         {% if user.is_authenticated %}
-          <span class="mb-0 fw-medium">{{ user.username }}</span>
+          <span class="mb-0 fw-medium">
+            {% if user.cliente %}{{ user.cliente.nombre }} ({{ user.username }}){% else %}{{ user.username }}{% endif %}
+          </span>
           <div class="dropstart d-flex border rounded">
             <button
               class="btn"
@@ -48,7 +50,7 @@
 
               <li>
                 <form
-                  action="{% url 'autenticacion:logout' %}"
+                  action="{% if user.cliente %}{% url 'clientes:logout' %}{% else %}{% url 'autenticacion:logout' %}{% endif %}"
                   method="post"
                   class="m-0 p-0 w-100"
                 >
@@ -66,7 +68,7 @@
           </div>
         {% else %}
           <a
-            href="{% url 'autenticacion:login' %}"
+            href="{% url 'clientes:login' %}?next={{ request.get_full_path|urlencode }}"
             class="btn btn-outline-light btn-sm d-flex align-items-center gap-2"
           >
             <i class="bi bi-box-arrow-in-right"></i>
