@@ -117,5 +117,19 @@
           });
       });
     </script>
+
+    <script>
+      // HU24: Mitigación de Caché al navegar hacia atrás
+      // Obliga a actualizar el globo del carrito si el usuario usa el botón "Atrás" del navegador
+      window.addEventListener( "pageshow", function ( event ) {
+        var historyTraversal = event.persisted || 
+                               ( typeof window.performance != "undefined" && 
+                                    window.performance.navigation.type === 2 );
+        if ( historyTraversal ) {
+          // Forzar recarga desde el servidor
+          window.location.reload();
+        }
+      });
+    </script>
   </body>
 </html>

@@ -22,4 +22,9 @@ urlpatterns = [
         views.modificar_cantidad_api,
         name="api_modificar_carrito",
     ),
+    path("checkout/", views.preparar_checkout, name="checkout"),
+    path("checkout/confirmar/", views.confirmar_pedido_api, name="api_confirmar_pedido"),
+    path(
+        "checkout/comprobante/<int:pedido_id>/", views.comprobante_pedido, name="comprobante_pedido"
+    ),
 ]

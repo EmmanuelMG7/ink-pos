@@ -1,3 +1,5 @@
+import random
+import string
 from decimal import Decimal
 
 from django.contrib.auth.models import User
@@ -75,7 +77,6 @@ class Marca(models.Model):
 
 
 class Impuesto(models.Model):
-
     class TipoImpuesto(models.TextChoices):
         PORCENTAJE = "PORCENTAJE", _("Porcentaje (%)")
         FIJO = "FIJO", _("Monto Fijo por Unidad")
@@ -221,27 +222,22 @@ class Producto(models.Model):
         verbose_name = _("models.producto.verbose_name")
         verbose_name_plural = _("models.producto.verbose_name_plural")
         constraints = [
-            # costo_compra >= 0
             models.CheckConstraint(
                 condition=models.Q(costo_compra__gte=0),
                 name="chk_producto_costo_gte_0",
             ),
-            # precio_venta >= costo_compra
             models.CheckConstraint(
                 condition=models.Q(precio_venta__gte=models.F("costo_compra")),
                 name="chk_producto_precio_gte_costo",
             ),
-            # stock_actual >= 0
             models.CheckConstraint(
                 condition=models.Q(stock_actual__gte=0),
                 name="chk_producto_stock_actual_gte_0",
             ),
-            # stock_mínimo >= 0
             models.CheckConstraint(
                 condition=models.Q(stock_minimo__gte=0),
                 name="chk_producto_stock_minimo_gte_0",
             ),
-            # nombre no puede estar vacío
             models.CheckConstraint(
                 condition=~models.Q(nombre=""),
                 name="chk_producto_nombre_no_vacio",
@@ -249,22 +245,16 @@ class Producto(models.Model):
         ]
 
     def save(self, *args, skip_clean=False, **kwargs):
-        """Función llamada para hacer INSERT o UPDATE en la base de datos, se encarga de que se
-        llamen a las funciones de validación de campos usando `self.full_clean()` y permite
-        saltarse las validaciones para testing de base de datos"""
         if not skip_clean:
             self.full_clean()
         super().save(*args, **kwargs)
 
-    # Formatear automáticamente el id del producto a 5 dígitos
     @property
     def codigo(self) -> str:
         return f"{self.pk:05d}" if self.pk else ""
 
     @property
     def imagen_url(self) -> str:
-        """Retorna la URL de la imagen del producto si existe, o la imagen ilustrativa
-        elegante por defecto con el emblema de la papelería (SCRUM-151)."""
         if self.imagen:
             try:
                 return self.imagen.url
@@ -274,7 +264,6 @@ class Producto(models.Model):
 
     @property
     def tiene_imagen(self) -> bool:
-        """Indica si el producto tiene una imagen personalizada asignada (SCRUM-154)."""
         return bool(self.imagen and hasattr(self.imagen, "name") and self.imagen.name)
 
 
@@ -352,7 +341,6 @@ class MovimientoInventario(models.Model):
             if self.stock_anterior is None:
                 self.stock_anterior = self.producto.stock_actual
 
-            # Validar salidas contra stock anterior
             if self.tipo_movimiento in [
                 MovimientoInventario.TipoMovimiento.VENTA,
                 MovimientoInventario.TipoMovimiento.MERMA,
@@ -423,7 +411,6 @@ class MovimientoInventario(models.Model):
 
 
 class Carrito(models.Model):
-    # Relacionado al usuario autenticado o a una sesión anónima
     usuario = models.OneToOneField(
         User, on_delete=models.CASCADE, null=True, blank=True, related_name="carrito"
     )
@@ -451,11 +438,9 @@ class ItemCarrito(models.Model):
         verbose_name = _("Item de Carrito")
         verbose_name_plural = _("Items de Carrito")
         constraints = [
-            # Seguridad: Prevención de Cantidades Negativas o Nulas (HU21)
             models.CheckConstraint(
                 condition=models.Q(cantidad__gt=0), name="chk_itemcarrito_cantidad_gt_0"
             ),
-            # Evita duplicar el mismo producto en el mismo carrito (se debe sumar la cantidad)
             models.UniqueConstraint(fields=["carrito", "producto"], name="uq_itemcarrito_producto"),
         ]
 
@@ -465,7 +450,6 @@ class ItemCarrito(models.Model):
             raise ValidationError({"cantidad": "La cantidad debe ser mayor a 0."})
 
         if self.producto:
-            # Caso Límite: Intento de Compra con Inventario en Cero o Superando Límite
             if self.producto.stock_actual <= 0:
                 raise ValidationError("Este producto se encuentra agotado.")
             if self.cantidad > self.producto.stock_actual:
@@ -480,3 +464,64 @@ class ItemCarrito(models.Model):
 
     def __str__(self):
         return f"{self.cantidad}x {self.producto.nombre} en Carrito {self.carrito.pk}"
+
+
+def generar_codigo_reclamacion():
+    """Genera un código único alfanumérico de 6 caracteres para reclamar en tienda."""
+    return "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+
+class Pedido(models.Model):
+    ESTADOS_PEDIDO = [
+        ("PENDIENTE", "Pendiente de Preparación"),
+        ("LISTO", "Listo para Recoger"),
+        ("ENTREGADO", "Entregado"),
+        ("CANCELADO", "Cancelado"),
+    ]
+
+    METODOS_ENTREGA = [
+        ("TIENDA", "Recogida en Tienda"),
+        ("DOMICILIO", "Envío a Domicilio"),
+    ]
+
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    session_id = models.CharField(max_length=255, null=True, blank=True)
+
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    estado = models.CharField(max_length=20, choices=ESTADOS_PEDIDO, default="PENDIENTE")
+    metodo_entrega = models.CharField(max_length=20, choices=METODOS_ENTREGA, default="TIENDA")
+
+    codigo_reclamacion = models.CharField(
+        max_length=10, default=generar_codigo_reclamacion, unique=True
+    )
+
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    descuento_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    costo_envio = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    class Meta:
+        verbose_name = "Pedido"
+        verbose_name_plural = "Pedidos"
+        ordering = ["-fecha_creacion"]
+
+    def __str__(self):
+        return f"Pedido #{self.id} - {self.codigo_reclamacion}"
+
+
+class DetallePedido(models.Model):
+    pedido = models.ForeignKey(Pedido, related_name="detalles", on_delete=models.CASCADE)
+    producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
+
+    nombre_producto = models.CharField(max_length=255)
+    cantidad = models.PositiveIntegerField()
+    precio_unitario = models.DecimalField(max_digits=12, decimal_places=2)
+    descuento_aplicado_pct = models.PositiveIntegerField(default=0)
+    subtotal_linea = models.DecimalField(max_digits=12, decimal_places=2)
+
+    class Meta:
+        verbose_name = "Detalle de Pedido"
+        verbose_name_plural = "Detalles de Pedido"
+
+    def __str__(self):
+        return f"{self.cantidad}x {self.nombre_producto} (Pedido {self.pedido.id})"

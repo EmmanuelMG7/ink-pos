@@ -1,0 +1,158 @@
+{% extends 'Master.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Checkout" %} - InkPOS{% endblock %}
+
+{% block content %}
+<div class="container py-5 max-w-7xl">
+  <header class="mb-4 pb-2 border-bottom border-secondary-subtle">
+    <h1 class="h3 text-light fw-bold">
+      <i class="bi bi-credit-card-2-front text-primary me-2"></i>{% trans "Finalizar Pedido" %}
+    </h1>
+  </header>
+
+  <div class="row g-4">
+    <!-- Métodos de Entrega -->
+    <div class="col-lg-7">
+      <div class="card bg-dark-subtle border-secondary-subtle mb-4">
+        <div class="card-header bg-dark border-secondary-subtle text-light fw-bold">
+          1. {% trans "Método de Entrega" %}
+        </div>
+        <div class="card-body p-4">
+          
+          <!-- Opción: Recogida en Tienda (HU24) -->
+          <div class="form-check custom-radio-box mb-3 p-3 border border-primary rounded bg-dark" id="box-tienda">
+            <input class="form-check-input ms-1 mt-2" type="radio" name="metodo_entrega" id="radioTienda" value="TIENDA" checked onchange="actualizarResumen()">
+            <label class="form-check-label w-100 ms-2" for="radioTienda">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-light fw-bold"><i class="bi bi-shop me-2 text-primary"></i>{% trans "Recogida en Tienda" %}</span>
+                <span class="text-success fw-bold">¡Gratis! ($0)</span>
+              </div>
+              <small class="text-secondary d-block mt-1">{% trans "Retira tu pedido en nuestra sede presentando tu documento y código de compra. Horario: Lunes a Sábado, 8am a 6pm." %}</small>
+            </label>
+          </div>
+
+          <!-- Opción: Domicilio (Adelanto HU25 / Restringido HU24) -->
+          <div class="form-check custom-radio-box p-3 border border-secondary-subtle rounded bg-dark {% if not aplica_domicilio %}opacity-50{% endif %}" id="box-domicilio">
+            <input class="form-check-input ms-1 mt-2" type="radio" name="metodo_entrega" id="radioDomicilio" value="DOMICILIO" {% if not aplica_domicilio %}disabled{% endif %} onchange="actualizarResumen()">
+            <label class="form-check-label w-100 ms-2" for="radioDomicilio">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-light fw-bold"><i class="bi bi-truck me-2"></i>{% trans "Envío a Domicilio" %}</span>
+                <span class="text-light">$5,000.00</span>
+              </div>
+              {% if aplica_domicilio %}
+                <small class="text-secondary d-block mt-1">{% trans "Entrega el mismo día hábil en la zona urbana." %}</small>
+              {% else %}
+                <small class="text-danger d-block mt-1 fw-bold"><i class="bi bi-exclamation-triangle"></i> {% trans "Requiere compras mayores a $20.000 para habilitarse." %}</small>
+              {% endif %}
+            </label>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen Financiero -->
+    <div class="col-lg-5">
+      <div class="card bg-dark border-secondary-subtle sticky-top" style="top: 1rem;">
+        <div class="card-header bg-dark border-secondary-subtle text-light fw-bold">
+          {% trans "Resumen de Compra" %}
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between mb-2 text-secondary">
+            <span>{% trans "Subtotal productos" %}</span>
+            <span>${{ subtotal_bruto|floatformat:2 }}</span>
+          </div>
+          {% if descuento_total > 0 %}
+          <div class="d-flex justify-content-between mb-2 text-success">
+            <span>{% trans "Descuento por volumen" %}</span>
+            <span>- ${{ descuento_total|floatformat:2 }}</span>
+          </div>
+          {% endif %}
+          <div class="d-flex justify-content-between mb-3 text-secondary">
+            <span>{% trans "Costo de envío" %}</span>
+            <span id="txt-costo-envio" class="fw-medium text-success">$0.00</span>
+          </div>
+          
+          <hr class="border-secondary-subtle">
+          
+          <div class="d-flex justify-content-between mb-4 text-light fs-4 fw-bold">
+            <span>{% trans "Total a Pagar" %}</span>
+            <span id="txt-total-pagar" data-neto="{{ subtotal_neto }}">${{ subtotal_neto|floatformat:2 }}</span>
+          </div>
+          
+          <!-- Botón que disparará el backend de la Fase 3 -->
+          <button class="btn btn-success w-100 fw-bold py-2 btn-lg" id="btn-confirmar" onclick="confirmarPedido()">
+            <i class="bi bi-check-circle me-2"></i> {% trans "Confirmar Pedido" %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function actualizarResumen() {
+      const radioTienda = document.getElementById('radioTienda');
+      const boxTienda = document.getElementById('box-tienda');
+      const boxDomicilio = document.getElementById('box-domicilio');
+      
+      const txtEnvio = document.getElementById('txt-costo-envio');
+      const txtTotal = document.getElementById('txt-total-pagar');
+      
+      const subtotalNeto = parseFloat(txtTotal.getAttribute('data-neto'));
+      
+      // Transición visual ágil < 300ms (HU24)
+      if (radioTienda.checked) {
+          boxTienda.classList.replace('border-secondary-subtle', 'border-primary');
+          boxDomicilio.classList.replace('border-primary', 'border-secondary-subtle');
+          
+          txtEnvio.innerText = '$0.00';
+          txtEnvio.classList.add('text-success');
+          
+          txtTotal.innerText = '$' + subtotalNeto.toLocaleString('es-CO', {minimumFractionDigits: 2});
+      } else {
+          boxDomicilio.classList.replace('border-secondary-subtle', 'border-primary');
+          boxTienda.classList.replace('border-primary', 'border-secondary-subtle');
+          
+          const costoEnvio = 5000; // Simulación base para HU25
+          txtEnvio.innerText = '$' + costoEnvio.toLocaleString('es-CO', {minimumFractionDigits: 2});
+          txtEnvio.classList.remove('text-success');
+          
+          const totalFinal = subtotalNeto + costoEnvio;
+          txtTotal.innerText = '$' + totalFinal.toLocaleString('es-CO', {minimumFractionDigits: 2});
+      }
+  }
+
+  function confirmarPedido() {
+      const btn = document.getElementById('btn-confirmar');
+      const metodoEntrega = document.querySelector('input[name="metodo_entrega"]:checked').value;
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Procesando...';
+      
+      fetch('{% url "inventario:api_confirmar_pedido" %}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify({ metodo_entrega: metodoEntrega })
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              // Redirección inmediata al comprobante de éxito
+              window.location.href = data.url_redireccion;
+          } else {
+              btn.disabled = false;
+              btn.innerHTML = '<i class="bi bi-check-circle me-2"></i> Confirmar Pedido';
+              alert("Error: " + data.error);
+          }
+      })
+      .catch(error => {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-check-circle me-2"></i> Confirmar Pedido';
+          alert("Error de conexión al procesar el pago.");
+      });
+  }
+</script>
+{% endblock %}

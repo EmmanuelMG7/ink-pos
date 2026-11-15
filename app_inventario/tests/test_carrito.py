@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
@@ -6,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from app_inventario.models import Carrito, ItemCarrito, Marca, Producto
+from app_inventario.models import Carrito, ItemCarrito, Marca, Pedido, Producto
 
 
 class CarritoModelTest(TestCase):
@@ -297,3 +298,60 @@ class CarritoViewsTest(TestCase):
         )
         self.assertFalse(response.json()["success"])
         self.assertEqual(response.json()["error"], "La cantidad mínima es 1 unidad.")
+
+    def test_checkout_view_context(self):
+        self.client.force_login(self.user)
+        carrito = Carrito.objects.create(usuario=self.user)
+        # Producto con precio menor a 20.000 para forzar restricción de domicilio
+        self.producto.precio_venta = Decimal("15000.00")
+        self.producto.save()
+        ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=1)
+
+        response = self.client.get(reverse("inventario:checkout"))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context["aplica_domicilio"])
+
+    def test_api_confirmar_pedido_tienda_exito(self):
+        self.client.force_login(self.user)
+        carrito = Carrito.objects.create(usuario=self.user)
+        ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=2)
+        stock_inicial = self.producto.stock_actual
+
+        url = reverse("inventario:api_confirmar_pedido")
+        response = self.client.post(
+            url, data=json.dumps({"metodo_entrega": "TIENDA"}), content_type="application/json"
+        )
+        data = response.json()
+
+        self.assertTrue(data["success"])
+        # Verificar vaciado de carrito y descuento de inventario
+        self.assertEqual(carrito.items.count(), 0)
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, stock_inicial - 2)
+
+        # Verificar integridad del pedido
+        pedido = Pedido.objects.get(id=data["pedido_id"])
+        self.assertEqual(pedido.metodo_entrega, "TIENDA")
+        self.assertEqual(pedido.estado, "LISTO")
+        self.assertEqual(pedido.costo_envio, Decimal("0.00"))
+
+    def test_api_confirmar_pedido_stock_insuficiente(self):
+        self.client.force_login(self.user)
+        carrito = Carrito.objects.create(usuario=self.user)
+
+        # 1. Agregamos una cantidad válida inicialmente (el stock por defecto en tests es 10)
+        ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=8)
+
+        # 2. Simulamos que otro cliente compró el producto en paralelo y el stock bajó a 2
+        self.producto.stock_actual = 2
+        self.producto.save(update_fields=["stock_actual"], skip_clean=True)
+
+        # 3. Intentamos confirmar el pedido
+        url = reverse("inventario:api_confirmar_pedido")
+        response = self.client.post(
+            url, data=json.dumps({"metodo_entrega": "TIENDA"}), content_type="application/json"
+        )
+        data = response.json()
+
+        self.assertFalse(data["success"])
+        self.assertIn("Stock insuficiente", data["error"])

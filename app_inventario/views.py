@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import JsonResponse
@@ -12,7 +12,7 @@ from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
 
 from .forms import ProductoForm
-from .models import Carrito, Categoria, ItemCarrito, Marca, Producto
+from .models import Carrito, Categoria, DetallePedido, ItemCarrito, Marca, Pedido, Producto
 from .tables import ProductoTable
 
 
@@ -274,6 +274,10 @@ def agregar_al_carrito_api(request):
 
     except Producto.DoesNotExist:
         return JsonResponse({"success": False, "error": "Producto no encontrado."})
+    except ValidationError as e:
+        # Atrapa la protección del modelo y se la envía al frontend amigablemente
+        error_msg = e.messages[0] if hasattr(e, "messages") else str(e)
+        return JsonResponse({"success": False, "error": error_msg})
     except Exception:
         return JsonResponse({"success": False, "error": "Error interno del servidor."})
 
@@ -441,3 +445,201 @@ def modificar_cantidad_api(request, item_id):
         return JsonResponse({"success": False, "error": "Cantidad inválida."})
     except Exception:
         return JsonResponse({"success": False, "error": "Error interno del servidor."})
+
+
+def preparar_checkout(request):
+    """
+    Vista de Checkout (HU24 y HU25).
+    Despliega el resumen de compra y permite elegir el método de entrega.
+    """
+    carrito = obtener_carrito(request)
+    items = carrito.items.select_related("producto")
+
+    if not items.exists():
+        messages.warning(request, "Tu carrito está vacío. Agrega productos para continuar.")
+        return redirect("inventario:ver_carrito")
+
+    subtotal_bruto = Decimal("0.00")
+    descuento_total = Decimal("0.00")
+
+    for i in items:
+        precio_base = i.producto.precio_venta
+        descuento_pct = Decimal("0.00")
+
+        if i.cantidad >= 50:
+            descuento_pct = Decimal("0.25")
+        elif i.cantidad >= 12:
+            descuento_pct = Decimal("0.15")
+
+        valor_descuento = (precio_base * descuento_pct) * i.cantidad
+        subtotal_bruto += precio_base * i.cantidad
+        descuento_total += valor_descuento
+
+    subtotal_neto = subtotal_bruto - descuento_total
+
+    # Caso Límite HU24: Domicilio solo disponible si subtotal neto >= 20000
+    aplica_domicilio = subtotal_neto >= Decimal("20000.00")
+
+    context = {
+        "items": items,
+        "subtotal_bruto": subtotal_bruto,
+        "descuento_total": descuento_total,
+        "subtotal_neto": subtotal_neto,
+        "aplica_domicilio": aplica_domicilio,
+    }
+    return render(request, "carrito/checkout.html", context)
+
+
+@require_POST
+def confirmar_pedido_api(request):
+    """
+    Procesa la orden de venta con mitigación de concurrencia (HU24).
+    Bloquea los productos, valida stock, descuenta inventario y emite el pedido.
+    """
+    carrito = obtener_carrito(request)
+
+    try:
+        data = json.loads(request.body)
+        metodo_entrega = data.get("metodo_entrega", "TIENDA")
+
+        with transaction.atomic():
+            items = carrito.items.select_related("producto")
+            if not items.exists():
+                return JsonResponse({"success": False, "error": "El carrito está vacío."})
+
+            # Bloqueo atómico de todos los productos involucrados ordenados por ID (evita deadlocks)
+            producto_ids = [item.producto_id for item in items]
+            productos_bloqueados = (
+                Producto.objects.select_for_update().filter(id__in=producto_ids).order_by("id")
+            )
+            productos_dict = {p.id: p for p in productos_bloqueados}
+
+            subtotal_bruto = Decimal("0.00")
+            descuento_total = Decimal("0.00")
+            detalles_a_crear = []
+
+            for item in items:
+                producto = productos_dict.get(item.producto_id)
+
+                if not producto or not producto.activo:
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "error": f"El producto {item.producto.nombre} ya no está disponible.",
+                        }
+                    )
+
+                # Caso Límite: Verificación estricta de stock disponible (HU24)
+                if producto.stock_actual < item.cantidad:
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "error": (
+                                f"Stock insuficiente para {producto.nombre}. "
+                                f"Disponibles: {producto.stock_actual}"
+                            ),
+                        }
+                    )
+
+                # Regla SC-001: Descuentos por volumen
+                precio_base = producto.precio_venta
+                descuento_pct_val = 0
+                descuento_decimal = Decimal("0.00")
+
+                if item.cantidad >= 50:
+                    descuento_pct_val = 25
+                    descuento_decimal = Decimal("0.25")
+                elif item.cantidad >= 12:
+                    descuento_pct_val = 15
+                    descuento_decimal = Decimal("0.15")
+
+                valor_descuento_linea = (precio_base * descuento_decimal) * item.cantidad
+                subtotal_linea_neto = (precio_base * item.cantidad) - valor_descuento_linea
+
+                subtotal_bruto += precio_base * item.cantidad
+                descuento_total += valor_descuento_linea
+
+                # Descuento inmediato de inventario
+                producto.stock_actual -= item.cantidad
+                producto.save(update_fields=["stock_actual"], skip_clean=True)
+
+                # Preparar Detalle (Fotografía financiera en el tiempo)
+                detalles_a_crear.append(
+                    DetallePedido(
+                        producto=producto,
+                        nombre_producto=producto.nombre,
+                        cantidad=item.cantidad,
+                        precio_unitario=precio_base,
+                        descuento_aplicado_pct=descuento_pct_val,
+                        subtotal_linea=subtotal_linea_neto,
+                    )
+                )
+
+            subtotal_neto = subtotal_bruto - descuento_total
+            costo_envio = Decimal("0.00")
+
+            if metodo_entrega == "DOMICILIO":
+                if subtotal_neto < Decimal("20000.00"):
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "error": "El envío a domicilio requiere una compra mínima de $20.000.",
+                        }
+                    )
+                costo_envio = Decimal("5000.00")
+
+            total_final = subtotal_neto + costo_envio
+
+            # Crear la cabecera del Pedido
+            nuevo_pedido = Pedido.objects.create(
+                usuario=request.user if request.user.is_authenticated else None,
+                session_id=(
+                    request.session.session_key if not request.user.is_authenticated else None
+                ),
+                estado="LISTO" if metodo_entrega == "TIENDA" else "PENDIENTE",
+                metodo_entrega=metodo_entrega,
+                subtotal=subtotal_bruto,
+                descuento_total=descuento_total,
+                costo_envio=costo_envio,
+                total=total_final,
+            )
+
+            # Guardar los detalles en bloque por rendimiento
+            for detalle in detalles_a_crear:
+                detalle.pedido = nuevo_pedido
+            DetallePedido.objects.bulk_create(detalles_a_crear)
+
+            # Vaciar el carrito
+            items.delete()
+
+            return JsonResponse(
+                {
+                    "success": True,
+                    "pedido_id": nuevo_pedido.id,
+                    "url_redireccion": f"/inventario/checkout/comprobante/{nuevo_pedido.id}/",
+                }
+            )
+
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "error": f"Ocurrió un error al procesar tu pedido: {str(e)}"}
+        )
+
+
+def comprobante_pedido(request, pedido_id):
+    """
+    Vista final del flujo (HU24): Muestra el código de reclamación y las instrucciones.
+    """
+    pedido = get_object_or_404(Pedido, id=pedido_id)
+
+    # Seguridad: Solo el dueño del pedido (por sesión o usuario) puede ver su comprobante
+    es_dueno = False
+    if request.user.is_authenticated and pedido.usuario == request.user:
+        es_dueno = True
+    elif not request.user.is_authenticated and pedido.session_id == request.session.session_key:
+        es_dueno = True
+
+    if not es_dueno:
+        raise PermissionDenied("No tienes permiso para ver este comprobante.")
+
+    return render(request, "carrito/comprobante.html", {"pedido": pedido})

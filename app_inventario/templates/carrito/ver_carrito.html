@@ -95,9 +95,9 @@
               <span class="text-warning"><i class="bi bi-shop me-1"></i> {% trans "Solo recogida en tienda (Monto inferior a $20.000)" %}</span>
             {% endif %}
           </div>
-          <button class="btn btn-primary w-100 fw-bold py-2" disabled>
+          <a href="{% url 'inventario:checkout' %}" class="btn btn-primary w-100 fw-bold py-2">
             {% trans "Proceder al Pago" %} <i class="bi bi-arrow-right ms-2"></i>
-          </button>
+          </a>
         </div>
       </div>
     </div>

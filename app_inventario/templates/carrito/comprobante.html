@@ -1,0 +1,61 @@
+{% extends 'Master.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Comprobante de Pedido" %} - InkPOS{% endblock %}
+
+{% block content %}
+<!-- Contenedor con overflow-y-auto y padding inferior (pb-5) para permitir scroll sin cortes -->
+<div class="container py-5 pb-5 d-flex justify-content-center overflow-y-auto">
+  <div class="card bg-dark border-success border-2 shadow-lg mb-5" style="max-width: 600px; width: 100%; height: fit-content;">
+    <div class="card-body text-center p-5">
+      <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+      <h2 class="text-light fw-bold mt-3 mb-1">¡Pedido Confirmado!</h2>
+      <p class="text-secondary mb-4">Gracias por tu compra en InkPOS.</p>
+      
+      <div class="bg-dark-subtle border border-secondary-subtle rounded p-4 mb-4 text-start">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="text-secondary fw-medium">{% trans "Código de Reclamación:" %}</span>
+          <span class="badge bg-primary fs-5 px-3 py-2 font-monospace">{{ pedido.codigo_reclamacion }}</span>
+        </div>
+        
+        <hr class="border-secondary-subtle">
+        
+        <div class="row text-light">
+          <div class="col-6 mb-2">
+            <small class="text-secondary d-block">{% trans "No. Orden" %}</small>
+            <span class="fw-medium">#{{ pedido.id|stringformat:"05d" }}</span>
+          </div>
+          <div class="col-6 mb-2">
+            <small class="text-secondary d-block">{% trans "Método de Entrega" %}</small>
+            <span class="fw-medium text-uppercase">{{ pedido.get_metodo_entrega_display }}</span>
+          </div>
+          <div class="col-6">
+            <small class="text-secondary d-block">{% trans "Total Pagado" %}</small>
+            <span class="fw-bold text-success fs-5">${{ pedido.total|floatformat:2 }}</span>
+          </div>
+          <div class="col-6">
+            <small class="text-secondary d-block">{% trans "Fecha" %}</small>
+            <span class="fw-medium">{{ pedido.fecha_creacion|date:"d M Y, h:i A" }}</span>
+          </div>
+        </div>
+      </div>
+
+      {% if pedido.metodo_entrega == 'TIENDA' %}
+      <div class="alert bg-primary text-light border-0 text-start" role="alert">
+        <h5 class="alert-heading fw-bold mb-2"><i class="bi bi-info-circle-fill me-2"></i>{% trans "Instrucciones de Retiro" %}</h5>
+        <p class="mb-0 small">
+          Tu pedido ya se encuentra en estado <strong>LISTO</strong>. Puedes pasar a recogerlo en nuestro mostrador principal. 
+          Recuerda llevar contigo este <strong>Código de Reclamación ({{ pedido.codigo_reclamacion }})</strong> y tu documento de identidad original.
+        </p>
+        <hr>
+        <p class="mb-0 small"><i class="bi bi-clock me-1"></i> <strong>Horario:</strong> Lunes a Sábado, 8:00 AM a 6:00 PM.</p>
+      </div>
+      {% endif %}
+      
+      <a href="{% url 'inventario:catalogo' %}" class="btn btn-outline-light w-100 mt-3">
+        <i class="bi bi-arrow-left me-2"></i> {% trans "Volver al Catálogo" %}
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
