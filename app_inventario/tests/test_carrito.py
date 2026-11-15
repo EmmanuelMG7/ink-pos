@@ -355,3 +355,60 @@ class CarritoViewsTest(TestCase):
 
         self.assertFalse(data["success"])
         self.assertIn("Stock insuficiente", data["error"])
+
+    def test_api_confirmar_pedido_domicilio_exito(self):
+        self.client.force_login(self.user)
+        carrito = Carrito.objects.create(usuario=self.user)
+        self.producto.precio_venta = Decimal("25000.00")
+        self.producto.stock_actual = 5
+        self.producto.save()
+        ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=1)
+
+        url = reverse("inventario:api_confirmar_pedido")
+        payload = {
+            "metodo_entrega": "DOMICILIO",
+            "direccion_entrega": "Calle Falsa 123",
+            "telefono_contacto": "3001234567",
+        }
+        response = self.client.post(url, data=json.dumps(payload), content_type="application/json")
+        data = response.json()
+
+        self.assertTrue(data["success"])
+        pedido = Pedido.objects.get(id=data["pedido_id"])
+        self.assertEqual(pedido.direccion_entrega, "Calle Falsa 123")
+        self.assertEqual(pedido.costo_envio, Decimal("5000.00"))
+
+    def test_api_confirmar_pedido_domicilio_monto_insuficiente(self):
+        self.client.force_login(self.user)
+        carrito = Carrito.objects.create(usuario=self.user)
+        # Caso límite: $19.999 pesos
+        self.producto.precio_venta = Decimal("19999.00")
+        self.producto.save()
+        ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=1)
+
+        url = reverse("inventario:api_confirmar_pedido")
+        payload = {
+            "metodo_entrega": "DOMICILIO",
+            "direccion_entrega": "Calle Falsa 123",
+            "telefono_contacto": "3001234567",
+        }
+        response = self.client.post(url, data=json.dumps(payload), content_type="application/json")
+        data = response.json()
+
+        self.assertFalse(data["success"])
+        self.assertIn("mínima de $20.000", data["error"])
+
+    def test_api_confirmar_pedido_domicilio_sin_direccion(self):
+        self.client.force_login(self.user)
+        carrito = Carrito.objects.create(usuario=self.user)
+        self.producto.precio_venta = Decimal("25000.00")
+        self.producto.save()
+        ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=1)
+
+        url = reverse("inventario:api_confirmar_pedido")
+        payload = {"metodo_entrega": "DOMICILIO", "direccion_entrega": "", "telefono_contacto": ""}
+        response = self.client.post(url, data=json.dumps(payload), content_type="application/json")
+        data = response.json()
+
+        self.assertFalse(data["success"])
+        self.assertIn("obligatorios", data["error"])

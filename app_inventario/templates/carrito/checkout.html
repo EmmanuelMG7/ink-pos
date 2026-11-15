@@ -4,7 +4,7 @@
 {% block title %}{% trans "Checkout" %} - InkPOS{% endblock %}
 
 {% block content %}
-<div class="container py-5 max-w-7xl">
+<div class="container py-5 pb-5 mb-5 max-w-7xl overflow-y-auto" style="height: 100vh;">
   <header class="mb-4 pb-2 border-bottom border-secondary-subtle">
     <h1 class="h3 text-light fw-bold">
       <i class="bi bi-credit-card-2-front text-primary me-2"></i>{% trans "Finalizar Pedido" %}
@@ -12,7 +12,7 @@
   </header>
 
   <div class="row g-4">
-    <!-- Métodos de Entrega -->
+    <!-- Métodos de Entrega y Formulario -->
     <div class="col-lg-7">
       <div class="card bg-dark-subtle border-secondary-subtle mb-4">
         <div class="card-header bg-dark border-secondary-subtle text-light fw-bold">
@@ -20,7 +20,7 @@
         </div>
         <div class="card-body p-4">
           
-          <!-- Opción: Recogida en Tienda (HU24) -->
+          <!-- Opción: Recogida en Tienda -->
           <div class="form-check custom-radio-box mb-3 p-3 border border-primary rounded bg-dark" id="box-tienda">
             <input class="form-check-input ms-1 mt-2" type="radio" name="metodo_entrega" id="radioTienda" value="TIENDA" checked onchange="actualizarResumen()">
             <label class="form-check-label w-100 ms-2" for="radioTienda">
@@ -32,7 +32,7 @@
             </label>
           </div>
 
-          <!-- Opción: Domicilio (Adelanto HU25 / Restringido HU24) -->
+          <!-- Opción: Domicilio (HU25) -->
           <div class="form-check custom-radio-box p-3 border border-secondary-subtle rounded bg-dark {% if not aplica_domicilio %}opacity-50{% endif %}" id="box-domicilio">
             <input class="form-check-input ms-1 mt-2" type="radio" name="metodo_entrega" id="radioDomicilio" value="DOMICILIO" {% if not aplica_domicilio %}disabled{% endif %} onchange="actualizarResumen()">
             <label class="form-check-label w-100 ms-2" for="radioDomicilio">
@@ -43,9 +43,32 @@
               {% if aplica_domicilio %}
                 <small class="text-secondary d-block mt-1">{% trans "Entrega el mismo día hábil en la zona urbana." %}</small>
               {% else %}
-                <small class="text-danger d-block mt-1 fw-bold"><i class="bi bi-exclamation-triangle"></i> {% trans "Requiere compras mayores a $20.000 para habilitarse." %}</small>
+                <small class="text-danger d-block mt-1 fw-bold">
+                  <i class="bi bi-exclamation-triangle"></i> {% trans "Te faltan" %} ${{ monto_faltante|floatformat:2 }} {% trans "para habilitar el domicilio." %}
+                </small>
               {% endif %}
             </label>
+          </div>
+
+          <!-- Formulario Desplegable de Dirección -->
+          <div id="formulario-domicilio" class="mt-4 d-none">
+            <h5 class="text-light mb-3 fs-6 border-bottom border-secondary-subtle pb-2">
+              <i class="bi bi-geo-alt text-primary me-2"></i>{% trans "Datos de Entrega" %}
+            </h5>
+            <div class="row g-3">
+              <div class="col-md-8">
+                <label for="direccion_entrega" class="form-label text-secondary small mb-1">{% trans "Dirección Completa *" %}</label>
+                <input type="text" class="form-control bg-dark text-light border-secondary-subtle" id="direccion_entrega" placeholder="Ej. Calle 10 # 20-30, Apto 401">
+              </div>
+              <div class="col-md-4">
+                <label for="telefono_contacto" class="form-label text-secondary small mb-1">{% trans "Teléfono *" %}</label>
+                <input type="tel" class="form-control bg-dark text-light border-secondary-subtle" id="telefono_contacto" placeholder="Ej. 3001234567">
+              </div>
+              <div class="col-12">
+                <label for="indicaciones_entrega" class="form-label text-secondary small mb-1">{% trans "Indicaciones adicionales (Opcional)" %}</label>
+                <textarea class="form-control bg-dark text-light border-secondary-subtle" id="indicaciones_entrega" rows="2" placeholder="Dejar en portería, casa fachada blanca..."></textarea>
+              </div>
+            </div>
           </div>
 
         </div>
@@ -96,26 +119,26 @@
       const radioTienda = document.getElementById('radioTienda');
       const boxTienda = document.getElementById('box-tienda');
       const boxDomicilio = document.getElementById('box-domicilio');
+      const formularioDomicilio = document.getElementById('formulario-domicilio');
       
       const txtEnvio = document.getElementById('txt-costo-envio');
       const txtTotal = document.getElementById('txt-total-pagar');
-      
       const subtotalNeto = parseFloat(txtTotal.getAttribute('data-neto'));
       
-      // Transición visual ágil < 300ms (HU24)
       if (radioTienda.checked) {
           boxTienda.classList.replace('border-secondary-subtle', 'border-primary');
           boxDomicilio.classList.replace('border-primary', 'border-secondary-subtle');
+          formularioDomicilio.classList.add('d-none');
           
           txtEnvio.innerText = '$0.00';
           txtEnvio.classList.add('text-success');
-          
           txtTotal.innerText = '$' + subtotalNeto.toLocaleString('es-CO', {minimumFractionDigits: 2});
       } else {
           boxDomicilio.classList.replace('border-secondary-subtle', 'border-primary');
           boxTienda.classList.replace('border-primary', 'border-secondary-subtle');
+          formularioDomicilio.classList.remove('d-none');
           
-          const costoEnvio = 5000; // Simulación base para HU25
+          const costoEnvio = 5000;
           txtEnvio.innerText = '$' + costoEnvio.toLocaleString('es-CO', {minimumFractionDigits: 2});
           txtEnvio.classList.remove('text-success');
           
@@ -129,18 +152,33 @@
       const metodoEntrega = document.querySelector('input[name="metodo_entrega"]:checked').value;
       const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
       
+      const payload = { metodo_entrega: metodoEntrega };
+      
+      // Validación estricta en frontend para HU25
+      if (metodoEntrega === 'DOMICILIO') {
+          const direccion = document.getElementById('direccion_entrega').value.trim();
+          const telefono = document.getElementById('telefono_contacto').value.trim();
+          
+          if (!direccion || !telefono) {
+              alert("Por favor, completa la dirección y el teléfono para el envío a domicilio.");
+              return;
+          }
+          payload.direccion_entrega = direccion;
+          payload.telefono_contacto = telefono;
+          payload.indicaciones_entrega = document.getElementById('indicaciones_entrega').value.trim();
+      }
+      
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Procesando...';
       
       fetch('{% url "inventario:api_confirmar_pedido" %}', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-          body: JSON.stringify({ metodo_entrega: metodoEntrega })
+          body: JSON.stringify(payload)
       })
       .then(response => response.json())
       .then(data => {
           if (data.success) {
-              // Redirección inmediata al comprobante de éxito
               window.location.href = data.url_redireccion;
           } else {
               btn.disabled = false;

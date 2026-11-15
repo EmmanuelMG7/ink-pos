@@ -50,6 +50,19 @@
         <hr>
         <p class="mb-0 small"><i class="bi bi-clock me-1"></i> <strong>Horario:</strong> Lunes a Sábado, 8:00 AM a 6:00 PM.</p>
       </div>
+      {% elif pedido.metodo_entrega == 'DOMICILIO' %}
+      <div class="alert bg-secondary text-light border-0 text-start" role="alert">
+        <h5 class="alert-heading fw-bold mb-2"><i class="bi bi-truck me-2"></i>{% trans "Detalles de Despacho" %}</h5>
+        <p class="mb-2 small">
+          Tu pedido ha sido confirmado y asignado a nuestra ruta de despachos. El tiempo estimado de entrega es <strong>el mismo día hábil</strong>.
+        </p>
+        <hr>
+        <p class="mb-1 small"><i class="bi bi-geo-alt me-1"></i> <strong>Dirección:</strong> {{ pedido.direccion_entrega }}</p>
+        <p class="mb-1 small"><i class="bi bi-telephone me-1"></i> <strong>Teléfono:</strong> {{ pedido.telefono_contacto }}</p>
+        {% if pedido.indicaciones_entrega %}
+        <p class="mb-0 small"><i class="bi bi-chat-left-text me-1"></i> <strong>Indicaciones:</strong> {{ pedido.indicaciones_entrega }}</p>
+        {% endif %}
+      </div>
       {% endif %}
       
       <a href="{% url 'inventario:catalogo' %}" class="btn btn-outline-light w-100 mt-3">
