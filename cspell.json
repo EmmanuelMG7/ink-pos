@@ -149,7 +149,12 @@
     "renderizado",
     "modificacion",
     "MODIFICACION",
-    "maximo"
+    "maximo",
+    "desincronización",
+    "ENVIO",
+    "envio",
+    "metodo",
+    "redireccion"
   ],
   "patterns": [
     {
