@@ -1013,3 +1013,16 @@ msgstr "Volver al catálogo"
 
 msgid "Detalle de Producto"
 msgstr "Detalle de Producto"
+
+# Sello de Novedad (HU28 - SCRUM-130)
+msgid "Novedad"
+msgstr "Novedad"
+
+msgid "models.producto.field.fecha_creacion"
+msgstr "Fecha de creación"
+
+msgid "Volver al catálogo"
+msgstr "Volver al catálogo"
+
+msgid "Detalle de Producto"
+msgstr "Detalle de Producto"

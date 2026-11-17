@@ -812,3 +812,16 @@ msgstr "Back to catalog"
 
 msgid "Detalle de Producto"
 msgstr "Product Detail"
+
+# Sello de Novedad (HU28 - SCRUM-130)
+msgid "Novedad"
+msgstr "New"
+
+msgid "models.producto.field.fecha_creacion"
+msgstr "Creation date"
+
+msgid "Volver al catálogo"
+msgstr "Back to catalog"
+
+msgid "Detalle de Producto"
+msgstr "Product Detail"
