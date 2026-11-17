@@ -20,7 +20,9 @@
     ".flake8",
     "pyproject.toml",
     "templates/svg/**",
-    "locale/**"
+    "locale/**",
+    "*.svg",
+    "**/tests/**"
   ],
   "words": [
     "errormsg",
@@ -126,7 +128,17 @@
     "tzdata",
     "vcard",
     "venv",
-    "wsgi"
+    "wsgi",
+    "busqueda",
+    "aáàäâ",
+    "AÁÀÄÂ",
+    "eéèëê",
+    "EÉÈËÊ",
+    "iíìïî",
+    "oóòöô",
+    "OÓÒÖÔ",
+    "uúùüû",
+    "UÚÙÜÛ"
   ],
   "patterns": [
     {

@@ -187,7 +187,7 @@ def build_accent_insensitive_regex(term: str) -> str:
         if base_char in vowel_map:
             result.append(vowel_map[base_char])
         elif unicodedata.category(char).startswith("M"):
-            # Marca diacrítica combinable ya absorbida por la clase de vocal base
+            # Marca combinable ya absorbida por la clase de vocal base
             continue
         else:
             result.append(re.escape(char))
@@ -200,7 +200,7 @@ def catalogo(request):
     Vista pública del Catálogo Virtual de Productos (HU20, HU27, HU31).
     Despliega productos activos en bloques paginados de 20 artículos.
     Permite filtrar por categoría ('?categoria=<id>') y buscar por '?q=<termino>'.
-    Implementa sanitización de parámetros y redirección suave (SCRUM-142, SCRUM-186).
+    Implementa sanitización de parámetros y re-dirección suave (SCRUM-142, SCRUM-186).
     """
     # 1. Obtener lista de categorías para la barra de navegación (SCRUM-159)
     categorias = list(Categoria.objects.all().order_by("nombre"))
@@ -242,7 +242,7 @@ def catalogo(request):
         if pattern:
             productos_qs = productos_qs.filter(nombre__iregex=pattern)
 
-    # 7. Evitar duplicados por relaciones ManyToMany y ordenar de forma determinística (SCRUM-160)
+    # 7. Evitar duplicados por relaciones ManyToMany y ordenar de forma segura (SCRUM-160)
     productos_qs = productos_qs.order_by("nombre", "id").distinct()
 
     # 8. Paginación estructurada de 20 artículos por página (SCRUM-163, SCRUM-164, SCRUM-186)
@@ -254,10 +254,10 @@ def catalogo(request):
         try:
             val = int(page_param)
             if val <= 0:
-                # Valor no permitido (cero o negativo) -> sanitizar a página 1 (SCRUM-145)
+                # Valor no permitido (cero o negativo) -> re-dirigir a página 1 (SCRUM-145)
                 page_number = 1
             elif paginator.num_pages > 0 and val > paginator.num_pages:
-                # Salto a página inexistente -> redirección suave
+                # Salto a página inexistente -> re-dirección suave
                 # preservando parámetros (SCRUM-142, SCRUM-163, SCRUM-186)
                 query_params = request.GET.copy()
                 query_params["page"] = paginator.num_pages
@@ -265,7 +265,7 @@ def catalogo(request):
             else:
                 page_number = val
         except (ValueError, TypeError):
-            # Valor inválido -> sanitizar a página 1 (SCRUM-145)
+            # Valor inválido -> re-dirigir a página 1 (SCRUM-145)
             page_number = 1
 
     page_obj = paginator.get_page(page_number)
