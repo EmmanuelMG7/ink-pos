@@ -220,7 +220,7 @@
     const alertaFoto = document.getElementById('alerta_imagen_crear');
     const defaultSrc = previewFoto ? previewFoto.getAttribute('data-default') : '';
 
-    function resetearFoto() {
+    function reiniciarFoto() {
       if (inputFoto) inputFoto.value = '';
       if (previewFoto && defaultSrc) previewFoto.src = defaultSrc;
       if (btnQuitarFoto) btnQuitarFoto.classList.add('d-none');
@@ -237,7 +237,7 @@
     }
 
     if (btnQuitarFoto) {
-      btnQuitarFoto.addEventListener('click', resetearFoto);
+      btnQuitarFoto.addEventListener('click', reiniciarFoto);
     }
 
     if (inputFoto) {
@@ -249,10 +249,10 @@
         const maxBytes = 5 * 1024 * 1024;
         if (archivo.size > maxBytes) {
           if (alertaFoto) {
-            alertaFoto.textContent = 'El archivo es muy pesado (máx 5 MB). Optimícelo antes de continuar.';
+            alertaFoto.textContent = 'El archivo es muy pesado (máx 5 MB). Debe reducirlo antes de continuar.';
             alertaFoto.classList.remove('d-none');
           }
-          resetearFoto();
+          reiniciarFoto();
           return;
         }
 
@@ -267,7 +267,7 @@
             alertaFoto.textContent = 'Formato no permitido. Use JPG, PNG o WEBP.';
             alertaFoto.classList.remove('d-none');
           }
-          resetearFoto();
+          reiniciarFoto();
           return;
         }
 
@@ -277,7 +277,7 @@
               alertaFoto.textContent = 'Archivo bloqueado por seguridad: doble extensión detectada.';
               alertaFoto.classList.remove('d-none');
             }
-            resetearFoto();
+            reiniciarFoto();
             return;
           }
         }
@@ -288,7 +288,7 @@
             alertaFoto.textContent = 'Formato no permitido. Formatos permitidos: JPG, JPEG, PNG, WEBP.';
             alertaFoto.classList.remove('d-none');
           }
-          resetearFoto();
+          reiniciarFoto();
           return;
         }
 
@@ -312,12 +312,12 @@
 
     // Volver a la página 1 cuando se limpie o cierre el modal
     modalEl.addEventListener('reset', function () {
-      resetearFoto();
+      reiniciarFoto();
       setTimeout(irAPagina1, 0);
     });
 
     modalEl.addEventListener('hidden.bs.modal', function () {
-      resetearFoto();
+      reiniciarFoto();
       irAPagina1();
     });
   })();
