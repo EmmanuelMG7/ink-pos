@@ -55,7 +55,7 @@ def validar_tamano_imagen(file: UploadedFile) -> None:
         raise ValidationError(
             f"El archivo es muy pesado ({file.size / (1024 * 1024):.1f} MB). "
             f"El tamaño máximo permitido es de {MAX_IMAGE_SIZE_MB} Megabytes. "
-            "Por favor optimícelo antes de continuar."
+            "Por favor optimizarlo antes de continuar."
         )
 
 
@@ -141,7 +141,7 @@ def optimizar_imagen(
     file: UploadedFile, max_dimension: int = 1200, quality: int = 85
 ) -> ContentFile:
     """Genera una versión optimizada y comprimida de la imagen para garantizar que el catálogo
-    cargue ágilmente sin sacrificar calidad visual (SCRUM-157).
+    cargue rápidamente sin sacrificar calidad visual (SCRUM-157).
     """
     posicion_inicial = file.tell() if hasattr(file, "tell") else 0
     file.seek(0)
@@ -150,7 +150,7 @@ def optimizar_imagen(
         formato_original = img.format or "JPEG"
         modo = img.mode
 
-        # Redimensionar si excede dimensiones máximas conservando relación de aspecto
+        # Re-dimensionar si excede dimensiones máximas conservando relación de aspecto
         ancho, alto = img.size
         if ancho > max_dimension or alto > max_dimension:
             img.thumbnail((max_dimension, max_dimension), Image.Resampling.LANCZOS)
