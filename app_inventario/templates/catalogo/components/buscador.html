@@ -1,0 +1,153 @@
+{% load i18n %}
+<div class="position-relative flex-grow-1 mx-lg-4 my-2 my-lg-0 contenedor-buscador" style="max-width: 480px;" id="contenedor-buscador">
+  <form action="{% url 'catalogo' %}" method="get" class="d-flex align-items-center position-relative w-100 form-buscador-catalogo" role="search">
+    <div class="input-group input-group-sm">
+      <span class="input-group-text bg-dark-subtle border-secondary-subtle text-secondary">
+        <i class="bi bi-search"></i>
+      </span>
+      <input
+        type="search"
+        name="q"
+        id="input-buscador-catalogo"
+        class="form-control form-control-sm bg-dark text-light border-secondary-subtle ps-2 pe-4 input-buscador-catalogo"
+        placeholder="{% trans 'Buscar productos por nombre...' %}"
+        value="{{ query|default:'' }}"
+        autocomplete="off"
+        aria-label="{% trans 'Buscar productos' %}"
+      />
+      <!-- Botón de Limpieza Rápida 'X' (SCRUM-184) -->
+      <a
+        href="{% url 'catalogo' %}"
+        id="btn-limpiar-busqueda"
+        class="btn btn-sm btn-link position-absolute end-0 top-50 translate-middle-y text-secondary text-decoration-none z-3 pe-2 btn-limpiar-busqueda {% if not query %}d-none{% endif %}"
+        title="{% trans 'Limpiar búsqueda' %}"
+        aria-label="{% trans 'Limpiar búsqueda' %}"
+        style="box-shadow: none;"
+      >
+        <i class="bi bi-x-circle-fill"></i>
+      </a>
+      <button type="submit" class="btn btn-primary btn-sm px-3 shadow-sm">
+        {% trans "Buscar" %}
+      </button>
+    </div>
+  </form>
+
+  <!-- Menú Desplegable con Sugerencias Rápidas (SCRUM-183, SCRUM-191) -->
+  <div
+    id="sugerencias-busqueda-dropdown"
+    class="dropdown-menu dropdown-menu-dark w-100 shadow-lg border border-secondary-subtle p-0 mt-1 d-none position-absolute z-3 overflow-hidden sugerencias-busqueda-dropdown"
+    style="max-height: 380px; overflow-y: auto;"
+  >
+    <div id="lista-sugerencias" class="list-group list-group-flush lista-sugerencias"></div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    document.querySelectorAll(".contenedor-buscador").forEach(function (container) {
+      if (container.dataset.initialized) return;
+      container.dataset.initialized = "true";
+
+      const input = container.querySelector(".input-buscador-catalogo");
+      const btnLimpiar = container.querySelector(".btn-limpiar-busqueda");
+      const dropdown = container.querySelector(".sugerencias-busqueda-dropdown");
+      const lista = container.querySelector(".lista-sugerencias");
+      if (!input || !btnLimpiar || !dropdown || !lista) return;
+
+      let debounceTimer = null;
+      let abortController = null;
+
+      function toggleBtnLimpiar() {
+        if (input.value.trim().length > 0) {
+          btnLimpiar.classList.remove("d-none");
+        } else {
+          btnLimpiar.classList.add("d-none");
+        }
+      }
+
+      function cerrarSugerencias() {
+        dropdown.classList.add("d-none");
+        lista.innerHTML = "";
+      }
+
+      btnLimpiar.addEventListener("click", function (e) {
+        input.value = "";
+        toggleBtnLimpiar();
+        cerrarSugerencias();
+        // Si estamos en una página con parámetro de búsqueda 'q' activo, retornar a la vista global (SCRUM-184)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has("q")) {
+          window.location.href = "{% url 'catalogo' %}";
+          e.preventDefault();
+        } else {
+          e.preventDefault();
+          input.focus();
+        }
+      });
+
+      input.addEventListener("input", function () {
+        toggleBtnLimpiar();
+        const term = input.value.trim();
+
+        clearTimeout(debounceTimer);
+        if (abortController) {
+          abortController.abort();
+        }
+
+        if (term.length < 3) {
+          cerrarSugerencias();
+          return;
+        }
+
+        // Control de frecuencia con espera de 300ms (SCRUM-191)
+        debounceTimer = setTimeout(() => {
+          abortController = new AbortController();
+          const url = "{% url 'catalogo_sugerencias' %}?q=" + encodeURIComponent(term);
+
+          fetch(url, { signal: abortController.signal })
+            .then((response) => response.json())
+            .then((data) => {
+              lista.innerHTML = "";
+              if (data.results && data.results.length > 0) {
+                data.results.forEach((prod) => {
+                  const item = document.createElement("a");
+                  item.href = prod.url;
+                  item.className = "list-group-item list-group-item-action list-group-item-dark d-flex align-items-center gap-3 p-2 text-decoration-none border-secondary-subtle";
+                  item.innerHTML = `
+                    <img src="${prod.imagen_url}" alt="${prod.nombre}" class="rounded object-fit-contain bg-black p-1 border border-secondary-subtle" style="width: 40px; height: 40px;" />
+                    <div class="flex-grow-1 overflow-hidden">
+                      <div class="text-light text-truncate small fw-medium">${prod.nombre}</div>
+                      <div class="text-success small fw-bold">$${prod.precio}</div>
+                    </div>
+                  `;
+                  lista.appendChild(item);
+                });
+                dropdown.classList.remove("d-none");
+              } else {
+                cerrarSugerencias();
+              }
+            })
+            .catch((err) => {
+              if (err.name !== "AbortError") {
+                cerrarSugerencias();
+              }
+            });
+        }, 300);
+      });
+
+      // Cerrar sugerencias al hacer clic fuera
+      document.addEventListener("click", function (event) {
+        if (!container.contains(event.target)) {
+          cerrarSugerencias();
+        }
+      });
+
+      // Cerrar sugerencias con Escape
+      input.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          cerrarSugerencias();
+        }
+      });
+    });
+  })();
+</script>

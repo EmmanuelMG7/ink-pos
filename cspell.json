@@ -21,7 +21,8 @@
     "pyproject.toml",
     "templates/svg/**",
     "locale/**",
-    "*.svg"
+    "*.svg",
+    "**/tests/**"
   ],
   "words": [
     "errormsg",
@@ -127,7 +128,17 @@
     "tzdata",
     "vcard",
     "venv",
-    "wsgi"
+    "wsgi",
+    "busqueda",
+    "aáàäâ",
+    "AÁÀÄÂ",
+    "eéèëê",
+    "EÉÈËÊ",
+    "iíìïî",
+    "oóòöô",
+    "OÓÒÖÔ",
+    "uúùüû",
+    "UÚÙÜÛ"
   ],
   "patterns": [
     {

@@ -24,6 +24,7 @@
         {% include 'nav_item.html' with url_name=item.url_name label=item.label %}
         {% endfor %}
       </ul>
+      {% include 'catalogo/components/buscador.html' %}
       <div class="d-flex align-items-center gap-2">
         {% if user.is_authenticated %}
           <span class="mb-0 fw-medium">{{ user.username }}</span>
