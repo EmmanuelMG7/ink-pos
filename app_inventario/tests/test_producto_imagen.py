@@ -263,7 +263,7 @@ class ProductoImagenTestCase(TestCase):
     # SCRUM-157: Optimización y Compresión Automática de Imágenes
     # --------------------------------------------------------------------------
     def test_scrum_157_optimizacion_y_compresion_alta_resolucion(self):
-        """Una imagen de alta resolución (ej. 3000x2000) se redimensiona y optimiza."""
+        """Una imagen de alta resolución (ej. 3000x2000) se re-dimensiona y optimiza."""
         img_hd = crear_imagen_en_memoria(formato="JPEG", tamano=(3000, 2000))
         img_opt = optimizar_imagen(img_hd, max_dimension=1200, quality=85)
 
