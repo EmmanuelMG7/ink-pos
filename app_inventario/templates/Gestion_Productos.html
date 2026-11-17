@@ -189,6 +189,23 @@
                             }
                         }
                     }
+
+                    // Precarga de imagen del producto en edición (SCRUM-149, SCRUM-150, SCRUM-151)
+                    const previewEdit = document.getElementById('preview_imagen_editar');
+                    if (previewEdit) {
+                        const imgUrl = data.imagen_url || previewEdit.getAttribute('data-default');
+                        previewEdit.src = imgUrl;
+                        previewEdit.setAttribute('data-original', imgUrl);
+                    }
+                    const inputEdit = document.getElementById('input_imagen_editar');
+                    if (inputEdit) inputEdit.value = '';
+                    const btnQuitar = document.getElementById('btn_quitar_imagen_editar');
+                    if (btnQuitar) btnQuitar.classList.add('d-none');
+                    const alertaEdit = document.getElementById('alerta_imagen_editar');
+                    if (alertaEdit) {
+                        alertaEdit.textContent = '';
+                        alertaEdit.classList.add('d-none');
+                    }
                 })
                 .catch(error => console.error('Error al cargar datos:', error));
         });
@@ -207,6 +224,20 @@
                 const marcaContainer = document.getElementById('dropdown_marca_edit_container');
                 if (marcaContainer && typeof marcaContainer.resetToDefault === 'function') {
                     marcaContainer.resetToDefault();
+                }
+                const previewEdit = document.getElementById('preview_imagen_editar');
+                if (previewEdit) {
+                    previewEdit.src = previewEdit.getAttribute('data-default');
+                    previewEdit.removeAttribute('data-original');
+                }
+                const inputEdit = document.getElementById('input_imagen_editar');
+                if (inputEdit) inputEdit.value = '';
+                const btnQuitar = document.getElementById('btn_quitar_imagen_editar');
+                if (btnQuitar) btnQuitar.classList.add('d-none');
+                const alertaEdit = document.getElementById('alerta_imagen_editar');
+                if (alertaEdit) {
+                    alertaEdit.textContent = '';
+                    alertaEdit.classList.add('d-none');
                 }
             });
         }

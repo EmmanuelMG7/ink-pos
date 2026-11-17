@@ -1,5 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -15,7 +17,9 @@ from .tables import ProductoTable
 @permission_required("app_inventario.view_producto", raise_exception=True)
 def gestion_productos(request):
     if request.method == "POST" and "nombre" in request.POST:
-        form = ProductoForm(request.POST)
+        if not request.user.has_perm("app_inventario.add_producto"):
+            raise PermissionDenied
+        form = ProductoForm(request.POST, request.FILES)
         if form.is_valid():
             try:
                 producto = form.save()
@@ -62,7 +66,7 @@ def editar_producto(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
 
     if request.method == "POST":
-        form = ProductoForm(request.POST, instance=producto)
+        form = ProductoForm(request.POST, request.FILES, instance=producto)
         if form.is_valid():
             try:
                 form.save()
@@ -121,6 +125,8 @@ def obtener_producto(request, pk):
         "marca": producto.marca.nombre if producto.marca else "",
         "categorias": list(producto.categorias.values_list("nombre", flat=True)),
         "impuesto": producto.impuesto_id if producto.impuesto else "",
+        "imagen_url": producto.imagen_url,
+        "tiene_imagen": producto.tiene_imagen,
     }
     return JsonResponse(data)
 
@@ -140,3 +146,48 @@ def eliminar_producto(request, pk):
         messages.error(request, f"Hubo un error al eliminar el producto: {str(e)}")
 
     return redirect("inventario:gestion")
+
+
+def catalogo(request):
+    """
+    Vista pública del Catálogo Virtual de Productos (HU20 - SCRUM-35).
+    Despliega productos activos en bloques paginados de 20 artículos.
+    Implementa sanitización de parámetros (SCRUM-145) y re-dirección suave (SCRUM-142).
+    """
+    productos_qs = (
+        Producto.objects.filter(activo=True)
+        .select_related("marca", "impuesto")
+        .prefetch_related("categorias")
+        .order_by("nombre", "id")
+    )
+
+    paginator = Paginator(productos_qs, 20)
+    page_param = request.GET.get("page")
+    page_number = 1
+
+    if page_param is not None and page_param != "":
+        try:
+            val = int(page_param)
+            if val <= 0:
+                # Valor no permitido (cero o negativo) -> re-dirigir a página 1 (SCRUM-145)
+                page_number = 1
+            elif paginator.num_pages > 0 and val > paginator.num_pages:
+                # Salto a página inexistente -> re-dirección suave a la
+                # última página válida (SCRUM-142)
+                query_params = request.GET.copy()
+                query_params["page"] = paginator.num_pages
+                return redirect(f"{request.path}?{query_params.urlencode()}")
+            else:
+                page_number = val
+        except (ValueError, TypeError):
+            # Valor inválido (texto, decimal o inyección) -> re-dirigir a página 1 (SCRUM-145)
+            page_number = 1
+
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "page_obj": page_obj,
+        "productos": page_obj.object_list,
+        "total_productos": paginator.count,
+    }
+    return render(request, "catalogo/catalogo.html", context)

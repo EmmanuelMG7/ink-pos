@@ -1,0 +1,53 @@
+{% load i18n %}
+{% if page_obj.has_other_pages %}
+  <nav aria-label="{% trans 'Navegación del catálogo' %}" class="mt-auto pt-3 pb-4">
+    <ul class="pagination justify-content-center mb-0">
+      <!-- Botón Anterior -->
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="{% trans 'Anterior' %}">
+            <i class="bi bi-chevron-left me-1"></i>{% trans "Anterior" %}
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link"><i class="bi bi-chevron-left me-1"></i>{% trans "Anterior" %}</span>
+        </li>
+      {% endif %}
+
+      <!-- Números de Página -->
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <li class="page-item active" aria-current="page">
+            <span class="page-link">{{ num }}</span>
+          </li>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+
+      <!-- Botón Siguiente -->
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="{% trans 'Siguiente' %}">
+            {% trans "Siguiente" %}<i class="bi bi-chevron-right ms-1"></i>
+          </a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">{% trans "Siguiente" %}<i class="bi bi-chevron-right ms-1"></i></span>
+        </li>
+      {% endif %}
+    </ul>
+
+    <div class="text-center text-secondary small mt-2">
+      {% blocktrans with current=page_obj.number total=page_obj.paginator.num_pages count total_count=total_productos %}
+        Página {{ current }} de {{ total }} ({{ total_count }} producto en total)
+      {% plural %}
+        Página {{ current }} de {{ total }} ({{ total_count }} productos en total)
+      {% endblocktrans %}
+    </div>
+  </nav>
+{% endif %}

@@ -841,3 +841,41 @@ msgstr "Por favor ingresa un valor válido."
 
 msgid "form.default.errormsg.empty"
 msgstr "Este campo no puede estar vacío."
+
+# Catalogo de productos (HU20 - SCRUM-35)
+msgid "Catálogo de Productos"
+msgstr "Catálogo de Productos"
+
+msgid "Explora nuestros artículos y existencias disponibles."
+msgstr "Explora nuestros artículos y existencias disponibles."
+
+msgid "Actualmente no hay artículos disponibles y pronto habrá novedades."
+msgstr "Actualmente no hay artículos disponibles y pronto habrá novedades."
+
+msgid "Agotado"
+msgstr "Agotado"
+
+msgid "disponibles"
+msgstr "disponibles"
+
+msgid "Iniciar Sesión"
+msgstr "Iniciar Sesión"
+
+msgid "Anterior"
+msgstr "Anterior"
+
+msgid "Siguiente"
+msgstr "Siguiente"
+
+msgid "Navegación del catálogo"
+msgstr "Navegación del catálogo"
+
+msgid "Catálogo vacío"
+msgstr "Catálogo vacío"
+
+#, python-format
+msgid "Página %(current)s de %(total)s (%(total_count)s producto en total)"
+id_plural "Página %(current)s de %(total)s (%(total_count)s productos en total)"
+msgstr[0] "Página %(current)s de %(total)s (%(total_count)s producto en total)"
+msgstr[1] "Página %(current)s de %(total)s (%(total_count)s productos en total)"
+

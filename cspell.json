@@ -20,7 +20,8 @@
     ".flake8",
     "pyproject.toml",
     "templates/svg/**",
-    "locale/**"
+    "locale/**",
+    "*.svg"
   ],
   "words": [
     "errormsg",
