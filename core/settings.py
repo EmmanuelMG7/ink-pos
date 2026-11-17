@@ -1,3 +1,4 @@
+# cspell:disable
 """
 Django settings for core project.
 

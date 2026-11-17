@@ -50,6 +50,10 @@ class Cliente(models.Model):
         null=True,
         verbose_name=_("models.cliente.field.email"),
     )
+    es_institucional = models.BooleanField(
+        default=False,
+        verbose_name=_("models.cliente.field.es_institucional"),
+    )
 
     class Meta:
         verbose_name = _("models.cliente.verbose_name")
@@ -70,9 +74,8 @@ class Cliente(models.Model):
         if self.identificacion:
             self.identificacion = self.identificacion.strip()
         if not self.identificacion:
-            raise ValidationError(
-                {"identificacion": "El número de identificación no puede estar vacío."}
-            )
+            msg = "El número de identificación no puede estar vacío."
+            raise ValidationError({"identificacion": msg})
 
         if self.nombre:
             self.nombre = self.nombre.strip()
@@ -95,7 +98,7 @@ class Cliente(models.Model):
 
     @property
     def es_corporativo(self) -> bool:
-        return self.tipo_documento == TipoDocumento.NIT
+        return self.tipo_documento == TipoDocumento.NIT or self.es_institucional
 
     def __str__(self):
         return f"{self.nombre} ({self.identificacion})"

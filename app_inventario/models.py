@@ -1,3 +1,4 @@
+# cspell:disable
 import random
 import string
 from decimal import Decimal
@@ -192,6 +193,17 @@ class Producto(models.Model):
         decimal_places=2,
         verbose_name=_("models.producto.field.precio_venta"),
     )
+    es_institucional = models.BooleanField(
+        default=False,
+        verbose_name=_("models.producto.field.es_institucional"),
+    )
+    precio_institucional = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("models.producto.field.precio_institucional"),
+    )
     impuesto = models.ForeignKey(
         Impuesto,
         on_delete=models.SET_NULL,
@@ -250,6 +262,26 @@ class Producto(models.Model):
             ),
         ]
 
+    def clean(self):
+        super().clean()
+        if self.precio_institucional is not None:
+            if self.costo_compra is not None and self.precio_institucional < self.costo_compra:
+                raise ValidationError(
+                    {
+                        "precio_institucional": (
+                            "El precio institucional no puede ser inferior al costo de compra."
+                        )
+                    }
+                )
+            if self.precio_venta is not None and self.precio_institucional > self.precio_venta:
+                raise ValidationError(
+                    {
+                        "precio_institucional": (
+                            "El precio institucional no puede ser superior al precio de venta."
+                        )
+                    }
+                )
+
     def save(self, *args, skip_clean=False, **kwargs):
         if not skip_clean:
             self.full_clean()
@@ -274,8 +306,6 @@ class Producto(models.Model):
 
     @property
     def es_novedad(self) -> bool:
-        """Determina si el producto fue registrado dentro de los últimos 30 días calendario
-        (SCRUM-170, SCRUM-174)."""
         if not self.fecha_creacion:
             return False
         dias = (timezone.now().date() - self.fecha_creacion.date()).days

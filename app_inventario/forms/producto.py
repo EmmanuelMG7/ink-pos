@@ -1,3 +1,4 @@
+# cspell:disable
 from decimal import Decimal
 
 from django import forms
@@ -53,7 +54,14 @@ class ProductoForm(BootstrapModelForm):
         model = Producto
         # Campos excluidos del formulario. Se excluyen marca y categorías para evitar
         # errores de asignación internos con Django, delegando la asignación al método save()
-        exclude = ["activo", "marca", "categorias", "fecha_creacion"]
+        exclude = [
+            "activo",
+            "marca",
+            "categorias",
+            "fecha_creacion",
+            "es_institucional",
+            "precio_institucional",
+        ]
 
         labels = {
             "nombre": _("form.producto.field.nombre"),
