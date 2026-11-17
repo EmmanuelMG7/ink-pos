@@ -21,7 +21,8 @@
     "pyproject.toml",
     "templates/svg/**",
     "locale/**",
-    "*.svg"
+    "*.svg",
+    "**/tests/**"
   ],
   "words": [
     "errormsg",

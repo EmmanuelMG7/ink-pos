@@ -153,7 +153,7 @@ def catalogo(request):
     Vista pública del Catálogo Virtual de Productos (HU20 - SCRUM-35, HU27 - SCRUM-128).
     Despliega productos activos en bloques paginados de 20 artículos.
     Permite filtrar por categoría mediante el parámetro GET '?categoria=<id>'.
-    Implementa sanitización de parámetros (SCRUM-145, SCRUM-166) y redirección suave (SCRUM-142).
+    Implementa sanitización de parámetros (SCRUM-145, SCRUM-166) y re-dirección suave (SCRUM-142).
     """
     # 1. Obtener lista de categorías para la barra de navegación (SCRUM-159)
     categorias = list(Categoria.objects.all().order_by("nombre"))
@@ -185,7 +185,7 @@ def catalogo(request):
     if categoria_actual:
         productos_qs = productos_qs.filter(categorias=categoria_actual)
 
-    # 5. Evitar duplicados por relaciones ManyToMany y ordenar de forma determinística (SCRUM-160)
+    # 5. Evitar duplicados por relaciones ManyToMany y ordenar de forma segura.
     productos_qs = productos_qs.order_by("nombre", "id").distinct()
 
     # 6. Paginación estructurada de 20 artículos por página (SCRUM-163, SCRUM-164)
@@ -200,7 +200,7 @@ def catalogo(request):
                 # Valor no permitido (cero o negativo) -> re-dirigir a página 1 (SCRUM-145)
                 page_number = 1
             elif paginator.num_pages > 0 and val > paginator.num_pages:
-                # Salto a página inexistente -> redirección suave
+                # Salto a página inexistente -> re-dirección suave
                 # preservando parámetros (SCRUM-142, SCRUM-163)
                 query_params = request.GET.copy()
                 query_params["page"] = paginator.num_pages
@@ -208,7 +208,7 @@ def catalogo(request):
             else:
                 page_number = val
         except (ValueError, TypeError):
-            # Valor inválido -> sanitizar a página 1 (SCRUM-145)
+            # Valor inválido -> re-dirigir a página 1 (SCRUM-145)
             page_number = 1
 
     page_obj = paginator.get_page(page_number)
