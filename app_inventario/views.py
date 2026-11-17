@@ -251,7 +251,7 @@ def catalogo(request):
         try:
             val = int(page_param)
             if val <= 0:
-                # Valor no permitido (cero o negativo) -> sanitizar a página 1 (SCRUM-145)
+                # Valor no permitido (cero o negativo) -> re-dirigir a página 1 (SCRUM-145)
                 page_number = 1
             elif paginator.num_pages > 0 and val > paginator.num_pages:
                 # Salto a página inexistente -> redirección suave
@@ -262,7 +262,7 @@ def catalogo(request):
             else:
                 page_number = val
         except (ValueError, TypeError):
-            # Valor inválido -> sanitizar a página 1 (SCRUM-145)
+            # Valor inválido -> re-dirigir a página 1 (SCRUM-145)
             page_number = 1
 
     page_obj = paginator.get_page(page_number)
