@@ -152,7 +152,7 @@ def catalogo(request):
     """
     Vista pública del Catálogo Virtual de Productos (HU20 - SCRUM-35).
     Despliega productos activos en bloques paginados de 20 artículos.
-    Implementa sanitización de parámetros (SCRUM-145) y redirección suave (SCRUM-142).
+    Implementa sanitización de parámetros (SCRUM-145) y re-dirección suave (SCRUM-142).
     """
     productos_qs = (
         Producto.objects.filter(activo=True)
@@ -169,10 +169,10 @@ def catalogo(request):
         try:
             val = int(page_param)
             if val <= 0:
-                # Valor no permitido (cero o negativo) -> sanitizar a página 1 (SCRUM-145)
+                # Valor no permitido (cero o negativo) -> re-dirigir a página 1 (SCRUM-145)
                 page_number = 1
             elif paginator.num_pages > 0 and val > paginator.num_pages:
-                # Salto a página inexistente -> redirección suave a la
+                # Salto a página inexistente -> re-dirección suave a la
                 # última página válida (SCRUM-142)
                 query_params = request.GET.copy()
                 query_params["page"] = paginator.num_pages
@@ -180,7 +180,7 @@ def catalogo(request):
             else:
                 page_number = val
         except (ValueError, TypeError):
-            # Valor inválido (texto, decimal o inyección) -> sanitizar a página 1 (SCRUM-145)
+            # Valor inválido (texto, decimal o inyección) -> re-dirigir a página 1 (SCRUM-145)
             page_number = 1
 
     page_obj = paginator.get_page(page_number)
