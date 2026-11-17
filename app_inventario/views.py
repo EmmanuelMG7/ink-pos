@@ -561,8 +561,10 @@ def preparar_checkout(request):
 
     subtotal_neto = subtotal_bruto - descuento_total
 
-    # Caso Límite HU24: Domicilio solo disponible si subtotal neto >= 20000
-    aplica_domicilio = subtotal_neto >= Decimal("20000.00")
+    # Caso Límite HU25: Evaluación exacta del umbral y cálculo de faltante
+    umbral_domicilio = Decimal("20000.00")
+    aplica_domicilio = subtotal_neto >= umbral_domicilio
+    monto_faltante = umbral_domicilio - subtotal_neto if not aplica_domicilio else Decimal("0.00")
 
     context = {
         "items": items,
@@ -570,6 +572,7 @@ def preparar_checkout(request):
         "descuento_total": descuento_total,
         "subtotal_neto": subtotal_neto,
         "aplica_domicilio": aplica_domicilio,
+        "monto_faltante": monto_faltante,
     }
     return render(request, "carrito/checkout.html", context)
 
@@ -585,6 +588,11 @@ def confirmar_pedido_api(request):
     try:
         data = json.loads(request.body)
         metodo_entrega = data.get("metodo_entrega", "TIENDA")
+
+        # Nuevos campos de HU25
+        direccion = data.get("direccion_entrega", "").strip()
+        telefono = data.get("telefono_contacto", "").strip()
+        indicaciones = data.get("indicaciones_entrega", "").strip()
 
         with transaction.atomic():
             items = carrito.items.select_related("producto")
@@ -670,11 +678,21 @@ def confirmar_pedido_api(request):
                             "error": "El envío a domicilio requiere una compra mínima de $20.000.",
                         }
                     )
+                if not direccion or not telefono:
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "error": (
+                                "La dirección y el teléfono son obligatorios para"
+                                " el envío a domicilio."
+                            ),
+                        }
+                    )
                 costo_envio = Decimal("5000.00")
 
             total_final = subtotal_neto + costo_envio
 
-            # Crear la cabecera del Pedido
+            # Crear la cabecera del Pedido con los nuevos datos
             nuevo_pedido = Pedido.objects.create(
                 usuario=request.user if request.user.is_authenticated else None,
                 session_id=(
@@ -682,6 +700,9 @@ def confirmar_pedido_api(request):
                 ),
                 estado="LISTO" if metodo_entrega == "TIENDA" else "PENDIENTE",
                 metodo_entrega=metodo_entrega,
+                direccion_entrega=direccion if metodo_entrega == "DOMICILIO" else None,
+                telefono_contacto=telefono if metodo_entrega == "DOMICILIO" else None,
+                indicaciones_entrega=indicaciones if metodo_entrega == "DOMICILIO" else None,
                 subtotal=subtotal_bruto,
                 descuento_total=descuento_total,
                 costo_envio=costo_envio,

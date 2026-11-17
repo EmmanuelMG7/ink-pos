@@ -510,6 +510,17 @@ class Pedido(models.Model):
         max_length=10, default=generar_codigo_reclamacion, unique=True
     )
 
+    # Datos Confidenciales de Envío a Domicilio (HU25)
+    direccion_entrega = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name="Dirección de Entrega"
+    )
+    telefono_contacto = models.CharField(
+        max_length=20, null=True, blank=True, verbose_name="Teléfono de Contacto"
+    )
+    indicaciones_entrega = models.TextField(
+        null=True, blank=True, verbose_name="Indicaciones de Entrega"
+    )
+
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     descuento_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     costo_envio = models.DecimalField(max_digits=12, decimal_places=2, default=0)
