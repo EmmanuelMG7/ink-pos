@@ -1,0 +1,203 @@
+<!-- cspell:disable -->
+{% load i18n static %}
+<!doctype html>
+<html data-bs-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>InkPOS - Registro</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+
+  <body class="bg-body">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      {% if messages %}
+        {% for message in messages %}
+          <div
+            class="toast align-items-center text-bg-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} border-0"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+            data-bs-autohide="true"
+            data-bs-delay="5000"
+          >
+            <div class="d-flex">
+              <div class="toast-body">{{ message }}</div>
+              <button
+                type="button"
+                class="btn-close btn-close-white me-2 m-auto"
+                data-bs-dismiss="toast"
+                aria-label="Close"
+              ></button>
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <div class="d-flex justify-content-center align-items-center min-vh-100 py-4">
+      <div
+        class="bg-body-tertiary p-4 rounded shadow-lg border border-secondary-subtle w-100"
+        style="max-width: 28rem;"
+      >
+        <div class="d-flex w-100 align-items-center m-2">
+          <div style="width: 48px; height: 48px; color: #fff">
+            {% include 'svg/Brand.svg' %}
+          </div>
+          <h1 class="mb-0 ms-2 text-center w-100">InkPOS</h1>
+        </div>
+        <div class="d-flex w-100 justify-content-center">
+          <p class="text-center text-wrap text-body-secondary small" style="max-width: 22rem;">
+            {% trans "Crea tu cuenta personal o corporativa (NIT) para guardar tus datos de envío y gestionar tus pedidos." %}
+          </p>
+        </div>
+
+        {% if form.non_field_errors or form.website.errors %}
+          <div class="alert alert-danger py-2 small" role="alert">
+            {{ form.non_field_errors.0|default:form.website.errors.0 }}
+          </div>
+        {% endif %}
+
+        <form id="registroForm" action="{% url 'clientes:registro' %}" method="post" class="needs-validation" novalidate>
+          {% csrf_token %}
+          {{ form.website }}
+
+          <div class="mb-2 has-validation">
+            {% with doc_field=form.tipo_documento id_field=form.identificacion %}
+              {% include 'tipo_documento_group.html' %}
+            {% endwith %}
+          </div>
+
+          <div class="mb-2 has-validation">
+            {% with field=form.nombre span_icon="bi bi-person-vcard-fill" %}
+              {% include 'bootstrap_input_field.html' %}
+            {% endwith %}
+          </div>
+
+          <div class="mb-2 has-validation">
+            {% with field=form.direccion span_icon="bi bi-geo-alt-fill" %}
+              {% include 'bootstrap_input_field.html' %}
+            {% endwith %}
+          </div>
+
+          <div class="mb-2 has-validation">
+            {% with field=form.telefono span_icon="bi bi-telephone-fill" %}
+              {% include 'bootstrap_input_field.html' %}
+            {% endwith %}
+          </div>
+
+          <div class="mb-2 has-validation">
+            {% with field=form.email span_icon="bi bi-envelope-fill" %}
+              {% include 'bootstrap_input_field.html' %}
+            {% endwith %}
+          </div>
+
+          <div class="mb-2 has-validation">
+            {% with field=form.contrasena span_icon="bi bi-key-fill" %}
+              {% include 'password_input_field.html' %}
+            {% endwith %}
+          </div>
+
+          <div class="mb-3" id="password_strength_container">
+            <div class="progress" style="height: 6px;">
+              <div
+                id="password_strength_bar"
+                class="progress-bar bg-danger"
+                role="progressbar"
+                style="width: 0%;"
+                aria-valuenow="0"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              ></div>
+            </div>
+            <small id="password_strength_text" class="text-body-secondary d-block mt-1" style="font-size: 0.78rem;">
+              {% trans "Fortaleza de la clave: Mínimo 8 caracteres, mayúscula, minúscula, número y símbolo." %}
+            </small>
+          </div>
+
+          {% if form.identificacion.errors or form.email.errors %}
+            <div class="alert alert-warning d-flex align-items-center justify-content-between py-2 mb-3">
+              <span class="small">
+                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                {% trans "¿Ya tienes cuenta?" %}
+              </span>
+              <a href="{% url 'autenticacion:login' %}" class="btn btn-sm btn-outline-warning">
+                {% trans "Recuperar cuenta / Ingresar" %}
+              </a>
+            </div>
+          {% endif %}
+
+          <button type="submit" id="btnRegistro" class="btn btn-primary w-100" data-loading-button>
+            {% trans "Crear Cuenta" %}
+          </button>
+
+          <div class="text-center mt-3">
+            <span class="small text-body-secondary">{% trans "¿Ya tienes una cuenta?" %}</span>
+            <a href="{% url 'autenticacion:login' %}" class="small text-decoration-none ms-1">
+              {% trans "Iniciar Sesión" %}
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const toastElList = document.querySelectorAll(".toast");
+        [...toastElList].forEach((toastEl) => {
+          const toast = new bootstrap.Toast(toastEl);
+          toast.show();
+        });
+
+        const passInput = document.querySelector('input[name="contrasena"]');
+        const bar = document.getElementById("password_strength_bar");
+        const text = document.getElementById("password_strength_text");
+
+        if (passInput && bar && text) {
+          passInput.addEventListener("input", function () {
+            const val = passInput.value || "";
+            let score = 0;
+            if (val.length >= 8) score += 25;
+            if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score += 25;
+            if (/\d/.test(val)) score += 25;
+            if (/[^a-zA-Z0-9\s]/.test(val)) score += 25;
+
+            bar.style.width = score + "%";
+            bar.setAttribute("aria-valuenow", score);
+            bar.classList.remove("bg-danger", "bg-warning", "bg-success");
+
+            if (score === 0) {
+              bar.classList.add("bg-danger");
+              text.textContent = "Fortaleza de la clave: Sin evaluar";
+            } else if (score <= 50) {
+              bar.classList.add("bg-danger");
+              text.textContent = "Fortaleza de la clave: Débil";
+            } else if (score === 75) {
+              bar.classList.add("bg-warning");
+              text.textContent = "Fortaleza de la clave: Media";
+            } else {
+              bar.classList.add("bg-success");
+              text.textContent = "Fortaleza de la clave: Fuerte y segura";
+            }
+          });
+        }
+      });
+    </script>
+    <script src="{% static 'js/FormValidationIntercept.js' %}"></script>
+    <script src="{% static 'js/loading_button.js' %}"></script>
+  </body>
+</html>

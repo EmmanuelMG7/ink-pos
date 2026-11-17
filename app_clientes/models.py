@@ -1,3 +1,5 @@
+# cspell:disable
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -8,6 +10,14 @@ from app_common.constants import TipoDocumento
 class Cliente(models.Model):
     TipoDocumento = TipoDocumento
 
+    auth_user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="cliente",
+        null=True,
+        blank=True,
+        verbose_name=_("models.cliente.field.auth_user"),
+    )
     tipo_documento = models.CharField(
         max_length=2,
         choices=TipoDocumento,
@@ -82,6 +92,10 @@ class Cliente(models.Model):
         if not skip_clean:
             self.full_clean()
         super().save(*args, **kwargs)
+
+    @property
+    def es_corporativo(self) -> bool:
+        return self.tipo_documento == TipoDocumento.NIT
 
     def __str__(self):
         return f"{self.nombre} ({self.identificacion})"

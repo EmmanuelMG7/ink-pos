@@ -1,4 +1,4 @@
-{% load i18n static %}
+﻿{% load i18n static %}
 <!doctype html>
 <html data-bs-theme="dark">
   <head>
@@ -76,6 +76,13 @@
           <button type="submit" id="btnLogin" class="btn btn-primary w-100" data-loading-button>
             {% trans "Iniciar Sesión" %}
           </button>
+
+          <div class="text-center mt-3">
+            <span class="small text-body-secondary">{% trans "¿Eres cliente nuevo?" %}</span>
+            <a href="{% url 'clientes:registro' %}" class="small text-decoration-none fw-semibold ms-1">
+              {% trans "Regístrate aquí" %}
+            </a>
+          </div>
         </form>
       </div>
     </div>
