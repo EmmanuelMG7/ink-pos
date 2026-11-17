@@ -7,13 +7,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app_inventario', '0002_alter_categoria_options_alter_impuesto_options_and_more'),
+        ("app_inventario", "0002_alter_categoria_options_alter_impuesto_options_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='producto',
-            name='fecha_creacion',
-            field=models.DateTimeField(default=django.utils.timezone.now, editable=False, verbose_name='models.producto.field.fecha_creacion'),
+            model_name="producto",
+            name="fecha_creacion",
+            field=models.DateTimeField(
+                default=django.utils.timezone.now,
+                editable=False,
+                verbose_name="models.producto.field.fecha_creacion",
+            ),
         ),
     ]

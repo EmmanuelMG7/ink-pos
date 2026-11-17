@@ -1,7 +1,7 @@
 import json
-from decimal import Decimal
 import re
 import unicodedata
+from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -748,6 +748,8 @@ def comprobante_pedido(request, pedido_id):
         raise PermissionDenied("No tienes permiso para ver este comprobante.")
 
     return render(request, "carrito/comprobante.html", {"pedido": pedido})
+
+
 def catalogo_sugerencias(request):
     """
     Endpoint JSON para el menú de sugerencias rápidas (SCRUM-183, SCRUM-191).
