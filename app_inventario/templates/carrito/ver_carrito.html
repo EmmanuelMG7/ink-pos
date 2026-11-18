@@ -198,7 +198,6 @@
                   const badge = document.getElementById('badge-carrito-count');
                   if (badge) {
                       badge.innerText = data.total_unidades;
-                      if (data.total_unidades === 0) badge.classList.add('d-none');
                   }
 
                   if (data.carrito_vacio) {
