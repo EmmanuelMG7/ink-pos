@@ -1,3 +1,6 @@
+from app_clientes.models import Cliente
+import time
+from django.db import OperationalError
 # cspell:disable
 import json
 import re
@@ -287,9 +290,15 @@ def catalogo(request):
 
 def _resolver_precios_carrito(request, productos: list[Producto]) -> dict[int, Producto]:
     """Resuelve en bloque las tarifas institucionales vigentes para la sesion actual (HU30)."""
+    user = getattr(request, "user", None)
+    if user and getattr(user, "is_authenticated", False):
+        cliente_fresco = Cliente.objects.filter(auth_user=user).first()
+        if cliente_fresco is not None:
+            user.cliente = cliente_fresco
+
     lista = list(productos)
     if lista:
-        PromotionEngineService.resolve_catalog_institutional_prices(lista, request.user)
+        PromotionEngineService.resolve_catalog_institutional_prices(lista, user)
     return {p.pk: p for p in lista}
 
 
@@ -664,122 +673,139 @@ def confirmar_pedido_api(request):
         telefono = data.get("telefono_contacto", "").strip()
         indicaciones = data.get("indicaciones_entrega", "").strip()
 
-        with transaction.atomic():
-            items = carrito.items.select_related("producto")
-            if not items.exists():
-                return JsonResponse({"success": False, "error": "El carrito está vacío."})
+        max_reintentos = 5
+        for intento in range(max_reintentos):
+            try:
+                with transaction.atomic():
+                    if request.user.is_authenticated:
+                        cliente_lock = (
+                            Cliente.objects.select_for_update()
+                            .filter(auth_user=request.user)
+                            .first()
+                        )
+                        if cliente_lock is not None:
+                            request.user.cliente = cliente_lock
 
-            # Bloqueo atómico de todos los productos involucrados ordenados por ID (evita deadlocks)
-            producto_ids = [item.producto_id for item in items]
-            productos_bloqueados = (
-                Producto.objects.select_for_update().filter(id__in=producto_ids).order_by("id")
-            )
-            productos_dict = _resolver_precios_carrito(request, list(productos_bloqueados))
+                    items = carrito.items.select_related("producto")
+                    if not items.exists():
+                        return JsonResponse({"success": False, "error": "El carrito está vacío."})
 
-            subtotal_bruto = Decimal("0.00")
-            descuento_total = Decimal("0.00")
-            detalles_a_crear = []
+                    # Bloqueo atómico de todos los productos involucrados ordenados por ID (evita deadlocks)
+                    producto_ids = [item.producto_id for item in items]
+                    productos_bloqueados = (
+                        Producto.objects.select_for_update().filter(id__in=producto_ids).order_by("id")
+                    )
+                    productos_dict = _resolver_precios_carrito(request, list(productos_bloqueados))
 
-            for item in items:
-                producto = productos_dict.get(item.producto_id)
+                    subtotal_bruto = Decimal("0.00")
+                    descuento_total = Decimal("0.00")
+                    detalles_a_crear = []
 
-                if not producto or not producto.activo:
+                    for item in items:
+                        producto = productos_dict.get(item.producto_id)
+
+                        if not producto or not producto.activo:
+                            return JsonResponse(
+                                {
+                                    "success": False,
+                                    "error": f"El producto {item.producto.nombre} ya no está disponible.",
+                                }
+                            )
+
+                        if producto.stock_actual < item.cantidad:
+                            return JsonResponse(
+                                {
+                                    "success": False,
+                                    "error": (
+                                        f"Stock insuficiente para {producto.nombre}. "
+                                        f"Disponibles: {producto.stock_actual}"
+                                    ),
+                                }
+                            )
+
+                        calc = _calcular_linea_carrito(producto, item.cantidad)
+                        descuento_pct_val = int(calc["descuento_volumen_pct"] * 100)
+                        subtotal_linea_neto = calc["linea_neta"]
+
+                        subtotal_bruto += calc["linea_bruta"]
+                        descuento_total += calc["descuento_linea"]
+
+                        producto.stock_actual -= item.cantidad
+                        producto.save(update_fields=["stock_actual"], skip_clean=True)
+
+                        detalles_a_crear.append(
+                            DetallePedido(
+                                producto=producto,
+                                nombre_producto=producto.nombre,
+                                cantidad=item.cantidad,
+                                precio_unitario=calc["precio_base"],
+                                descuento_aplicado_pct=descuento_pct_val,
+                                subtotal_linea=subtotal_linea_neto,
+                            )
+                        )
+
+                    subtotal_neto = subtotal_bruto - descuento_total
+                    costo_envio = Decimal("0.00")
+
+                    if metodo_entrega == "DOMICILIO":
+                        if subtotal_neto < Decimal("20000.00"):
+                            return JsonResponse(
+                                {
+                                    "success": False,
+                                    "error": "El envío a domicilio requiere una compra mínima de $20.000.",
+                                }
+                            )
+                        if not direccion or not telefono:
+                            return JsonResponse(
+                                {
+                                    "success": False,
+                                    "error": (
+                                        "La dirección y el teléfono son obligatorios para"
+                                        " el envío a domicilio."
+                                    ),
+                                }
+                            )
+                        costo_envio = Decimal("5000.00")
+
+                    total_final = subtotal_neto + costo_envio
+
+                    # Crear la cabecera del Pedido con los nuevos datos
+                    nuevo_pedido = Pedido.objects.create(
+                        usuario=request.user if request.user.is_authenticated else None,
+                        session_id=(
+                            request.session.session_key if not request.user.is_authenticated else None
+                        ),
+                        estado="LISTO" if metodo_entrega == "TIENDA" else "PENDIENTE",
+                        metodo_entrega=metodo_entrega,
+                        direccion_entrega=direccion if metodo_entrega == "DOMICILIO" else None,
+                        telefono_contacto=telefono if metodo_entrega == "DOMICILIO" else None,
+                        indicaciones_entrega=indicaciones if metodo_entrega == "DOMICILIO" else None,
+                        subtotal=subtotal_bruto,
+                        descuento_total=descuento_total,
+                        costo_envio=costo_envio,
+                        total=total_final,
+                    )
+
+                    # Guardar los detalles en bloque por rendimiento
+                    for detalle in detalles_a_crear:
+                        detalle.pedido = nuevo_pedido
+                    DetallePedido.objects.bulk_create(detalles_a_crear)
+
+                    # Vaciar el carrito
+                    items.delete()
+
                     return JsonResponse(
                         {
-                            "success": False,
-                            "error": f"El producto {item.producto.nombre} ya no está disponible.",
+                            "success": True,
+                            "pedido_id": nuevo_pedido.id,
+                            "url_redireccion": f"/inventario/checkout/comprobante/{nuevo_pedido.id}/",
                         }
                     )
-
-                if producto.stock_actual < item.cantidad:
-                    return JsonResponse(
-                        {
-                            "success": False,
-                            "error": (
-                                f"Stock insuficiente para {producto.nombre}. "
-                                f"Disponibles: {producto.stock_actual}"
-                            ),
-                        }
-                    )
-
-                calc = _calcular_linea_carrito(producto, item.cantidad)
-                descuento_pct_val = int(calc["descuento_volumen_pct"] * 100)
-                subtotal_linea_neto = calc["linea_neta"]
-
-                subtotal_bruto += calc["linea_bruta"]
-                descuento_total += calc["descuento_linea"]
-
-                producto.stock_actual -= item.cantidad
-                producto.save(update_fields=["stock_actual"], skip_clean=True)
-
-                detalles_a_crear.append(
-                    DetallePedido(
-                        producto=producto,
-                        nombre_producto=producto.nombre,
-                        cantidad=item.cantidad,
-                        precio_unitario=calc["precio_base"],
-                        descuento_aplicado_pct=descuento_pct_val,
-                        subtotal_linea=subtotal_linea_neto,
-                    )
-                )
-
-            subtotal_neto = subtotal_bruto - descuento_total
-            costo_envio = Decimal("0.00")
-
-            if metodo_entrega == "DOMICILIO":
-                if subtotal_neto < Decimal("20000.00"):
-                    return JsonResponse(
-                        {
-                            "success": False,
-                            "error": "El envío a domicilio requiere una compra mínima de $20.000.",
-                        }
-                    )
-                if not direccion or not telefono:
-                    return JsonResponse(
-                        {
-                            "success": False,
-                            "error": (
-                                "La dirección y el teléfono son obligatorios para"
-                                " el envío a domicilio."
-                            ),
-                        }
-                    )
-                costo_envio = Decimal("5000.00")
-
-            total_final = subtotal_neto + costo_envio
-
-            # Crear la cabecera del Pedido con los nuevos datos
-            nuevo_pedido = Pedido.objects.create(
-                usuario=request.user if request.user.is_authenticated else None,
-                session_id=(
-                    request.session.session_key if not request.user.is_authenticated else None
-                ),
-                estado="LISTO" if metodo_entrega == "TIENDA" else "PENDIENTE",
-                metodo_entrega=metodo_entrega,
-                direccion_entrega=direccion if metodo_entrega == "DOMICILIO" else None,
-                telefono_contacto=telefono if metodo_entrega == "DOMICILIO" else None,
-                indicaciones_entrega=indicaciones if metodo_entrega == "DOMICILIO" else None,
-                subtotal=subtotal_bruto,
-                descuento_total=descuento_total,
-                costo_envio=costo_envio,
-                total=total_final,
-            )
-
-            # Guardar los detalles en bloque por rendimiento
-            for detalle in detalles_a_crear:
-                detalle.pedido = nuevo_pedido
-            DetallePedido.objects.bulk_create(detalles_a_crear)
-
-            # Vaciar el carrito
-            items.delete()
-
-            return JsonResponse(
-                {
-                    "success": True,
-                    "pedido_id": nuevo_pedido.id,
-                    "url_redireccion": f"/inventario/checkout/comprobante/{nuevo_pedido.id}/",
-                }
-            )
+            except OperationalError as exc:
+                if "locked" in str(exc).lower() and intento < max_reintentos - 1:
+                    time.sleep(0.05 * (intento + 1))
+                    continue
+                raise
 
     except Exception as e:
         return JsonResponse(

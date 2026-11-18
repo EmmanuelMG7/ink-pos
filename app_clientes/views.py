@@ -1,3 +1,5 @@
+import time
+from django.db import OperationalError
 # cspell:disable
 import logging
 import time
@@ -317,64 +319,73 @@ def asignar_categoria_institucional_view(request, pk: int):
             "la categoría institucional."
         )
 
-    with transaction.atomic():
-        cliente = get_object_or_404(Cliente.objects.select_for_update(), pk=pk)
-        estado_previo = cliente.es_institucional
+    max_reintentos = 5
+    for intento in range(max_reintentos):
+        try:
+            with transaction.atomic():
+                cliente = get_object_or_404(Cliente.objects.select_for_update(), pk=pk)
+                estado_previo = cliente.es_institucional
 
-        datos_post = request.POST.copy()
-        for campo in (
-            "tipo_documento",
-            "identificacion",
-            "nombre",
-            "direccion",
-            "telefono",
-            "email",
-        ):
-            if campo not in datos_post:
-                datos_post[campo] = getattr(cliente, campo) or ""
+                datos_post = request.POST.copy()
+                for campo in (
+                    "tipo_documento",
+                    "identificacion",
+                    "nombre",
+                    "direccion",
+                    "telefono",
+                    "email",
+                ):
+                    if campo not in datos_post:
+                        datos_post[campo] = getattr(cliente, campo) or ""
 
-        if "clasificacion_selector" in datos_post and "es_institucional" not in datos_post:
-            datos_post["es_institucional"] = (
-                "on" if datos_post["clasificacion_selector"] == "institucional" else ""
-            )
+                if "clasificacion_selector" in datos_post and "es_institucional" not in datos_post:
+                    datos_post["es_institucional"] = (
+                        "on" if datos_post["clasificacion_selector"] == "institucional" else ""
+                    )
 
-        form = ClienteCategoriaInstitucionalForm(datos_post, instance=cliente)
-        if form.is_valid():
-            cliente_actualizado = form.save()
-            if cliente_actualizado.auth_user:
-                cliente_actualizado.auth_user.first_name = cliente_actualizado.nombre[:150]
-                cliente_actualizado.auth_user.email = cliente_actualizado.email or ""
-                cliente_actualizado.auth_user.save(update_fields=["first_name", "email"])
+                form = ClienteCategoriaInstitucionalForm(datos_post, instance=cliente)
+                if form.is_valid():
+                    cliente_actualizado = form.save()
+                    if cliente_actualizado.auth_user:
+                        cliente_actualizado.auth_user.first_name = cliente_actualizado.nombre[:150]
+                        cliente_actualizado.auth_user.email = cliente_actualizado.email or ""
+                        cliente_actualizado.auth_user.save(update_fields=["first_name", "email"])
 
-            ip = _obtener_ip_cliente(request)
-            audit_logger.info(
-                "AUDITORIA (HU30): Admin=%s actualizo cliente_id=%s (%s) "
-                "es_institucional: %s -> %s desde ip=%s",
-                request.user.username,
-                cliente_actualizado.pk,
-                cliente_actualizado.identificacion,
-                estado_previo,
-                cliente_actualizado.es_institucional,
-                ip,
-            )
+                    ip = _obtener_ip_cliente(request)
+                    audit_logger.info(
+                        "AUDITORIA (HU30): Admin=%s actualizo cliente_id=%s (%s) "
+                        "es_institucional: %s -> %s desde ip=%s",
+                        request.user.username,
+                        cliente_actualizado.pk,
+                        cliente_actualizado.identificacion,
+                        estado_previo,
+                        cliente_actualizado.es_institucional,
+                        ip,
+                    )
 
-            if cliente_actualizado.es_institucional:
-                messages.success(
-                    request,
-                    f"Se asignó la categoría 'Institucional' a '{cliente_actualizado.nombre}' "
-                    "exitosamente.",
-                )
-            else:
-                messages.success(
-                    request,
-                    f"Se revocó la categoría institucional de '{cliente_actualizado.nombre}'. "
-                    "El perfil pasó a estado natural.",
-                )
-        else:
-            errores_planos = "; ".join(f"{err}" for lista in form.errors.values() for err in lista)
-            messages.error(
-                request,
-                f"No fue posible actualizar la categoría del cliente: {errores_planos}",
-            )
+                    if cliente_actualizado.es_institucional:
+                        messages.success(
+                            request,
+                            f"Se asignó la categoría 'Institucional' a '{cliente_actualizado.nombre}' "
+                            "exitosamente.",
+                        )
+                    else:
+                        messages.success(
+                            request,
+                            f"Se revocó la categoría institucional de '{cliente_actualizado.nombre}'. "
+                            "El perfil pasó a estado natural.",
+                        )
+                else:
+                    errores_planos = "; ".join(f"{err}" for lista in form.errors.values() for err in lista)
+                    messages.error(
+                        request,
+                        f"No fue posible actualizar la categoría del cliente: {errores_planos}",
+                    )
+            break
+        except OperationalError as exc:
+            if "locked" in str(exc).lower() and intento < max_reintentos - 1:
+                time.sleep(0.05 * (intento + 1))
+                continue
+            raise
 
     return redirect("clientes:gestion")
