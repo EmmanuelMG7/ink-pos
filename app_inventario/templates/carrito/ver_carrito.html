@@ -33,7 +33,15 @@
                 <!-- Info Producto y Etiqueta de Descuento -->
                 <div class="col-9 col-md-4 mb-3 mb-md-0">
                   <h6 class="text-light mb-1 text-truncate" title="{{ item.producto.nombre }}">{{ item.producto.nombre }}</h6>
-                  <span class="text-secondary small">${{ item.producto.precio_venta|floatformat:2 }} /u</span>
+                  <div id="precio-unitario-{{ item.id }}">
+                    {% if item.tiene_precio_institucional %}
+                      <span class="text-secondary text-decoration-line-through small me-1">${{ item.producto.precio_venta|floatformat:2 }}</span>
+                      <span class="text-info fw-bold small"><i class="bi bi-buildings"></i> ${{ item.precio_unitario_efectivo|floatformat:2 }} /u</span>
+                      <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle ms-1">Institucional</span>
+                    {% else %}
+                      <span class="text-secondary small">${{ item.producto.precio_venta|floatformat:2 }} /u</span>
+                    {% endif %}
+                  </div>
                   
                   <!-- Renderizado Inicial del Descuento SC-001 -->
                   <div id="badge-descuento-{{ item.id }}" class="mt-1" style="min-height: 22px;">
@@ -60,7 +68,7 @@
                     </button>
                   </div>
                   <!-- Subtotal de línea dinámico -->
-                  <div class="text-center mt-2 text-success fw-bold" id="linea-subtotal-{{ item.id }}"></div>
+                  <div class="text-center mt-2 text-success fw-bold" id="linea-subtotal-{{ item.id }}">Total: ${{ item.linea_subtotal|floatformat:2 }}</div>
                 </div>
                 
                 <!-- Botón Eliminar -->
@@ -298,6 +306,17 @@
                   '<span class="text-warning"><i class="bi bi-shop me-1"></i> Solo recogida en tienda (Monto inferior a $20.000)</span>';
 
               // 3. UI de la Fila (Subtotal calculado y Descuento SC-001)
+              const precioUnitEl = document.getElementById(`precio-unitario-${itemId}`);
+              if (precioUnitEl && typeof data.item_precio_unitario !== 'undefined') {
+                  if (data.tiene_precio_institucional) {
+                      precioUnitEl.innerHTML = `<span class="text-secondary text-decoration-line-through small me-1">$${data.item_precio_regular.toLocaleString('es-CO', {minimumFractionDigits: 2})}</span>`
+                          + `<span class="text-info fw-bold small"><i class="bi bi-buildings"></i> $${data.item_precio_unitario.toLocaleString('es-CO', {minimumFractionDigits: 2})} /u</span>`
+                          + `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle ms-1">Institucional</span>`;
+                  } else {
+                      precioUnitEl.innerHTML = `<span class="text-secondary small">$${data.item_precio_regular.toLocaleString('es-CO', {minimumFractionDigits: 2})} /u</span>`;
+                  }
+              }
+
               const lineaSubtotal = document.getElementById(`linea-subtotal-${itemId}`);
               if (lineaSubtotal) {
                   lineaSubtotal.innerText = "Total: $" + data.item_subtotal.toLocaleString('es-CO', {minimumFractionDigits: 2});

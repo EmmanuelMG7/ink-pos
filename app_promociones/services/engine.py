@@ -109,10 +109,11 @@ class PromotionEngineService:
                 continue
 
         if not coincidentes:
+            desc_directo = cls._apply_direct_product_institutional_prices(working_items, cliente)
             return DiscountCalculationResult(
                 subtotal_original=subtotal_original,
-                monto_descuento_total=Decimal("0.00"),
-                subtotal_neto=subtotal_original,
+                monto_descuento_total=desc_directo,
+                subtotal_neto=max(Decimal("0.00"), subtotal_original - desc_directo),
                 items=working_items,
                 regalos=[],
                 promociones_aplicadas=[],
@@ -157,6 +158,7 @@ class PromotionEngineService:
                     )
                 )
 
+        total_descuento += cls._apply_direct_product_institutional_prices(working_items, cliente)
         subtotal_neto = max(Decimal("0.00"), subtotal_original - total_descuento)
 
         return DiscountCalculationResult(
@@ -167,6 +169,76 @@ class PromotionEngineService:
             regalos=regalos_totales,
             promociones_aplicadas=promociones_info,
         )
+
+    @classmethod
+    def _apply_direct_product_institutional_prices(
+        cls,
+        working_items: list[dict[str, Any]],
+        cliente: Cliente | None,
+    ) -> Decimal:
+        """Respaldo directo usando Producto.precio_institucional cuando no existe regla en BD."""
+        if not cliente or not getattr(cliente, "es_institucional", False):
+            return Decimal("0.00")
+
+        if ReglaPromocion.objects.filter(
+            acciones__tipo_accion=AccionPromocion.TipoAccion.PRECIO_INSTITUCIONAL
+        ).exists():
+            return Decimal("0.00")
+
+        prod_ids = [
+            int(it["producto_id"])
+            for it in working_items
+            if it.get("producto_id") is not None
+            and ("es_institucional" not in it or "precio_institucional" not in it)
+        ]
+        productos_map: dict[int, Producto] = {}
+        if prod_ids:
+            productos_map = {p.pk: p for p in Producto.objects.filter(pk__in=prod_ids)}
+
+        descuento_extra = Decimal("0.00")
+        for it in working_items:
+            if it.get("tiene_precio_institucional") or it.get("subtotal_remanente", Decimal("0.00")) <= Decimal("0.00"):
+                continue
+
+            p_id = it.get("producto_id")
+            prod_db = productos_map.get(int(p_id)) if p_id is not None else None
+
+            es_inst = it.get("es_institucional")
+            if es_inst is None:
+                es_inst = bool(prod_db and prod_db.es_institucional)
+                it["es_institucional"] = es_inst
+            if not es_inst:
+                continue
+
+            raw_pi = it.get("precio_institucional")
+            if raw_pi is None and prod_db is not None:
+                raw_pi = prod_db.precio_institucional
+            if raw_pi is None or Decimal(str(raw_pi)) <= Decimal("0.00"):
+                continue
+
+            precio_inst = Decimal(str(raw_pi))
+            pu = Decimal(str(it["precio_unitario"]))
+            if precio_inst >= pu:
+                continue
+
+            cant = int(it.get("cantidad", 1))
+            desc_linea = ((pu - precio_inst) * Decimal(cant)).quantize(Decimal("0.01"))
+            desc_linea = min(desc_linea, it["subtotal_remanente"])
+
+            if desc_linea > Decimal("0.00"):
+                it["monto_descuento_acumulado"] = (
+                    it.get("monto_descuento_acumulado", Decimal("0.00")) + desc_linea
+                )
+                it["subtotal_remanente"] = max(
+                    Decimal("0.00"), it["subtotal_remanente"] - desc_linea
+                )
+                it["precio_institucional_aplicado"] = precio_inst
+                it["ahorro_institucional"] = desc_linea
+                it["tiene_precio_institucional"] = True
+                it["icono_institucional"] = "bi bi-buildings"
+                descuento_extra += desc_linea
+
+        return descuento_extra
 
     @classmethod
     def resolve_catalog_institutional_prices(
