@@ -310,6 +310,29 @@ class CarritoViewsTest(TestCase):
         response = self.client.get(reverse("inventario:checkout"))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context["aplica_domicilio"])
+        self.assertIsNone(response.context["cliente"])
+
+    def test_checkout_precarga_datos_cliente(self):
+        from app_clientes.models import Cliente
+
+        cliente = Cliente.objects.create(
+            auth_user=self.user,
+            identificacion="123456789",
+            nombre="Cliente Prueba",
+            direccion="Calle 123 # 45-67",
+            telefono="3001234567",
+        )
+        carrito = Carrito.objects.create(usuario=self.user)
+        self.producto.precio_venta = Decimal("25000.00")
+        self.producto.save()
+        ItemCarrito.objects.create(carrito=carrito, producto=self.producto, cantidad=1)
+
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("inventario:checkout"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["cliente"], cliente)
+        self.assertContains(response, 'value="Calle 123 # 45-67"')
+        self.assertContains(response, 'value="3001234567"')
 
     def test_api_confirmar_pedido_tienda_exito(self):
         self.client.force_login(self.user)
