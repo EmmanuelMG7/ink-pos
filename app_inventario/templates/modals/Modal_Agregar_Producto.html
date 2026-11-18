@@ -30,7 +30,8 @@
             <div class="row g-3 align-items-stretch">
               <!-- Selector interactivo de imagen del producto con previsualización instantánea (SCRUM-150) -->
               <div class="col-12 col-md-4">
-                <div class="border border-secondary-subtle rounded bg-body-tertiary d-flex flex-column align-items-center justify-content-between h-100 p-2 text-center position-relative" 
+                <div class="border {% if form.imagen.errors %}border-danger{% else %}border-secondary-subtle{% endif %} rounded bg-body-tertiary d-flex flex-column align-items-center justify-content-between h-100 p-2 text-center position-relative" 
+                     id="contenedor_imagen_crear"
                      style="min-height: 190px;">
                   <div class="w-100 d-flex flex-column align-items-center justify-content-center flex-grow-1 overflow-hidden rounded bg-body p-1" style="min-height: 130px; max-height: 140px;">
                     <img id="preview_imagen_crear" 
@@ -44,7 +45,7 @@
                          name="imagen" 
                          id="input_imagen_crear" 
                          accept="image/jpeg,image/png,image/webp" 
-                         class="d-none">
+                         class="d-none {% if form.imagen.errors %}is-invalid{% endif %}">
                   <div class="mt-2 w-100 d-flex gap-1">
                     <button type="button" 
                             class="btn btn-sm btn-outline-primary w-100 text-truncate" 
@@ -58,7 +59,9 @@
                       <i class="bi bi-x-lg"></i>
                     </button>
                   </div>
-                  <div id="alerta_imagen_crear" class="text-danger small mt-1 d-none text-start" style="font-size: 0.72rem; line-height: 1.1;"></div>
+                  <div id="alerta_imagen_crear" class="invalid-feedback text-wrap text-break text-start mt-1 {% if form.imagen.errors %}d-block{% else %}d-none{% endif %}" style="font-size: 0.75rem; line-height: 1.2;">
+                    {% if form.imagen.errors %}{{ form.imagen.errors.0 }}{% endif %}
+                  </div>
                 </div>
               </div>
 
@@ -219,16 +222,51 @@
     const previewFoto = document.getElementById('preview_imagen_crear');
     const btnQuitarFoto = document.getElementById('btn_quitar_imagen_crear');
     const alertaFoto = document.getElementById('alerta_imagen_crear');
+    const contenedorFoto = document.getElementById('contenedor_imagen_crear');
     const defaultSrc = previewFoto ? previewFoto.getAttribute('data-default') : '';
+
+    function limpiarErrorFoto() {
+      if (inputFoto) {
+        inputFoto.classList.remove('is-invalid');
+      }
+      if (contenedorFoto) {
+        contenedorFoto.classList.remove('border-danger');
+        contenedorFoto.classList.add('border-secondary-subtle');
+      }
+      if (alertaFoto) {
+        alertaFoto.textContent = '';
+        alertaFoto.classList.remove('d-block');
+        alertaFoto.classList.add('d-none');
+      }
+    }
+
+    function mostrarErrorFoto(mensaje) {
+      if (inputFoto) {
+        inputFoto.value = '';
+        inputFoto.classList.add('is-invalid');
+      }
+      if (previewFoto && defaultSrc) {
+        previewFoto.src = defaultSrc;
+      }
+      if (btnQuitarFoto) {
+        btnQuitarFoto.classList.add('d-none');
+      }
+      if (contenedorFoto) {
+        contenedorFoto.classList.remove('border-secondary-subtle');
+        contenedorFoto.classList.add('border-danger');
+      }
+      if (alertaFoto) {
+        alertaFoto.textContent = mensaje;
+        alertaFoto.classList.remove('d-none');
+        alertaFoto.classList.add('d-block');
+      }
+    }
 
     function reiniciarFoto() {
       if (inputFoto) inputFoto.value = '';
       if (previewFoto && defaultSrc) previewFoto.src = defaultSrc;
       if (btnQuitarFoto) btnQuitarFoto.classList.add('d-none');
-      if (alertaFoto) {
-        alertaFoto.textContent = '';
-        alertaFoto.classList.add('d-none');
-      }
+      limpiarErrorFoto();
     }
 
     if (btnFoto && inputFoto) {
@@ -249,11 +287,7 @@
         // 1. Validación de tamaño máx: 5MB (SCRUM-153)
         const maxBytes = 5 * 1024 * 1024;
         if (archivo.size > maxBytes) {
-          if (alertaFoto) {
-            alertaFoto.textContent = 'El archivo es muy pesado (máx 5 MB). Debe reducirlo antes de continuar.';
-            alertaFoto.classList.remove('d-none');
-          }
-          reiniciarFoto();
+          mostrarErrorFoto('El archivo es muy pesado (máx 5 MB). Por favor optimícelo antes de continuar.');
           return;
         }
 
@@ -261,51 +295,55 @@
         const nombre = archivo.name.toLowerCase();
         const partes = nombre.split('.');
         const extensionesPermitidas = ['jpg', 'jpeg', 'png', 'webp'];
-        const extensionesPeligrosas = ['exe', 'bat', 'cmd', 'sh', 'php', 'phtml', 'py', 'js', 'vbs', 'msi', 'dll', 'html', 'htm', 'svg'];
+        const extensionesPeligrosas = [
+          'exe', 'bat', 'cmd', 'sh', 'bash', 'php', 'php3', 'php4', 'php5', 'phtml',
+          'py', 'rb', 'pl', 'cgi', 'js', 'vbs', 'msi', 'dll', 'scr', 'com', 'jar',
+          'war', 'jsp', 'asp', 'aspx', 'html', 'htm', 'xhtml', 'svg'
+        ];
 
         if (partes.length < 2) {
-          if (alertaFoto) {
-            alertaFoto.textContent = 'Formato no permitido. Use JPG, PNG o WEBP.';
-            alertaFoto.classList.remove('d-none');
-          }
-          reiniciarFoto();
+          mostrarErrorFoto('El archivo no tiene una extensión válida. Formatos permitidos: JPG, JPEG, PNG, WEBP.');
           return;
         }
 
         for (let i = 1; i < partes.length - 1; i++) {
           if (extensionesPeligrosas.includes(partes[i]) || extensionesPermitidas.includes(partes[i])) {
-            if (alertaFoto) {
-              alertaFoto.textContent = 'Archivo bloqueado por seguridad: doble extensión detectada.';
-              alertaFoto.classList.remove('d-none');
-            }
-            reiniciarFoto();
+            mostrarErrorFoto('Archivo rechazado por seguridad: se detectó un archivo con doble extensión o extensión potencialmente maliciosa.');
             return;
           }
         }
 
         const extFinal = partes[partes.length - 1];
-        if (!extensionesPermitidas.includes(extFinal)) {
-          if (alertaFoto) {
-            alertaFoto.textContent = 'Formato no permitido. Formatos permitidos: JPG, JPEG, PNG, WEBP.';
-            alertaFoto.classList.remove('d-none');
-          }
-          reiniciarFoto();
+        if (extensionesPeligrosas.includes(extFinal)) {
+          mostrarErrorFoto('Archivo rechazado por seguridad: formato ejecutable o potencialmente malicioso bloqueado.');
           return;
         }
 
-        // 3. Previsualización instantánea (SCRUM-150)
-        if (alertaFoto) {
-          alertaFoto.textContent = '';
-          alertaFoto.classList.add('d-none');
+        if (!extensionesPermitidas.includes(extFinal)) {
+          mostrarErrorFoto('Formato de archivo no permitido. Formatos permitidos: JPG, JPEG, PNG, WEBP.');
+          return;
         }
+
+        // 3. Previsualización instantánea y validación estructural del contenido (SCRUM-150)
         const reader = new FileReader();
         reader.onload = function (e) {
-          if (previewFoto) {
-            previewFoto.src = e.target.result;
-          }
-          if (btnQuitarFoto) {
-            btnQuitarFoto.classList.remove('d-none');
-          }
+          const imgVerif = new Image();
+          imgVerif.onload = function () {
+            limpiarErrorFoto();
+            if (previewFoto) {
+              previewFoto.src = e.target.result;
+            }
+            if (btnQuitarFoto) {
+              btnQuitarFoto.classList.remove('d-none');
+            }
+          };
+          imgVerif.onerror = function () {
+            mostrarErrorFoto('El archivo subido no es una imagen válida o se encuentra corrupto. Formatos permitidos: JPG, JPEG, PNG, WEBP.');
+          };
+          imgVerif.src = e.target.result;
+        };
+        reader.onerror = function () {
+          mostrarErrorFoto('Error al leer el archivo. Intente de nuevo.');
         };
         reader.readAsDataURL(archivo);
       });

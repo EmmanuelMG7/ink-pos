@@ -273,3 +273,75 @@ class ProductoImagenTestCase(TestCase):
             self.assertLessEqual(ancho, 1200)
             self.assertLessEqual(alto, 1200)
             self.assertEqual(img_result.format, "JPEG")
+
+    # --------------------------------------------------------------------------
+    # HU26: Mensajes de Error de Campo para Imagen Inválida (Crear y Modificar)
+    # --------------------------------------------------------------------------
+    def test_hu26_mensaje_error_form_y_plantilla_crear_archivo_invalido(self):
+        """Al crear producto con archivo no imagen (PDF), se genera error en el campo imagen
+
+        y la plantilla lo muestra en el elemento con invalid-feedback sin cerrar modal.
+        """
+        self.client.login(username="admin_user", password="password123")
+        archivo_invalido = SimpleUploadedFile(
+            "documento.pdf", b"%PDF-1.4 contenido", content_type="application/pdf"
+        )
+        form_data = {
+            "nombre": "Producto PDF Inválido",
+            "precio_venta": "5000.00",
+            "costo_compra": "2500.00",
+            "stock_actual": 10,
+            "stock_minimo": 2,
+            "marca": self.marca.nombre,
+        }
+        # Validación a nivel de formulario
+        form = ProductoForm(data=form_data, files={"imagen": archivo_invalido})
+        self.assertFalse(form.is_valid())
+        self.assertIn("imagen", form.errors)
+
+        # Envío POST a la vista de gestión
+        url = reverse("inventario:gestion")
+        response = self.client.post(url, data={**form_data, "imagen": archivo_invalido})
+        self.assertEqual(response.status_code, 200)
+
+        contenido = response.content.decode("utf-8")
+        self.assertIn('id="alerta_imagen_crear"', contenido)
+        self.assertIn("invalid-feedback", contenido)
+        self.assertIn("d-block", contenido)
+        self.assertIn("border-danger", contenido)
+
+    def test_hu26_mensaje_error_plantilla_editar_archivo_invalido(self):
+        """Al modificar producto con archivo inválido, la plantilla de edición muestra el error
+
+        en el elemento de invalid-feedback del campo imagen.
+        """
+        producto = Producto.objects.create(
+            nombre="Producto Para Editar",
+            precio_venta=Decimal("10000.00"),
+            costo_compra=Decimal("5000.00"),
+            marca=self.marca,
+        )
+        self.client.login(username="admin_user", password="password123")
+        archivo_doble_ext = SimpleUploadedFile(
+            "script.exe.png", b"fake binary", content_type="image/png"
+        )
+        url_editar = reverse("inventario:editar_producto", kwargs={"pk": producto.pk})
+        response = self.client.post(
+            url_editar,
+            data={
+                "nombre": "Producto Editado Nombre",
+                "precio_venta": "12000.00",
+                "costo_compra": "6000.00",
+                "stock_actual": 15,
+                "stock_minimo": 3,
+                "marca": self.marca.nombre,
+                "imagen": archivo_doble_ext,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+
+        contenido = response.content.decode("utf-8")
+        self.assertIn('id="alerta_imagen_editar"', contenido)
+        self.assertIn("invalid-feedback", contenido)
+        self.assertIn("d-block", contenido)
+        self.assertIn("border-danger", contenido)

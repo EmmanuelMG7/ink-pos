@@ -198,13 +198,22 @@
                         previewEdit.setAttribute('data-original', imgUrl);
                     }
                     const inputEdit = document.getElementById('input_imagen_editar');
-                    if (inputEdit) inputEdit.value = '';
+                    if (inputEdit) {
+                        inputEdit.value = '';
+                        inputEdit.classList.remove('is-invalid');
+                    }
                     const btnQuitar = document.getElementById('btn_quitar_imagen_editar');
                     if (btnQuitar) btnQuitar.classList.add('d-none');
                     const alertaEdit = document.getElementById('alerta_imagen_editar');
                     if (alertaEdit) {
                         alertaEdit.textContent = '';
+                        alertaEdit.classList.remove('d-block');
                         alertaEdit.classList.add('d-none');
+                    }
+                    const contenedorEdit = document.getElementById('contenedor_imagen_editar');
+                    if (contenedorEdit) {
+                        contenedorEdit.classList.remove('border-danger');
+                        contenedorEdit.classList.add('border-secondary-subtle');
                     }
                 })
                 .catch(error => console.error('Error al cargar datos:', error));
@@ -231,13 +240,22 @@
                     previewEdit.removeAttribute('data-original');
                 }
                 const inputEdit = document.getElementById('input_imagen_editar');
-                if (inputEdit) inputEdit.value = '';
+                if (inputEdit) {
+                    inputEdit.value = '';
+                    inputEdit.classList.remove('is-invalid');
+                }
                 const btnQuitar = document.getElementById('btn_quitar_imagen_editar');
                 if (btnQuitar) btnQuitar.classList.add('d-none');
                 const alertaEdit = document.getElementById('alerta_imagen_editar');
                 if (alertaEdit) {
                     alertaEdit.textContent = '';
+                    alertaEdit.classList.remove('d-block');
                     alertaEdit.classList.add('d-none');
+                }
+                const contenedorEdit = document.getElementById('contenedor_imagen_editar');
+                if (contenedorEdit) {
+                    contenedorEdit.classList.remove('border-danger');
+                    contenedorEdit.classList.add('border-secondary-subtle');
                 }
             });
         }

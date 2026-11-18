@@ -23,7 +23,8 @@
             <div class="row g-3 align-items-stretch">
               <!-- Selector interactivo de imagen del producto para edición (SCRUM-149, SCRUM-150) -->
               <div class="col-12 col-md-4">
-                <div class="border border-secondary-subtle rounded bg-body-tertiary d-flex flex-column align-items-center justify-content-between h-100 p-2 text-center position-relative" 
+                <div class="border {% if form_editar.imagen.errors %}border-danger{% else %}border-secondary-subtle{% endif %} rounded bg-body-tertiary d-flex flex-column align-items-center justify-content-between h-100 p-2 text-center position-relative" 
+                     id="contenedor_imagen_editar"
                      style="min-height: 190px;">
                   <div class="w-100 d-flex flex-column align-items-center justify-content-center flex-grow-1 overflow-hidden rounded bg-body p-1" style="min-height: 130px; max-height: 140px;">
                     <img id="preview_imagen_editar" 
@@ -37,7 +38,7 @@
                          name="imagen" 
                          id="input_imagen_editar" 
                          accept="image/jpeg,image/png,image/webp" 
-                         class="d-none">
+                         class="d-none {% if form_editar.imagen.errors %}is-invalid{% endif %}">
                   <div class="mt-2 w-100 d-flex gap-1">
                     <button type="button" 
                             class="btn btn-sm btn-outline-primary w-100 text-truncate" 
@@ -51,7 +52,9 @@
                       <i class="bi bi-x-lg"></i>
                     </button>
                   </div>
-                  <div id="alerta_imagen_editar" class="text-danger small mt-1 d-none text-start" style="font-size: 0.72rem; line-height: 1.1;"></div>
+                  <div id="alerta_imagen_editar" class="invalid-feedback text-wrap text-break text-start mt-1 {% if form_editar.imagen.errors %}d-block{% else %}d-none{% endif %}" style="font-size: 0.75rem; line-height: 1.2;">
+                    {% if form_editar.imagen.errors %}{{ form_editar.imagen.errors.0 }}{% endif %}
+                  </div>
                 </div>
               </div>
 
@@ -206,7 +209,45 @@
     const previewFotoEdit = document.getElementById('preview_imagen_editar');
     const btnQuitarFotoEdit = document.getElementById('btn_quitar_imagen_editar');
     const alertaFotoEdit = document.getElementById('alerta_imagen_editar');
+    const contenedorFotoEdit = document.getElementById('contenedor_imagen_editar');
     let fotoOriginalUrl = previewFotoEdit ? (previewFotoEdit.getAttribute('data-original') || previewFotoEdit.getAttribute('data-default')) : '';
+
+    function limpiarErrorFotoEdit() {
+      if (inputFotoEdit) {
+        inputFotoEdit.classList.remove('is-invalid');
+      }
+      if (contenedorFotoEdit) {
+        contenedorFotoEdit.classList.remove('border-danger');
+        contenedorFotoEdit.classList.add('border-secondary-subtle');
+      }
+      if (alertaFotoEdit) {
+        alertaFotoEdit.textContent = '';
+        alertaFotoEdit.classList.remove('d-block');
+        alertaFotoEdit.classList.add('d-none');
+      }
+    }
+
+    function mostrarErrorFotoEdit(mensaje) {
+      if (inputFotoEdit) {
+        inputFotoEdit.value = '';
+        inputFotoEdit.classList.add('is-invalid');
+      }
+      if (previewFotoEdit) {
+        previewFotoEdit.src = previewFotoEdit.getAttribute('data-original') || previewFotoEdit.getAttribute('data-default');
+      }
+      if (btnQuitarFotoEdit) {
+        btnQuitarFotoEdit.classList.add('d-none');
+      }
+      if (contenedorFotoEdit) {
+        contenedorFotoEdit.classList.remove('border-secondary-subtle');
+        contenedorFotoEdit.classList.add('border-danger');
+      }
+      if (alertaFotoEdit) {
+        alertaFotoEdit.textContent = mensaje;
+        alertaFotoEdit.classList.remove('d-none');
+        alertaFotoEdit.classList.add('d-block');
+      }
+    }
 
     function resetearFotoEdit() {
       if (inputFotoEdit) inputFotoEdit.value = '';
@@ -214,10 +255,7 @@
         previewFotoEdit.src = previewFotoEdit.getAttribute('data-original') || previewFotoEdit.getAttribute('data-default');
       }
       if (btnQuitarFotoEdit) btnQuitarFotoEdit.classList.add('d-none');
-      if (alertaFotoEdit) {
-        alertaFotoEdit.textContent = '';
-        alertaFotoEdit.classList.add('d-none');
-      }
+      limpiarErrorFotoEdit();
     }
 
     if (btnFotoEdit && inputFotoEdit) {
@@ -238,11 +276,7 @@
         // 1. Validación de tamaño máx: 5MB (SCRUM-153)
         const maxBytes = 5 * 1024 * 1024;
         if (archivo.size > maxBytes) {
-          if (alertaFotoEdit) {
-            alertaFotoEdit.textContent = 'El archivo es muy pesado (máx 5 MB). Optimícelo antes de continuar.';
-            alertaFotoEdit.classList.remove('d-none');
-          }
-          resetearFotoEdit();
+          mostrarErrorFotoEdit('El archivo es muy pesado (máx 5 MB). Por favor optimícelo antes de continuar.');
           return;
         }
 
@@ -250,51 +284,55 @@
         const nombre = archivo.name.toLowerCase();
         const partes = nombre.split('.');
         const extensionesPermitidas = ['jpg', 'jpeg', 'png', 'webp'];
-        const extensionesPeligrosas = ['exe', 'bat', 'cmd', 'sh', 'php', 'phtml', 'py', 'js', 'vbs', 'msi', 'dll', 'html', 'htm', 'svg'];
+        const extensionesPeligrosas = [
+          'exe', 'bat', 'cmd', 'sh', 'bash', 'php', 'php3', 'php4', 'php5', 'phtml',
+          'py', 'rb', 'pl', 'cgi', 'js', 'vbs', 'msi', 'dll', 'scr', 'com', 'jar',
+          'war', 'jsp', 'asp', 'aspx', 'html', 'htm', 'xhtml', 'svg'
+        ];
 
         if (partes.length < 2) {
-          if (alertaFotoEdit) {
-            alertaFotoEdit.textContent = 'Formato no permitido. Use JPG, PNG o WEBP.';
-            alertaFotoEdit.classList.remove('d-none');
-          }
-          resetearFotoEdit();
+          mostrarErrorFotoEdit('El archivo no tiene una extensión válida. Formatos permitidos: JPG, JPEG, PNG, WEBP.');
           return;
         }
 
         for (let i = 1; i < partes.length - 1; i++) {
           if (extensionesPeligrosas.includes(partes[i]) || extensionesPermitidas.includes(partes[i])) {
-            if (alertaFotoEdit) {
-              alertaFotoEdit.textContent = 'Archivo bloqueado por seguridad: doble extensión detectada.';
-              alertaFotoEdit.classList.remove('d-none');
-            }
-            resetearFotoEdit();
+            mostrarErrorFotoEdit('Archivo rechazado por seguridad: se detectó un archivo con doble extensión o extensión potencialmente maliciosa.');
             return;
           }
         }
 
         const extFinal = partes[partes.length - 1];
-        if (!extensionesPermitidas.includes(extFinal)) {
-          if (alertaFotoEdit) {
-            alertaFotoEdit.textContent = 'Formato no permitido. Formatos permitidos: JPG, JPEG, PNG, WEBP.';
-            alertaFotoEdit.classList.remove('d-none');
-          }
-          resetearFotoEdit();
+        if (extensionesPeligrosas.includes(extFinal)) {
+          mostrarErrorFotoEdit('Archivo rechazado por seguridad: formato ejecutable o potencialmente malicioso bloqueado.');
           return;
         }
 
-        // 3. Previsualización instantánea (SCRUM-150)
-        if (alertaFotoEdit) {
-          alertaFotoEdit.textContent = '';
-          alertaFotoEdit.classList.add('d-none');
+        if (!extensionesPermitidas.includes(extFinal)) {
+          mostrarErrorFotoEdit('Formato de archivo no permitido. Formatos permitidos: JPG, JPEG, PNG, WEBP.');
+          return;
         }
+
+        // 3. Previsualización instantánea y validación estructural del contenido (SCRUM-150)
         const reader = new FileReader();
         reader.onload = function (e) {
-          if (previewFotoEdit) {
-            previewFotoEdit.src = e.target.result;
-          }
-          if (btnQuitarFotoEdit) {
-            btnQuitarFotoEdit.classList.remove('d-none');
-          }
+          const imgVerif = new Image();
+          imgVerif.onload = function () {
+            limpiarErrorFotoEdit();
+            if (previewFotoEdit) {
+              previewFotoEdit.src = e.target.result;
+            }
+            if (btnQuitarFotoEdit) {
+              btnQuitarFotoEdit.classList.remove('d-none');
+            }
+          };
+          imgVerif.onerror = function () {
+            mostrarErrorFotoEdit('El archivo subido no es una imagen válida o se encuentra corrupto. Formatos permitidos: JPG, JPEG, PNG, WEBP.');
+          };
+          imgVerif.src = e.target.result;
+        };
+        reader.onerror = function () {
+          mostrarErrorFotoEdit('Error al leer el archivo. Intente de nuevo.');
         };
         reader.readAsDataURL(archivo);
       });
