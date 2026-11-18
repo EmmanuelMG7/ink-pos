@@ -21,7 +21,7 @@ class RegistroClienteHU22Tests(TestCase):
         self.datos_natural = {
             "tipo_documento": TipoDocumento.CEDULA,
             "identificacion": "1020304050",
-            "nombre": "Sebastián Echeverri",
+            "nombre": "Sebasti\u00e1n Echeverri",
             "direccion": "Calle 50 # 40-20",
             "telefono": "3001234567",
             "email": "sebastian@correo.com",
@@ -47,7 +47,7 @@ class RegistroClienteHU22Tests(TestCase):
         self.assertLess(duracion, 1.0)
 
         cliente = Cliente.objects.get(identificacion="1020304050")
-        self.assertEqual(cliente.nombre, "Sebastián Echeverri")
+        self.assertEqual(cliente.nombre, "Sebasti\u00e1n Echeverri")
         self.assertFalse(cliente.es_corporativo)
         self.assertIsNotNone(cliente.auth_user)
         self.assertEqual(int(self.client.session["_auth_user_id"]), cliente.auth_user.id)
@@ -60,7 +60,7 @@ class RegistroClienteHU22Tests(TestCase):
         datos_empresa = {
             "tipo_documento": TipoDocumento.NIT,
             "identificacion": "900123456-7",
-            "nombre": "Colegio San José & Cía. S.A.S.",
+            "nombre": "Colegio San Jos\u00e9 & C\u00eda. S.A.S.",
             "direccion": "Av. Las Vegas # 10-50",
             "telefono": "6042345678",
             "email": "compras@colegiosanjose.edu.co",
@@ -73,7 +73,7 @@ class RegistroClienteHU22Tests(TestCase):
         empresa = Cliente.objects.get(identificacion="900123456-7")
         self.assertEqual(empresa.tipo_documento, TipoDocumento.NIT)
         self.assertTrue(empresa.es_corporativo)
-        self.assertEqual(empresa.nombre, "Colegio San José & Cía. S.A.S.")
+        self.assertEqual(empresa.nombre, "Colegio San Jos\u00e9 & C\u00eda. S.A.S.")
 
     def test_caso_limite_limpieza_automatica_espaciado(self):
         """Caso Limite: Limpia espacios en identificacion, nombre y direccion."""
@@ -81,7 +81,7 @@ class RegistroClienteHU22Tests(TestCase):
         datos_con_espacios.update(
             {
                 "identificacion": "  1020304050  ",
-                "nombre": "  Sebastián Echeverri  ",
+                "nombre": "  Sebasti\u00e1n Echeverri  ",
                 "direccion": "  Calle 50 # 40-20  ",
                 "telefono": "  3001234567  ",
                 "email": "  SEBASTIAN@Correo.com  ",
@@ -91,7 +91,7 @@ class RegistroClienteHU22Tests(TestCase):
         self.assertEqual(response.status_code, 302)
 
         cliente = Cliente.objects.get(identificacion="1020304050")
-        self.assertEqual(cliente.nombre, "Sebastián Echeverri")
+        self.assertEqual(cliente.nombre, "Sebasti\u00e1n Echeverri")
         self.assertEqual(cliente.direccion, "Calle 50 # 40-20")
         self.assertEqual(cliente.telefono, "3001234567")
         self.assertEqual(cliente.email, "sebastian@correo.com")
@@ -140,7 +140,7 @@ class RegistroClienteHU22Tests(TestCase):
         response = self.client.post(self.url, datos_incompletos)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'value="1020304050"')
-        self.assertContains(response, 'value="Sebastián Echeverri"')
+        self.assertContains(response, 'value="Sebasti\u00e1n Echeverri"')
 
     def test_seguridad_proteccion_envios_masivos_y_honeypot(self):
         """Seguridad: Bloquea bots por honeypot y limita envios masivos por IP."""
