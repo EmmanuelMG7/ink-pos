@@ -197,7 +197,9 @@ class PromotionEngineService:
 
         descuento_extra = Decimal("0.00")
         for it in working_items:
-            if it.get("tiene_precio_institucional") or it.get("subtotal_remanente", Decimal("0.00")) <= Decimal("0.00"):
+            if it.get("tiene_precio_institucional") or it.get(
+                "subtotal_remanente", Decimal("0.00")
+            ) <= Decimal("0.00"):
                 continue
 
             p_id = it.get("producto_id")

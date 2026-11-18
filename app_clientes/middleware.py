@@ -33,10 +33,7 @@ class InactividadClienteMiddleware:
             )
             ultima_actividad = request.session.get("ultima_actividad_ts")
 
-            if (
-                ultima_actividad is not None
-                and (ahora - int(ultima_actividad)) > limite_segundos
-            ):
+            if ultima_actividad is not None and (ahora - int(ultima_actividad)) > limite_segundos:
                 return self._cerrar_por_inactividad(request)
 
             request.session["ultima_actividad_ts"] = ahora

@@ -1,9 +1,7 @@
-from app_clientes.models import Cliente
-import time
-from django.db import OperationalError
 # cspell:disable
 import json
 import re
+import time
 import unicodedata
 from decimal import Decimal
 
@@ -11,13 +9,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
-from django.db import transaction
+from django.db import OperationalError, transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
 
+from app_clientes.models import Cliente
 from app_promociones.services.engine import PromotionEngineService
 
 from .forms import ProductoForm
@@ -310,9 +309,7 @@ def _calcular_linea_carrito(producto: Producto, cantidad: int) -> dict:
         and getattr(producto, "precio_institucional_aplicado", None) is not None
     )
     precio_base = (
-        Decimal(str(producto.precio_institucional_aplicado))
-        if tiene_inst
-        else precio_regular
+        Decimal(str(producto.precio_institucional_aplicado)) if tiene_inst else precio_regular
     )
 
     descuento_volumen_pct = Decimal("0.00")
@@ -490,7 +487,10 @@ def eliminar_del_carrito_api(request, item_id):
             items_restantes = list(carrito.items.select_related("producto"))
             _resolver_precios_carrito(request, [i.producto for i in items_restantes])
             subtotal = sum(
-                (_calcular_linea_carrito(i.producto, i.cantidad)["linea_neta"] for i in items_restantes),
+                (
+                    _calcular_linea_carrito(i.producto, i.cantidad)["linea_neta"]
+                    for i in items_restantes
+                ),
                 Decimal("0.00"),
             )
             total_unidades = sum(i.cantidad for i in items_restantes)
@@ -690,10 +690,12 @@ def confirmar_pedido_api(request):
                     if not items.exists():
                         return JsonResponse({"success": False, "error": "El carrito está vacío."})
 
-                    # Bloqueo atómico de todos los productos involucrados ordenados por ID (evita deadlocks)
+                    # Bloqueo atómico de todos los productos involucrados ordenados por ID (evita...
                     producto_ids = [item.producto_id for item in items]
                     productos_bloqueados = (
-                        Producto.objects.select_for_update().filter(id__in=producto_ids).order_by("id")
+                        Producto.objects.select_for_update()
+                        .filter(id__in=producto_ids)
+                        .order_by("id")
                     )
                     productos_dict = _resolver_precios_carrito(request, list(productos_bloqueados))
 
@@ -708,7 +710,10 @@ def confirmar_pedido_api(request):
                             return JsonResponse(
                                 {
                                     "success": False,
-                                    "error": f"El producto {item.producto.nombre} ya no está disponible.",
+                                    "error": (
+                                        f"El producto {item.producto.nombre} "
+                                        + "ya no está disponible."
+                                    ),
                                 }
                             )
 
@@ -752,7 +757,10 @@ def confirmar_pedido_api(request):
                             return JsonResponse(
                                 {
                                     "success": False,
-                                    "error": "El envío a domicilio requiere una compra mínima de $20.000.",
+                                    "error": (
+                                        "El envío a domicilio requiere una compra mínima "
+                                        + "de $20.000."
+                                    ),
                                 }
                             )
                         if not direccion or not telefono:
@@ -773,13 +781,17 @@ def confirmar_pedido_api(request):
                     nuevo_pedido = Pedido.objects.create(
                         usuario=request.user if request.user.is_authenticated else None,
                         session_id=(
-                            request.session.session_key if not request.user.is_authenticated else None
+                            request.session.session_key
+                            if not request.user.is_authenticated
+                            else None
                         ),
                         estado="LISTO" if metodo_entrega == "TIENDA" else "PENDIENTE",
                         metodo_entrega=metodo_entrega,
                         direccion_entrega=direccion if metodo_entrega == "DOMICILIO" else None,
                         telefono_contacto=telefono if metodo_entrega == "DOMICILIO" else None,
-                        indicaciones_entrega=indicaciones if metodo_entrega == "DOMICILIO" else None,
+                        indicaciones_entrega=(
+                            indicaciones if metodo_entrega == "DOMICILIO" else None
+                        ),
                         subtotal=subtotal_bruto,
                         descuento_total=descuento_total,
                         costo_envio=costo_envio,
@@ -794,11 +806,12 @@ def confirmar_pedido_api(request):
                     # Vaciar el carrito
                     items.delete()
 
+                    url_redireccion = f"/inventario/checkout/comprobante/{nuevo_pedido.id}/"
                     return JsonResponse(
                         {
                             "success": True,
                             "pedido_id": nuevo_pedido.id,
-                            "url_redireccion": f"/inventario/checkout/comprobante/{nuevo_pedido.id}/",
+                            "url_redireccion": url_redireccion,
                         }
                     )
             except OperationalError as exc:

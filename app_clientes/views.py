@@ -1,5 +1,3 @@
-import time
-from django.db import OperationalError
 # cspell:disable
 import logging
 import time
@@ -10,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, OperationalError, transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import NoReverseMatch, reverse
@@ -366,17 +364,21 @@ def asignar_categoria_institucional_view(request, pk: int):
                     if cliente_actualizado.es_institucional:
                         messages.success(
                             request,
-                            f"Se asignó la categoría 'Institucional' a '{cliente_actualizado.nombre}' "
+                            f"Se asignó la categoría 'Institucional' a "
+                            f"'{cliente_actualizado.nombre}' "
                             "exitosamente.",
                         )
                     else:
                         messages.success(
                             request,
-                            f"Se revocó la categoría institucional de '{cliente_actualizado.nombre}'. "
+                            f"Se revocó la categoría institucional de "
+                            f"'{cliente_actualizado.nombre}'. "
                             "El perfil pasó a estado natural.",
                         )
                 else:
-                    errores_planos = "; ".join(f"{err}" for lista in form.errors.values() for err in lista)
+                    errores_planos = "; ".join(
+                        f"{err}" for lista in form.errors.values() for err in lista
+                    )
                     messages.error(
                         request,
                         f"No fue posible actualizar la categoría del cliente: {errores_planos}",
