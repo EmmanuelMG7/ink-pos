@@ -74,15 +74,13 @@
 
     <!-- Controles de Carrito -->
     <div class="mt-3 pt-3 border-top border-secondary-subtle d-flex gap-2 align-items-center">
-      <input 
-        type="number" 
-        class="form-control form-control-sm w-25 text-center input-cantidad" 
-        value="1" 
-        min="1" 
-        max="{{ producto.stock_actual }}" 
-        {% if producto.stock_actual <= 0 %}disabled{% endif %}
-        aria-label="{% trans 'Cantidad' %}"
-      >
+      <input type="number" 
+       class="form-control bg-dark text-light border-secondary px-2 text-center custom-number-input" 
+       style="width: 70px;"
+       value="1" 
+       min="1" 
+       data-max="{{ producto.stock_actual }}" 
+       oninput="validarStockCatalogo(this)">
       <button 
         class="btn btn-primary btn-sm flex-grow-1 fw-bold btn-agregar-carrito"
         data-producto-id="{{ producto.pk }}"

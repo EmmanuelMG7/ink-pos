@@ -285,7 +285,7 @@
               input.value = data.nueva_cantidad;
               input.setAttribute('data-last-val', data.nueva_cantidad);
               if (data.stock_superado) {
-                  mostrarToastCarrito(`Stock ajustado: solo quedan ${data.stock_maximo} unidades.`, "warning");
+                  alert(`Solo hay ${data.stock_maximo} unidades disponibles.`);
               }
 
               // 2. Actualización de Totales y Domicilio
