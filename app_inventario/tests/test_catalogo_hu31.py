@@ -387,6 +387,37 @@ class CatalogoSearchUIAndClearButtonTests(TestCase):
         self.assertIn("debounceTimer", content)
         self.assertIn("AbortController", content)
 
+    def test_buscador_no_esta_en_navbar_y_no_se_duplica_en_catalogo(self):
+        """El buscador se renderiza únicamente en la cabecera del catálogo y no en el navbar."""
+        response = self.client.get(reverse("catalogo"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        # El campo de búsqueda debe aparecer exactamente 1 vez en toda la página
+        self.assertEqual(content.count('id="input-buscador-catalogo"'), 1)
+        self.assertEqual(content.count('id="contenedor-buscador"'), 1)
+        # La barra de navegación <nav class="navbar ..."> no debe contener el buscador
+        navbar_part = content.split("</nav>")[0]
+        self.assertNotIn("input-buscador-catalogo", navbar_part)
+        self.assertNotIn("contenedor-buscador", navbar_part)
+
+    def test_despliegue_menu_sugerencias_incluye_clase_show_y_display_block(self):
+        """El script frontend activa adecuadamente la clase 'show' y visualización del dropdown."""
+        response = self.client.get(reverse("catalogo"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn('dropdown.classList.add("show")', content)
+        self.assertIn('dropdown.style.display = "block"', content)
+        self.assertIn("top-100", content)
+        self.assertIn("start-0", content)
+
+    def test_boton_limpieza_oculta_cancel_nativo_y_se_ubica_en_input(self):
+        """Oculta el icono de cancelación nativo del navegador para evitar duplicidad de 'X'."""
+        response = self.client.get(reverse("catalogo"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertIn("-webkit-search-cancel-button", content)
+        self.assertIn("display: none !important", content)
+
 
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class CatalogoSearchPaginationTests(TestCase):
