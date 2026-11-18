@@ -79,7 +79,9 @@
        style="width: 70px;"
        value="1" 
        min="1" 
+       step="1"
        data-max="{{ producto.stock_actual }}" 
+       onkeypress="return event.charCode >= 48 && event.charCode <= 57"
        oninput="validarStockCatalogo(this)">
       <button 
         class="btn btn-primary btn-sm flex-grow-1 fw-bold btn-agregar-carrito"

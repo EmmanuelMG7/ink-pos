@@ -301,7 +301,20 @@ def agregar_al_carrito_api(request):
     try:
         data = json.loads(request.body)
         producto_id = data.get("producto_id")
-        cantidad_agregar = int(data.get("cantidad", 1))
+        cantidad_raw = data.get("cantidad", 1)
+
+        # Validación Estricta: Rechazar si no es un número entero exacto (HU21)
+        if isinstance(cantidad_raw, float) or (
+            isinstance(cantidad_raw, str) and ("." in cantidad_raw or "," in cantidad_raw)
+        ):
+            return JsonResponse(
+                {"success": False, "error": "La cantidad debe ser un número entero."}
+            )
+
+        try:
+            cantidad_agregar = int(cantidad_raw)
+        except ValueError:
+            return JsonResponse({"success": False, "error": "Formato de cantidad inválido."})
 
         if cantidad_agregar <= 0:
             return JsonResponse({"success": False, "error": "La cantidad debe ser mayor a 0."})
