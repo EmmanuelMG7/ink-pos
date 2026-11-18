@@ -56,11 +56,13 @@ class InactividadClienteMiddleware:
 
     @staticmethod
     def _es_sesion_cliente(request) -> bool:
+        if request.user.is_staff or request.user.is_superuser:
+            return False
         if "ultima_actividad_ts" in request.session:
             return True
         if hasattr(request.user, "cliente"):
             return True
-        return not request.user.is_staff and not request.user.is_superuser
+        return True
 
     @staticmethod
     def _es_peticion_ajax_o_json(request) -> bool:
