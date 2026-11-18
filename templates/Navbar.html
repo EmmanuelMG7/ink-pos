@@ -32,6 +32,18 @@
       </ul>
       {% include 'catalogo/components/buscador.html' %}
       <div class="d-flex align-items-center gap-2">
+        
+        <!-- Botón del Carrito (Oculto para personal de la tienda) -->
+        {% if not user.is_staff %}
+        <a href="{% url 'inventario:ver_carrito' %}" class="btn btn-outline-secondary position-relative me-2" aria-label="{% trans 'Ver Carrito' %}">
+          <i class="bi bi-cart3 fs-5"></i>
+          <span id="badge-carrito-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger {% if global_total_unidades_carrito == 0 %}d-none{% endif %}">
+            {{ global_total_unidades_carrito }}
+            <span class="visually-hidden">{% trans "artículos en carrito" %}</span>
+          </span>
+        </a>
+        {% endif %}
+
         {% if user.is_authenticated %}
           <span class="mb-0 fw-medium">
             {% if user.first_name %}{{ user.first_name }} ({{ user.username }}){% else %}{{ user.username }}{% endif %}
