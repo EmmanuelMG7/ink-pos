@@ -387,16 +387,30 @@ def agregar_al_carrito_api(request):
 def ver_carrito(request):
     """
     Vista para desplegar la pantalla completa del carrito de compras.
+    Calcula el subtotal aplicando la Regla SC-001 de descuentos por volumen.
     """
     carrito = obtener_carrito(request)
     items = carrito.items.select_related("producto")
 
-    # Recálculo de totales
-    subtotal = sum((item.producto.precio_venta * item.cantidad) for item in items)
-    total_unidades = sum(item.cantidad for item in items)
+    subtotal = Decimal("0.00")
+    total_unidades = 0
+
+    for item in items:
+        precio_base = item.producto.precio_venta
+        descuento_pct = Decimal("0.00")
+
+        # Regla SC-001: Descuentos por volumen
+        if item.cantidad >= 50:
+            descuento_pct = Decimal("0.25")
+        elif item.cantidad >= 12:
+            descuento_pct = Decimal("0.15")
+
+        precio_con_descuento = precio_base * (Decimal("1.00") - descuento_pct)
+        subtotal += precio_con_descuento * item.cantidad
+        total_unidades += item.cantidad
 
     # Regla de Negocio (HU29): Inhabilitación de Domicilio por saldo menor a $20.000
-    aplica_domicilio = subtotal >= 20000
+    aplica_domicilio = subtotal >= Decimal("20000.00")
 
     context = {
         "carrito": carrito,
@@ -584,6 +598,8 @@ def preparar_checkout(request):
     aplica_domicilio = subtotal_neto >= umbral_domicilio
     monto_faltante = umbral_domicilio - subtotal_neto if not aplica_domicilio else Decimal("0.00")
 
+    cliente = getattr(request.user, "cliente", None) if request.user.is_authenticated else None
+
     context = {
         "items": items,
         "subtotal_bruto": subtotal_bruto,
@@ -591,6 +607,7 @@ def preparar_checkout(request):
         "subtotal_neto": subtotal_neto,
         "aplica_domicilio": aplica_domicilio,
         "monto_faltante": monto_faltante,
+        "cliente": cliente,
     }
     return render(request, "carrito/checkout.html", context)
 

@@ -58,11 +58,11 @@
             <div class="row g-3">
               <div class="col-md-8">
                 <label for="direccion_entrega" class="form-label text-secondary small mb-1">{% trans "Dirección Completa *" %}</label>
-                <input type="text" class="form-control bg-dark text-light border-secondary-subtle" id="direccion_entrega" placeholder="Ej. Calle 10 # 20-30, Apto 401">
+                <input type="text" class="form-control bg-dark text-light border-secondary-subtle" id="direccion_entrega" placeholder="Ej. Calle 10 # 20-30, Apto 401" value="{{ cliente.direccion|default:'' }}">
               </div>
               <div class="col-md-4">
                 <label for="telefono_contacto" class="form-label text-secondary small mb-1">{% trans "Teléfono *" %}</label>
-                <input type="tel" class="form-control bg-dark text-light border-secondary-subtle" id="telefono_contacto" placeholder="Ej. 3001234567">
+                <input type="tel" class="form-control bg-dark text-light border-secondary-subtle" id="telefono_contacto" placeholder="Ej. 3001234567" value="{{ cliente.telefono|default:'' }}">
               </div>
               <div class="col-12">
                 <label for="indicaciones_entrega" class="form-label text-secondary small mb-1">{% trans "Indicaciones adicionales (Opcional)" %}</label>
