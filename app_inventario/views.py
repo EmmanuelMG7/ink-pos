@@ -1,6 +1,7 @@
 # cspell:disable
 import json
 import re
+import time
 import unicodedata
 from decimal import Decimal
 
@@ -8,13 +9,14 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
-from django.db import transaction
+from django.db import OperationalError, transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
 
+from app_clientes.models import Cliente
 from app_promociones.services.engine import PromotionEngineService
 
 from .forms import ProductoForm
@@ -285,6 +287,54 @@ def catalogo(request):
     return render(request, "catalogo/catalogo.html", context)
 
 
+def _resolver_precios_carrito(request, productos: list[Producto]) -> dict[int, Producto]:
+    """Resuelve en bloque las tarifas institucionales vigentes para la sesion actual (HU30)."""
+    user = getattr(request, "user", None)
+    if user and getattr(user, "is_authenticated", False):
+        cliente_fresco = Cliente.objects.filter(auth_user=user).first()
+        if cliente_fresco is not None:
+            user.cliente = cliente_fresco
+
+    lista = list(productos)
+    if lista:
+        PromotionEngineService.resolve_catalog_institutional_prices(lista, user)
+    return {p.pk: p for p in lista}
+
+
+def _calcular_linea_carrito(producto: Producto, cantidad: int) -> dict:
+    """Calcula precio efectivo (institucional o estandar) y descuento por volumen SC-001."""
+    precio_regular = producto.precio_venta
+    tiene_inst = bool(
+        getattr(producto, "tiene_precio_institucional_activo", False)
+        and getattr(producto, "precio_institucional_aplicado", None) is not None
+    )
+    precio_base = (
+        Decimal(str(producto.precio_institucional_aplicado)) if tiene_inst else precio_regular
+    )
+
+    descuento_volumen_pct = Decimal("0.00")
+    if cantidad >= 50:
+        descuento_volumen_pct = Decimal("0.25")
+    elif cantidad >= 12:
+        descuento_volumen_pct = Decimal("0.15")
+
+    precio_final_unitario = precio_base * (Decimal("1.00") - descuento_volumen_pct)
+    linea_bruta = precio_regular * cantidad
+    linea_neta = precio_final_unitario * cantidad
+    descuento_linea = linea_bruta - linea_neta
+
+    return {
+        "precio_regular": precio_regular,
+        "precio_base": precio_base,
+        "tiene_precio_institucional": tiene_inst,
+        "descuento_volumen_pct": descuento_volumen_pct,
+        "precio_final_unitario": precio_final_unitario,
+        "linea_bruta": linea_bruta,
+        "linea_neta": linea_neta,
+        "descuento_linea": descuento_linea,
+    }
+
+
 def obtener_carrito(request):
     """Función auxiliar para obtener o crear el carrito de la sesión actual."""
     if request.user.is_authenticated:
@@ -390,23 +440,18 @@ def ver_carrito(request):
     Calcula el subtotal aplicando la Regla SC-001 de descuentos por volumen.
     """
     carrito = obtener_carrito(request)
-    items = carrito.items.select_related("producto")
+    items = list(carrito.items.select_related("producto"))
+    _resolver_precios_carrito(request, [item.producto for item in items])
 
     subtotal = Decimal("0.00")
     total_unidades = 0
 
     for item in items:
-        precio_base = item.producto.precio_venta
-        descuento_pct = Decimal("0.00")
-
-        # Regla SC-001: Descuentos por volumen
-        if item.cantidad >= 50:
-            descuento_pct = Decimal("0.25")
-        elif item.cantidad >= 12:
-            descuento_pct = Decimal("0.15")
-
-        precio_con_descuento = precio_base * (Decimal("1.00") - descuento_pct)
-        subtotal += precio_con_descuento * item.cantidad
+        calc = _calcular_linea_carrito(item.producto, item.cantidad)
+        item.precio_unitario_efectivo = calc["precio_base"]
+        item.tiene_precio_institucional = calc["tiene_precio_institucional"]
+        item.linea_subtotal = calc["linea_neta"]
+        subtotal += calc["linea_neta"]
         total_unidades += item.cantidad
 
     # Regla de Negocio (HU29): Inhabilitación de Domicilio por saldo menor a $20.000
@@ -439,8 +484,15 @@ def eliminar_del_carrito_api(request, item_id):
             item.delete()
 
             # Rendimiento: Recálculo inmediato tras la eliminación
-            items_restantes = carrito.items.select_related("producto")
-            subtotal = sum((i.producto.precio_venta * i.cantidad) for i in items_restantes)
+            items_restantes = list(carrito.items.select_related("producto"))
+            _resolver_precios_carrito(request, [i.producto for i in items_restantes])
+            subtotal = sum(
+                (
+                    _calcular_linea_carrito(i.producto, i.cantidad)["linea_neta"]
+                    for i in items_restantes
+                ),
+                Decimal("0.00"),
+            )
             total_unidades = sum(i.cantidad for i in items_restantes)
             aplica_domicilio = subtotal >= 20000
 
@@ -448,7 +500,7 @@ def eliminar_del_carrito_api(request, item_id):
                 {
                     "success": True,
                     "mensaje": f"'{nombre_producto}' retirado satisfactoriamente.",
-                    "subtotal": subtotal,
+                    "subtotal": float(subtotal),
                     "total_unidades": total_unidades,
                     "aplica_domicilio": aplica_domicilio,
                     "carrito_vacio": total_unidades == 0,
@@ -508,36 +560,31 @@ def modificar_cantidad_api(request, item_id):
             item.save()
 
             # Recálculo integral del carrito aplicando Regla de Negocio SC-001
-            items_actualizados = carrito.items.select_related("producto")
-            subtotal_carrito = 0
+            items_actualizados = list(carrito.items.select_related("producto"))
+            _resolver_precios_carrito(request, [i.producto for i in items_actualizados])
+            subtotal_carrito = Decimal("0.00")
             total_unidades = 0
 
-            # Variables de respuesta para la UI del ítem modificado
-            item_subtotal_calculado = 0
+            item_subtotal_calculado = Decimal("0.00")
             descuento_aplicado = 0
+            item_tiene_institucional = False
+            item_precio_unitario = float(producto.precio_venta)
+            item_precio_regular = float(producto.precio_venta)
 
             for i in items_actualizados:
-                prod = i.producto
-                precio_base = prod.precio_venta
-
-                # Regla SC-001: Descuentos por volumen usando Decimal
-                descuento_pct = Decimal("0.00")
-                if i.cantidad >= 50:
-                    descuento_pct = Decimal("0.25")
-                elif i.cantidad >= 12:
-                    descuento_pct = Decimal("0.15")
-
-                precio_con_descuento = precio_base * (Decimal("1.00") - descuento_pct)
-                linea_total = precio_con_descuento * i.cantidad
+                calc = _calcular_linea_carrito(i.producto, i.cantidad)
+                linea_total = calc["linea_neta"]
 
                 subtotal_carrito += linea_total
                 total_unidades += i.cantidad
 
-                # Guardar datos específicos si es la línea que acabamos de modificar
                 if i.id == item.id:
                     item_subtotal_calculado = linea_total
-                    if descuento_pct > 0:
-                        descuento_aplicado = int(descuento_pct * 100)
+                    item_tiene_institucional = calc["tiene_precio_institucional"]
+                    item_precio_unitario = float(calc["precio_base"])
+                    item_precio_regular = float(calc["precio_regular"])
+                    if calc["descuento_volumen_pct"] > 0:
+                        descuento_aplicado = int(calc["descuento_volumen_pct"] * 100)
 
             aplica_domicilio = subtotal_carrito >= 20000
 
@@ -547,9 +594,12 @@ def modificar_cantidad_api(request, item_id):
                     "nueva_cantidad": nueva_cantidad,
                     "stock_superado": stock_superado,
                     "stock_maximo": producto.stock_actual,
-                    "item_subtotal": float(item_subtotal_calculado),  # Cast a float
+                    "item_subtotal": float(item_subtotal_calculado),
+                    "item_precio_unitario": item_precio_unitario,
+                    "item_precio_regular": item_precio_regular,
+                    "tiene_precio_institucional": item_tiene_institucional,
                     "descuento_pct": descuento_aplicado,
-                    "subtotal_carrito": float(subtotal_carrito),  # Cast a float
+                    "subtotal_carrito": float(subtotal_carrito),
                     "total_unidades": total_unidades,
                     "aplica_domicilio": aplica_domicilio,
                 }
@@ -575,21 +625,15 @@ def preparar_checkout(request):
         messages.warning(request, "Tu carrito está vacío. Agrega productos para continuar.")
         return redirect("inventario:ver_carrito")
 
+    items_lista = list(items)
+    _resolver_precios_carrito(request, [i.producto for i in items_lista])
     subtotal_bruto = Decimal("0.00")
     descuento_total = Decimal("0.00")
 
-    for i in items:
-        precio_base = i.producto.precio_venta
-        descuento_pct = Decimal("0.00")
-
-        if i.cantidad >= 50:
-            descuento_pct = Decimal("0.25")
-        elif i.cantidad >= 12:
-            descuento_pct = Decimal("0.15")
-
-        valor_descuento = (precio_base * descuento_pct) * i.cantidad
-        subtotal_bruto += precio_base * i.cantidad
-        descuento_total += valor_descuento
+    for i in items_lista:
+        calc = _calcular_linea_carrito(i.producto, i.cantidad)
+        subtotal_bruto += calc["linea_bruta"]
+        descuento_total += calc["descuento_linea"]
 
     subtotal_neto = subtotal_bruto - descuento_total
 
@@ -629,136 +673,152 @@ def confirmar_pedido_api(request):
         telefono = data.get("telefono_contacto", "").strip()
         indicaciones = data.get("indicaciones_entrega", "").strip()
 
-        with transaction.atomic():
-            items = carrito.items.select_related("producto")
-            if not items.exists():
-                return JsonResponse({"success": False, "error": "El carrito está vacío."})
+        max_reintentos = 5
+        for intento in range(max_reintentos):
+            try:
+                with transaction.atomic():
+                    if request.user.is_authenticated:
+                        cliente_lock = (
+                            Cliente.objects.select_for_update()
+                            .filter(auth_user=request.user)
+                            .first()
+                        )
+                        if cliente_lock is not None:
+                            request.user.cliente = cliente_lock
 
-            # Bloqueo atómico de todos los productos involucrados ordenados por ID (evita deadlocks)
-            producto_ids = [item.producto_id for item in items]
-            productos_bloqueados = (
-                Producto.objects.select_for_update().filter(id__in=producto_ids).order_by("id")
-            )
-            productos_dict = {p.id: p for p in productos_bloqueados}
+                    items = carrito.items.select_related("producto")
+                    if not items.exists():
+                        return JsonResponse({"success": False, "error": "El carrito está vacío."})
 
-            subtotal_bruto = Decimal("0.00")
-            descuento_total = Decimal("0.00")
-            detalles_a_crear = []
+                    # Bloqueo atómico de todos los productos involucrados ordenados por ID (evita...
+                    producto_ids = [item.producto_id for item in items]
+                    productos_bloqueados = (
+                        Producto.objects.select_for_update()
+                        .filter(id__in=producto_ids)
+                        .order_by("id")
+                    )
+                    productos_dict = _resolver_precios_carrito(request, list(productos_bloqueados))
 
-            for item in items:
-                producto = productos_dict.get(item.producto_id)
+                    subtotal_bruto = Decimal("0.00")
+                    descuento_total = Decimal("0.00")
+                    detalles_a_crear = []
 
-                if not producto or not producto.activo:
+                    for item in items:
+                        producto = productos_dict.get(item.producto_id)
+
+                        if not producto or not producto.activo:
+                            return JsonResponse(
+                                {
+                                    "success": False,
+                                    "error": (
+                                        f"El producto {item.producto.nombre} "
+                                        + "ya no está disponible."
+                                    ),
+                                }
+                            )
+
+                        if producto.stock_actual < item.cantidad:
+                            return JsonResponse(
+                                {
+                                    "success": False,
+                                    "error": (
+                                        f"Stock insuficiente para {producto.nombre}. "
+                                        f"Disponibles: {producto.stock_actual}"
+                                    ),
+                                }
+                            )
+
+                        calc = _calcular_linea_carrito(producto, item.cantidad)
+                        descuento_pct_val = int(calc["descuento_volumen_pct"] * 100)
+                        subtotal_linea_neto = calc["linea_neta"]
+
+                        subtotal_bruto += calc["linea_bruta"]
+                        descuento_total += calc["descuento_linea"]
+
+                        producto.stock_actual -= item.cantidad
+                        producto.save(update_fields=["stock_actual"], skip_clean=True)
+
+                        detalles_a_crear.append(
+                            DetallePedido(
+                                producto=producto,
+                                nombre_producto=producto.nombre,
+                                cantidad=item.cantidad,
+                                precio_unitario=calc["precio_base"],
+                                descuento_aplicado_pct=descuento_pct_val,
+                                subtotal_linea=subtotal_linea_neto,
+                            )
+                        )
+
+                    subtotal_neto = subtotal_bruto - descuento_total
+                    costo_envio = Decimal("0.00")
+
+                    if metodo_entrega == "DOMICILIO":
+                        if subtotal_neto < Decimal("20000.00"):
+                            return JsonResponse(
+                                {
+                                    "success": False,
+                                    "error": (
+                                        "El envío a domicilio requiere una compra mínima "
+                                        + "de $20.000."
+                                    ),
+                                }
+                            )
+                        if not direccion or not telefono:
+                            return JsonResponse(
+                                {
+                                    "success": False,
+                                    "error": (
+                                        "La dirección y el teléfono son obligatorios para"
+                                        " el envío a domicilio."
+                                    ),
+                                }
+                            )
+                        costo_envio = Decimal("5000.00")
+
+                    total_final = subtotal_neto + costo_envio
+
+                    # Crear la cabecera del Pedido con los nuevos datos
+                    nuevo_pedido = Pedido.objects.create(
+                        usuario=request.user if request.user.is_authenticated else None,
+                        session_id=(
+                            request.session.session_key
+                            if not request.user.is_authenticated
+                            else None
+                        ),
+                        estado="LISTO" if metodo_entrega == "TIENDA" else "PENDIENTE",
+                        metodo_entrega=metodo_entrega,
+                        direccion_entrega=direccion if metodo_entrega == "DOMICILIO" else None,
+                        telefono_contacto=telefono if metodo_entrega == "DOMICILIO" else None,
+                        indicaciones_entrega=(
+                            indicaciones if metodo_entrega == "DOMICILIO" else None
+                        ),
+                        subtotal=subtotal_bruto,
+                        descuento_total=descuento_total,
+                        costo_envio=costo_envio,
+                        total=total_final,
+                    )
+
+                    # Guardar los detalles en bloque por rendimiento
+                    for detalle in detalles_a_crear:
+                        detalle.pedido = nuevo_pedido
+                    DetallePedido.objects.bulk_create(detalles_a_crear)
+
+                    # Vaciar el carrito
+                    items.delete()
+
+                    url_redireccion = f"/inventario/checkout/comprobante/{nuevo_pedido.id}/"
                     return JsonResponse(
                         {
-                            "success": False,
-                            "error": f"El producto {item.producto.nombre} ya no está disponible.",
+                            "success": True,
+                            "pedido_id": nuevo_pedido.id,
+                            "url_redireccion": url_redireccion,
                         }
                     )
-
-                # Caso Límite: Verificación estricta de stock disponible (HU24)
-                if producto.stock_actual < item.cantidad:
-                    return JsonResponse(
-                        {
-                            "success": False,
-                            "error": (
-                                f"Stock insuficiente para {producto.nombre}. "
-                                f"Disponibles: {producto.stock_actual}"
-                            ),
-                        }
-                    )
-
-                # Regla SC-001: Descuentos por volumen
-                precio_base = producto.precio_venta
-                descuento_pct_val = 0
-                descuento_decimal = Decimal("0.00")
-
-                if item.cantidad >= 50:
-                    descuento_pct_val = 25
-                    descuento_decimal = Decimal("0.25")
-                elif item.cantidad >= 12:
-                    descuento_pct_val = 15
-                    descuento_decimal = Decimal("0.15")
-
-                valor_descuento_linea = (precio_base * descuento_decimal) * item.cantidad
-                subtotal_linea_neto = (precio_base * item.cantidad) - valor_descuento_linea
-
-                subtotal_bruto += precio_base * item.cantidad
-                descuento_total += valor_descuento_linea
-
-                # Descuento inmediato de inventario
-                producto.stock_actual -= item.cantidad
-                producto.save(update_fields=["stock_actual"], skip_clean=True)
-
-                # Preparar Detalle (Fotografía financiera en el tiempo)
-                detalles_a_crear.append(
-                    DetallePedido(
-                        producto=producto,
-                        nombre_producto=producto.nombre,
-                        cantidad=item.cantidad,
-                        precio_unitario=precio_base,
-                        descuento_aplicado_pct=descuento_pct_val,
-                        subtotal_linea=subtotal_linea_neto,
-                    )
-                )
-
-            subtotal_neto = subtotal_bruto - descuento_total
-            costo_envio = Decimal("0.00")
-
-            if metodo_entrega == "DOMICILIO":
-                if subtotal_neto < Decimal("20000.00"):
-                    return JsonResponse(
-                        {
-                            "success": False,
-                            "error": "El envío a domicilio requiere una compra mínima de $20.000.",
-                        }
-                    )
-                if not direccion or not telefono:
-                    return JsonResponse(
-                        {
-                            "success": False,
-                            "error": (
-                                "La dirección y el teléfono son obligatorios para"
-                                " el envío a domicilio."
-                            ),
-                        }
-                    )
-                costo_envio = Decimal("5000.00")
-
-            total_final = subtotal_neto + costo_envio
-
-            # Crear la cabecera del Pedido con los nuevos datos
-            nuevo_pedido = Pedido.objects.create(
-                usuario=request.user if request.user.is_authenticated else None,
-                session_id=(
-                    request.session.session_key if not request.user.is_authenticated else None
-                ),
-                estado="LISTO" if metodo_entrega == "TIENDA" else "PENDIENTE",
-                metodo_entrega=metodo_entrega,
-                direccion_entrega=direccion if metodo_entrega == "DOMICILIO" else None,
-                telefono_contacto=telefono if metodo_entrega == "DOMICILIO" else None,
-                indicaciones_entrega=indicaciones if metodo_entrega == "DOMICILIO" else None,
-                subtotal=subtotal_bruto,
-                descuento_total=descuento_total,
-                costo_envio=costo_envio,
-                total=total_final,
-            )
-
-            # Guardar los detalles en bloque por rendimiento
-            for detalle in detalles_a_crear:
-                detalle.pedido = nuevo_pedido
-            DetallePedido.objects.bulk_create(detalles_a_crear)
-
-            # Vaciar el carrito
-            items.delete()
-
-            return JsonResponse(
-                {
-                    "success": True,
-                    "pedido_id": nuevo_pedido.id,
-                    "url_redireccion": f"/inventario/checkout/comprobante/{nuevo_pedido.id}/",
-                }
-            )
+            except OperationalError as exc:
+                if "locked" in str(exc).lower() and intento < max_reintentos - 1:
+                    time.sleep(0.05 * (intento + 1))
+                    continue
+                raise
 
     except Exception as e:
         return JsonResponse(

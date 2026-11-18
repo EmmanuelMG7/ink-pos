@@ -66,6 +66,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "app_clientes.middleware.InactividadClienteMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -99,6 +100,10 @@ if DEBUG:
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
             "NAME": BASE_DIR / "db.sqlite3",
+            "OPTIONS": {
+                "timeout": 30,
+                "transaction_mode": "IMMEDIATE",
+            },
         }
     }
 else:
