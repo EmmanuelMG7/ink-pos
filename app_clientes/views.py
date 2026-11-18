@@ -1,4 +1,4 @@
-﻿# cspell:disable
+# cspell:disable
 import time
 
 from django.contrib import messages
@@ -158,6 +158,9 @@ def login_cliente_view(request):
             if user_autenticado is not None:
                 cache.delete(lock_key)
                 login(request, user_autenticado)
+                from app_promociones.services.engine import PromotionEngineService
+
+                PromotionEngineService.recalcular_carrito_sesion(request)
                 request.session["ultima_actividad_ts"] = int(time.time())
                 return redirect(_obtener_url_retorno_segura(request))
 

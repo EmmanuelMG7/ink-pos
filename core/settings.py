@@ -1,3 +1,4 @@
+# cspell:disable
 """
 Django settings for core project.
 
@@ -81,6 +82,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "app_common.permissions.menu_navegacion",
+                "app_inventario.context_processors.totales_carrito",
             ],
         },
     },

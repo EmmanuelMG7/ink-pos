@@ -1,3 +1,4 @@
+# cspell:disable
 from decimal import Decimal
 from typing import Any
 
@@ -839,3 +840,116 @@ class LimiteUsosClienteCard(BaseLimitCard):
     def to_limit_data(cls, config: dict[str, Any]) -> dict[str, Any]:
         lim = config.get("limite_usos_por_cliente")
         return {"limite_usos_por_cliente": int(lim) if lim else None}
+
+
+@register_card
+class ClienteInstitucionalCard(BaseConditionCard):
+    card_id = "cond_cliente_institucional"
+    title = "Es cliente Institucional"
+    description = "Aplica exclusivamente para clientes con categoría institucional activa."
+    icon = "bi-buildings"
+
+    @classmethod
+    def get_schema(cls) -> dict[str, Any]:
+        return {
+            "card_id": cls.card_id,
+            "title": cls.title,
+            "description": cls.description,
+            "icon": cls.icon,
+            "fields": [],
+        }
+
+    @classmethod
+    def to_rule_expression(cls, config: dict[str, Any]) -> str:
+        return "cliente.es_institucional == true"
+
+
+@register_card
+class AsignarPrecioInstitucionalCard(BaseActionCard):
+    card_id = "act_precio_institucional"
+    title = "Asignar precio institucional"
+    description = "Asigna el precio institucional preferencial a productos institucionales."
+    icon = "bi-buildings"
+
+    @classmethod
+    def get_schema(cls) -> dict[str, Any]:
+        return {
+            "card_id": cls.card_id,
+            "title": cls.title,
+            "description": cls.description,
+            "icon": cls.icon,
+            "fields": [
+                {
+                    "name": "alcance",
+                    "label": "Alcance Institucional",
+                    "type": "select",
+                    "options": [
+                        {"value": "CARRITO", "label": "Todos los productos institucionales"},
+                        {"value": "PRODUCTO", "label": "Producto institucional específico"},
+                    ],
+                    "default": "CARRITO",
+                    "required": True,
+                },
+                {
+                    "name": "producto_id",
+                    "label": "Producto Institucional Objetivo",
+                    "type": "select_producto",
+                    "depends_on": {"alcance": "PRODUCTO"},
+                    "required": False,
+                },
+                {
+                    "name": "precio_institucional",
+                    "label": "Precio Institucional ($)",
+                    "type": "number",
+                    "min": 0,
+                    "step": "0.01",
+                    "required": False,
+                },
+            ],
+        }
+
+    @classmethod
+    def validate_config(cls, config: dict[str, Any]) -> list[str]:
+        errors: list[str] = []
+        alcance = config.get("alcance", "CARRITO")
+        prod_id = config.get("producto_id")
+        if alcance == "PRODUCTO" and not prod_id:
+            errors.append("Debe seleccionar un producto objetivo.")
+
+        raw_precio = config.get("precio_institucional", config.get("valor"))
+        if raw_precio is not None and raw_precio != "":
+            try:
+                p_val = Decimal(str(raw_precio))
+                if p_val < Decimal("0.00"):
+                    errors.append("El precio institucional no puede ser negativo.")
+                elif prod_id and p_val > Decimal("0.00"):
+                    from app_inventario.models import Producto
+
+                    prod = Producto.objects.filter(pk=int(prod_id)).first()
+                    if prod and p_val < prod.costo_compra:
+                        errors.append(
+                            "El precio institucional no puede ser inferior al costo de compra."
+                        )
+            except Exception:
+                errors.append("El precio institucional no es un valor decimal válido.")
+        return errors
+
+    @classmethod
+    def to_action_data(cls, config: dict[str, Any]) -> dict[str, Any]:
+        raw_precio = config.get("precio_institucional", config.get("valor", "0.00"))
+        valor = Decimal(str(raw_precio)) if raw_precio not in (None, "") else Decimal("0.00")
+        alcance = config.get("alcance")
+        if not alcance:
+            alcance = (
+                AccionPromocion.AlcanceAccion.PRODUCTO
+                if config.get("producto_id")
+                else AccionPromocion.AlcanceAccion.CARRITO
+            )
+        data: dict[str, Any] = {
+            "tipo_accion": AccionPromocion.TipoAccion.PRECIO_INSTITUCIONAL,
+            "valor_accion": valor,
+            "alcance_accion": alcance,
+        }
+        if config.get("producto_id"):
+            data["producto_objetivo_id"] = int(config["producto_id"])
+        return data

@@ -1,3 +1,4 @@
+# cspell:disable
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
@@ -116,6 +117,7 @@ class PromotionFactHydrator:
                 "total_compras_historicas": total_compras,
                 "monto_total_historico": float(monto_historico),
                 "es_primera_compra": total_compras == 0,
+                "es_institucional": bool(cliente and getattr(cliente, "es_institucional", False)),
             },
             "temporal": {
                 "dia_semana": fecha.weekday(),

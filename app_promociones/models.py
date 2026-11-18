@@ -1,3 +1,4 @@
+# cspell:disable
 from decimal import Decimal
 
 import rule_engine
@@ -70,9 +71,8 @@ class ReglaPromocion(models.Model):
 
         if self.es_cupon:
             if not self.codigo_cupon or not self.codigo_cupon.strip():
-                raise ValidationError(
-                    {"codigo_cupon": "Debe definir un código para la promoción de tipo cupón."}
-                )
+                msg_cupon = "Debe definir un código para la promoción de tipo cupón."
+                raise ValidationError({"codigo_cupon": msg_cupon})
             self.codigo_cupon = self.codigo_cupon.strip().upper()
         else:
             self.codigo_cupon = None
@@ -88,16 +88,14 @@ class ReglaPromocion(models.Model):
                     {"limite_usos_total": "El límite de usos debe ser mayor a cero."}
                 )
             if self.veces_usado > self.limite_usos_total:
-                raise ValidationError(
-                    {"veces_usado": "Las veces usado no pueden superar el límite de usos total."}
-                )
+                msg_usos = "Las veces usado no pueden superar el límite de usos total."
+                raise ValidationError({"veces_usado": msg_usos})
 
         if self.limite_usos_por_cliente is not None and self.limite_usos_por_cliente <= 0:
             raise ValidationError(
                 {"limite_usos_por_cliente": "El límite por cliente debe ser mayor a cero."}
             )
 
-        # Validación sintáctica con rule-engine
         if self.expresion_condicion and self.expresion_condicion.strip():
             try:
                 rule_engine.Rule(self.expresion_condicion.strip())
@@ -120,6 +118,7 @@ class AccionPromocion(models.Model):
         PORCENTAJE = "PORCENTAJE", "Porcentaje (%)"
         MONTO_FIJO = "MONTO_FIJO", "Monto Fijo ($)"
         ITEM_REGALO = "ITEM_REGALO", "Producto de Regalo"
+        PRECIO_INSTITUCIONAL = "PRECIO_INSTITUCIONAL", "Asignar precio institucional"
 
     class AlcanceAccion(models.TextChoices):
         CARRITO = "CARRITO", "A todo el carrito"
@@ -135,7 +134,7 @@ class AccionPromocion(models.Model):
     )
     orden = models.PositiveSmallIntegerField(default=1)
     tipo_accion = models.CharField(
-        max_length=20,
+        max_length=25,
         choices=TipoAccion.choices,
         default=TipoAccion.PORCENTAJE,
     )
@@ -211,6 +210,11 @@ class AccionPromocion(models.Model):
         elif self.tipo_accion == AccionPromocion.TipoAccion.MONTO_FIJO:
             if self.valor_accion <= 0:
                 raise ValidationError({"valor_accion": "El monto fijo debe ser superior a cero."})
+        elif self.tipo_accion == AccionPromocion.TipoAccion.PRECIO_INSTITUCIONAL:
+            if self.valor_accion < 0:
+                raise ValidationError(
+                    {"valor_accion": "El precio institucional no puede ser negativo."}
+                )
         elif self.tipo_accion == AccionPromocion.TipoAccion.ITEM_REGALO:
             if not self.producto_regalo:
                 raise ValidationError(
@@ -231,19 +235,23 @@ class AccionPromocion(models.Model):
                 raise ValidationError(
                     {"producto_objetivo": "Debe seleccionar un producto objetivo."}
                 )
-            # Validación de margen mínimo frente a costo de compra (chk_producto_precio_gte_costo)
             if self.tipo_accion == AccionPromocion.TipoAccion.PORCENTAJE:
                 from decimal import ROUND_HALF_UP
 
                 desc_unit = (
                     self.producto_objetivo.precio_venta * self.valor_accion / Decimal("100")
                 ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+                precio_final = self.producto_objetivo.precio_venta - desc_unit
             elif self.tipo_accion == AccionPromocion.TipoAccion.MONTO_FIJO:
-                desc_unit = self.valor_accion
+                precio_final = self.producto_objetivo.precio_venta - self.valor_accion
+            elif (
+                self.tipo_accion == AccionPromocion.TipoAccion.PRECIO_INSTITUCIONAL
+                and self.valor_accion > Decimal("0.00")
+            ):
+                precio_final = self.valor_accion
             else:
-                desc_unit = Decimal("0.00")
+                precio_final = self.producto_objetivo.precio_venta
 
-            precio_final = self.producto_objetivo.precio_venta - desc_unit
             if precio_final < self.producto_objetivo.costo_compra:
                 costo_prod = self.producto_objetivo.costo_compra
                 raise ValidationError(

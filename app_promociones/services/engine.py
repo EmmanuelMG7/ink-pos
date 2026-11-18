@@ -1,3 +1,4 @@
+# cspell:disable
 import copy
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -8,6 +9,7 @@ import rule_engine
 from django.utils import timezone
 
 from app_clientes.models import Cliente
+from app_inventario.models import Producto
 from app_promociones.models import AccionPromocion, PromocionAplicada, ReglaPromocion
 
 from .applicator import ActionApplicator
@@ -50,7 +52,6 @@ class PromotionEngineService:
         fecha = fecha_hora or timezone.now()
         cupon_limpio = cupon.strip().upper() if cupon and cupon.strip() else None
 
-        # Copia de trabajo para líneas en memoria
         working_items: list[dict[str, Any]] = []
         subtotal_original = Decimal("0.00")
         for it in items:
@@ -58,21 +59,25 @@ class PromotionEngineService:
             pu = Decimal(str(it.get("precio_unitario", "0.00")))
             sub = Decimal(str(it.get("subtotal", cant * pu)))
             subtotal_original += sub
-            working_items.append(
-                {
-                    "producto_id": it.get("producto_id"),
-                    "nombre": it.get("nombre", ""),
-                    "categoria_id": it.get("categoria_id"),
-                    "categoria_nombre": it.get("categoria_nombre", ""),
-                    "marca_id": it.get("marca_id"),
-                    "marca_nombre": it.get("marca_nombre", ""),
-                    "cantidad": cant,
-                    "precio_unitario": pu,
-                    "subtotal_original": sub,
-                    "subtotal_remanente": sub,
-                    "monto_descuento_acumulado": Decimal("0.00"),
-                }
-            )
+            item_dict: dict[str, Any] = {
+                "producto_id": it.get("producto_id"),
+                "nombre": it.get("nombre", ""),
+                "categoria_id": it.get("categoria_id"),
+                "categoria_nombre": it.get("categoria_nombre", ""),
+                "marca_id": it.get("marca_id"),
+                "marca_nombre": it.get("marca_nombre", ""),
+                "cantidad": cant,
+                "precio_unitario": pu,
+                "subtotal_original": sub,
+                "subtotal_remanente": sub,
+                "monto_descuento_acumulado": Decimal("0.00"),
+                "tiene_precio_institucional": False,
+            }
+            if "es_institucional" in it:
+                item_dict["es_institucional"] = bool(it["es_institucional"])
+            if "precio_institucional" in it:
+                item_dict["precio_institucional"] = it["precio_institucional"]
+            working_items.append(item_dict)
 
         if not working_items and not cupon_limpio:
             return DiscountCalculationResult(
@@ -84,7 +89,6 @@ class PromotionEngineService:
                 promociones_aplicadas=[],
             )
 
-        # 1. Hidratar hechos
         facts = PromotionFactHydrator.build_facts(
             items=working_items,
             cliente=cliente,
@@ -92,10 +96,8 @@ class PromotionEngineService:
             fecha_hora=fecha,
         )
 
-        # 2. Cargar y filtrar reglas candidatas
         candidatas = cls._get_candidate_rules(cliente=cliente, cupon=cupon_limpio, fecha=fecha)
 
-        # 3. Filtrar reglas cuyas condiciones hacen match en rule-engine
         coincidentes: list[ReglaPromocion] = []
         for regla in candidatas:
             expr = (regla.expresion_condicion or "true").strip()
@@ -116,10 +118,8 @@ class PromotionEngineService:
                 promociones_aplicadas=[],
             )
 
-        # 4. Resolver colisiones y seleccionar grupo óptimo (Greedy)
         reglas_seleccionadas = cls._resolve_conflicts(coincidentes, working_items)
 
-        # 5. Aplicación efectiva en cascada sobre las líneas de compra
         total_descuento = Decimal("0.00")
         promociones_info: list[AppliedPromotionInfo] = []
         regalos_totales: list[dict[str, Any]] = []
@@ -169,6 +169,99 @@ class PromotionEngineService:
         )
 
     @classmethod
+    def resolve_catalog_institutional_prices(
+        cls,
+        productos: list[Producto],
+        user: Any = None,
+        fecha_hora: datetime | None = None,
+    ) -> list[Producto]:
+        """Resuelve en bloque las tarifas institucionales para una lista de productos (HU19)."""
+        for p in productos:
+            setattr(p, "tiene_precio_institucional_activo", False)
+            setattr(p, "precio_institucional_aplicado", None)
+            setattr(p, "ahorro_institucional", Decimal("0.00"))
+
+        if not productos or not user or not getattr(user, "is_authenticated", False):
+            return productos
+
+        cliente = getattr(user, "cliente", None)
+        if not cliente or not getattr(cliente, "es_institucional", False):
+            return productos
+
+        inst_productos = [p for p in productos if getattr(p, "es_institucional", False)]
+        if not inst_productos:
+            return productos
+
+        items_lote = [
+            {
+                "producto_id": p.pk,
+                "nombre": p.nombre,
+                "cantidad": 1,
+                "precio_unitario": p.precio_venta,
+                "subtotal": p.precio_venta,
+                "es_institucional": True,
+                "precio_institucional": p.precio_institucional,
+            }
+            for p in inst_productos
+        ]
+
+        res = cls.evaluate(items=items_lote, cliente=cliente, fecha_hora=fecha_hora)
+        mapa_items = {it["producto_id"]: it for it in res.items}
+
+        for p in inst_productos:
+            it_res = mapa_items.get(p.pk)
+            if it_res and it_res.get("tiene_precio_institucional"):
+                setattr(p, "tiene_precio_institucional_activo", True)
+                setattr(p, "precio_institucional_aplicado", it_res["subtotal_remanente"])
+                setattr(p, "ahorro_institucional", it_res["monto_descuento_acumulado"])
+
+        return productos
+
+    @classmethod
+    def recalcular_carrito_sesion(cls, request: Any) -> DiscountCalculationResult | None:
+        """Recalcula los precios del carrito en sesión tras autenticarse (HU19)."""
+        session = getattr(request, "session", None)
+        if not session or "carrito" not in session:
+            return None
+
+        raw_carrito = session.get("carrito")
+        items = (
+            raw_carrito.get("items", [])
+            if isinstance(raw_carrito, dict)
+            else (raw_carrito if isinstance(raw_carrito, list) else [])
+        )
+        if not items:
+            return None
+
+        user = getattr(request, "user", None)
+        cliente = (
+            getattr(user, "cliente", None)
+            if user and getattr(user, "is_authenticated", False)
+            else None
+        )
+        res = cls.evaluate(items=items, cliente=cliente)
+        session["carrito_resumen"] = {
+            "subtotal_original": str(res.subtotal_original),
+            "monto_descuento_total": str(res.monto_descuento_total),
+            "subtotal_neto": str(res.subtotal_neto),
+            "items": [
+                {
+                    "producto_id": it["producto_id"],
+                    "nombre": it["nombre"],
+                    "cantidad": it["cantidad"],
+                    "precio_unitario": str(it["precio_unitario"]),
+                    "subtotal_remanente": str(it["subtotal_remanente"]),
+                    "monto_descuento_acumulado": str(it["monto_descuento_acumulado"]),
+                    "tiene_precio_institucional": bool(it.get("tiene_precio_institucional", False)),
+                    "icono_institucional": it.get("icono_institucional", ""),
+                }
+                for it in res.items
+            ],
+        }
+        session.modified = True
+        return res
+
+    @classmethod
     def _get_candidate_rules(
         cls,
         cliente: Cliente | None,
@@ -176,8 +269,6 @@ class PromotionEngineService:
         fecha: datetime,
     ) -> list[ReglaPromocion]:
         qs = ReglaPromocion.objects.filter(activo=True).prefetch_related("acciones")
-
-        # Filtro de vigencia
         qs = qs.filter(fecha_inicio__lte=fecha)
         candidatas: list[ReglaPromocion] = []
 
@@ -186,13 +277,9 @@ class PromotionEngineService:
                 continue
             if r.limite_usos_total and r.veces_usado >= r.limite_usos_total:
                 continue
-
-            # Validación de cupón
             if r.es_cupon:
                 if not cupon or r.codigo_cupon != cupon:
                     continue
-
-            # Límite por cliente
             if cliente and cliente.pk and r.limite_usos_por_cliente:
                 usos_cliente = PromocionAplicada.objects.filter(
                     regla_promocion=r,
@@ -200,7 +287,6 @@ class PromotionEngineService:
                 ).count()
                 if usos_cliente >= r.limite_usos_por_cliente:
                     continue
-
             candidatas.append(r)
 
         return candidatas
@@ -217,21 +303,17 @@ class PromotionEngineService:
         if not no_acumulables:
             return acumulables
 
-        # Simular ahorro de cada regla no acumulable
         ranking_no_acumulables: list[tuple[ReglaPromocion, Decimal, int, int]] = []
         for r in no_acumulables:
             ahorro = cls._simulate_rules_savings([r], items)
             especificidad = cls._calc_specificity(r)
             ranking_no_acumulables.append((r, ahorro, especificidad, r.pk))
 
-        # Ordenar por: Ahorro DESC, Especificidad DESC, id DESC
         ranking_no_acumulables.sort(key=lambda x: (x[1], x[2], x[3]), reverse=True)
         mejor_no_acumulable, ahorro_no_acumulable, _, _ = ranking_no_acumulables[0]
 
-        # Simular ahorro del combo de acumulables
         ahorro_acumulables = cls._simulate_rules_savings(acumulables, items)
 
-        # Si el mejor no acumulable supera al combo de acumulables, gana en solitario
         if ahorro_no_acumulable > ahorro_acumulables:
             return [mejor_no_acumulable]
 

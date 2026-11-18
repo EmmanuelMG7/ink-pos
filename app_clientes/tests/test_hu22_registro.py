@@ -1,4 +1,4 @@
-﻿# cspell:disable
+# cspell:disable
 import time
 from unittest.mock import patch
 
@@ -178,7 +178,7 @@ class RegistroClienteHU22Tests(TestCase):
 
         response = self.client.get(url_bienvenida)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Sebasti\u00e1n Echeverri")
+        self.assertContains(response, "Sebastián Echeverri")
         self.assertContains(response, "Calle 50 # 40-20")
 
         resp_registro = self.client.get(self.url)

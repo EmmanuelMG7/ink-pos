@@ -1,3 +1,4 @@
+<!-- cspell:disable -->
 {% load i18n %}
 <div class="card h-100 bg-dark-subtle border-secondary-subtle shadow-sm d-flex flex-column position-relative overflow-hidden">
   {# Sello de Novedad en esquina superior (SCRUM-170, SCRUM-172, SCRUM-176) #}
@@ -53,10 +54,42 @@
       {% endif %}
     </div>
 
-    <!-- Precio en Posición Inferior Fija (SCRUM-136, SCRUM-141) -->
+    <!-- Precio en Posición Inferior Fija (SCRUM-136, SCRUM-141, HU19) -->
     <div class="pt-2 border-top border-secondary-subtle d-flex justify-content-between align-items-center">
       <span class="text-secondary small">{% trans "Precio" %}</span>
-      <span class="fs-5 fw-bold text-success">${{ producto.precio_venta|floatformat:2 }}</span>
+      {% if producto.tiene_precio_institucional_activo %}
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-secondary text-decoration-line-through small">
+            ${{ producto.precio_venta|floatformat:2 }}
+          </span>
+          <span class="fs-5 fw-bold text-info d-inline-flex align-items-center gap-1" title="{% trans 'Precio Institucional' %}">
+            <i class="bi bi-buildings"></i>
+            ${{ producto.precio_institucional_aplicado|floatformat:2 }}
+          </span>
+        </div>
+      {% else %}
+        <span class="fs-5 fw-bold text-success">${{ producto.precio_venta|floatformat:2 }}</span>
+      {% endif %}
+    </div>
+
+    <!-- Controles de Carrito -->
+    <div class="mt-3 pt-3 border-top border-secondary-subtle d-flex gap-2 align-items-center">
+      <input 
+        type="number" 
+        class="form-control form-control-sm w-25 text-center input-cantidad" 
+        value="1" 
+        min="1" 
+        max="{{ producto.stock_actual }}" 
+        {% if producto.stock_actual <= 0 %}disabled{% endif %}
+        aria-label="{% trans 'Cantidad' %}"
+      >
+      <button 
+        class="btn btn-primary btn-sm flex-grow-1 fw-bold btn-agregar-carrito"
+        data-producto-id="{{ producto.pk }}"
+        {% if producto.stock_actual <= 0 %}disabled{% endif %}
+      >
+        <i class="bi bi-cart-plus me-1"></i> {% trans "Agregar" %}
+      </button>
     </div>
   </div>
 </div>

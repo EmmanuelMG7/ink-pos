@@ -1,3 +1,4 @@
+# cspell:disable
 from datetime import datetime
 from decimal import Decimal
 from typing import Any
@@ -27,23 +28,42 @@ def procesar_venta_con_promociones(
     fecha_hora: datetime | None = None,
     tipo_documento: str = ResolucionDIAN.TipoDocumento.POS_ELECTRONICO,
 ) -> tuple[Factura, Any]:
-    """Procesa una venta completa aplicando promociones dinámicas y bloqueando
+    """Procesa una venta completa aplicando promociones dinamicas y bloqueando
 
     concurrentemente las reglas usadas mediante select_for_update() para
-    garantizar consistencia en límites de uso e integridad contable.
+    garantizar consistencia en limites de uso e integridad contable.
     """
     fecha = fecha_hora or timezone.now()
 
     with transaction.atomic():
-        # 1. Evaluación en memoria del motor de promociones
+        if cliente and cliente.pk:
+            cliente = Cliente.objects.select_for_update().get(pk=cliente.pk)
+
+        # Bloqueo pesimista previo de reglas y blindaje de precios oficiales (HU19)
+        list(ReglaPromocion.objects.select_for_update().filter(activo=True))
+        items_oficiales: list[dict[str, Any]] = []
+        for raw_it in items:
+            it_copy = dict(raw_it)
+            p_id = it_copy.get("producto_id")
+            if p_id is not None:
+                prod_oficial = Producto.objects.filter(pk=p_id).first()
+                if prod_oficial and prod_oficial.es_institucional:
+                    cant_it = int(it_copy.get("cantidad", 1))
+                    it_copy["precio_unitario"] = prod_oficial.precio_venta
+                    it_copy["subtotal"] = prod_oficial.precio_venta * Decimal(cant_it)
+                    it_copy["es_institucional"] = True
+                    it_copy["precio_institucional"] = prod_oficial.precio_institucional
+            items_oficiales.append(it_copy)
+
+        # 1. Evaluacion en memoria del motor de promociones
         eval_result = PromotionEngineService.evaluate(
-            items=items,
+            items=items_oficiales,
             cliente=cliente,
             cupon=cupon,
             fecha_hora=fecha,
         )
 
-        # 2. Bloqueo pesimista e incremento atómico de usos
+        # 2. Bloqueo pesimista e incremento atomico de usos
         reglas_locked: list[tuple[ReglaPromocion, Decimal]] = []
         for aplicada in eval_result.promociones_aplicadas:
             regla_db = ReglaPromocion.objects.select_for_update().get(pk=aplicada.regla_id)
@@ -65,7 +85,7 @@ def procesar_venta_con_promociones(
             regla_db.save(update_fields=["veces_usado"])
             reglas_locked.append((regla_db, aplicada.monto_descontado))
 
-        # 3. Cálculo de bases e impuestos por línea prorrateada
+        # 3. Calculo de bases e impuestos por linea prorrateada
         subtotal_bruto = eval_result.subtotal_original
         monto_descuento_total = eval_result.monto_descuento_total
         total_impuesto = Decimal("0.00")
@@ -98,7 +118,7 @@ def procesar_venta_con_promociones(
                 }
             )
 
-        # 4. Ítems de regalo otorgados por el motor
+        # 4. Items de regalo otorgados por el motor
         for gift in eval_result.regalos:
             producto_regalo = Producto.objects.get(pk=gift["producto_id"])
             cant_regalo = int(gift["cantidad"])
@@ -127,7 +147,7 @@ def procesar_venta_con_promociones(
         # 6. Consecutivo DIAN
         numero_factura = obtener_siguiente_numero_factura(tipo_documento=tipo_documento)
 
-        # 7. Creación de Factura
+        # 7. Creacion de Factura
         factura = Factura(
             codigo=numero_factura,
             cliente=cliente,

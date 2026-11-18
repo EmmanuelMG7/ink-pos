@@ -1,3 +1,4 @@
+# cspell:disable
 """
 URL configuration for core project.
 
