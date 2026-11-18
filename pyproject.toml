@@ -12,7 +12,15 @@ strict_optional = true
 django_settings_module = "core.settings"
 
 [tool.coverage.run]
-source = ["pos"]
+source = [
+    "app_common",
+    "app_clientes",
+    "app_empleados",
+    "app_autenticacion",
+    "app_inventario",
+    "app_ventas",
+    "app_promociones",
+]
 omit = [
     "*/migrations/*",
     "*/tests/*",
@@ -23,3 +31,6 @@ omit = [
 [tool.coverage.report]
 fail_under = 90
 show_missing = true
+
+[tool.black]
+line-length = 100

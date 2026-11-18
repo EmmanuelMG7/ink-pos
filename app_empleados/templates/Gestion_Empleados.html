@@ -1,0 +1,141 @@
+<!-- cspell:disable -->
+{% extends 'Master.html' %}
+{% load django_tables2 %} 
+{% block title %} 
+    InkPOS - Gestión Empleados 
+{% endblock %}
+
+{% block content %}
+
+{% include "modals/Modal_Agregar_Empleado.html" %}
+<!-- NUEVO: Inyectar modal de edición -->
+{% include "Form_Modificar_Empleado.html" %}
+{% include "modals/Modal_Eliminar_Empleado.html" %}
+
+<div class="d-flex flex-column h-100 overflow-hidden">
+  <div class="d-flex p-2 gap-2 flex-shrink-0">
+    
+    <p class="fs-3 fw-bold mb-0 w-100">
+      Gestión de Empleados
+    </p>
+
+    <div class="d-flex gap-2 justify-content-end w-100">
+      <form action="" method="post">
+        {% csrf_token %}
+        <input
+          type="text"
+          name="id_empleado"
+          class="form-control h-100"
+          placeholder="Busca Aquí un Empleado"
+        />
+      </form>
+
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modal_agregar_empleado">
+        <i class="bi bi-plus-lg"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="m-2 border rounded flex-grow-1 overflow-auto">
+      {% render_table table %}
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="toast align-items-center text-bg-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body">
+            {{ message }}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // 1. Toasts
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+    var toastList = toastElList.map(function (toastEl) {
+      return new bootstrap.Toast(toastEl, {delay: 3000})
+    })
+    toastList.forEach(toast => toast.show())
+
+    // 2. Lógica AJAX de precarga para Edición (HU8)
+    const formEditar = document.getElementById('form_editar_empleado');
+    if (formEditar) {
+        document.body.addEventListener('click', function(e) {
+            const btnEditar = e.target.closest('.btn-editar-empleado');
+            if (!btnEditar) return;
+
+            const empleadoId = btnEditar.getAttribute('data-empleado-id');
+            formEditar.action = `/empleados/editar/${empleadoId}/`;
+
+            formEditar.classList.remove('was-validated');
+            formEditar.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+            fetch(`/empleados/obtener/${empleadoId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    formEditar.querySelector('[name="tipo_documento"]').value = data.tipo_documento;
+                    formEditar.querySelector('[name="identificacion"]').value = data.identificacion;
+                    formEditar.querySelector('[name="nombre"]').value = data.nombre;
+                    formEditar.querySelector('[name="usuario"]').value = data.usuario;
+                    formEditar.querySelector('[name="telefono"]').value = data.telefono;
+                    
+                    const checkboxAdmin = formEditar.querySelector('[name="es_admin"]');
+                    if (checkboxAdmin) {
+                        checkboxAdmin.checked = data.es_admin;
+                    }
+                    
+                    // La contraseña siempre debe estar vacía por seguridad
+                    const inputPassword = formEditar.querySelector('[name="contrasena"]');
+                    if (inputPassword) inputPassword.value = '';
+                })
+                .catch(error => console.error('Error al obtener datos del empleado:', error));
+        });
+
+        // 3. Reseteo automático al cancelar o cerrar el modal
+        const modalEditarEl = document.getElementById('modal_editar_empleado');
+        if (modalEditarEl) {
+            modalEditarEl.addEventListener('hidden.bs.modal', function () {
+                formEditar.reset();
+                formEditar.action = "";
+                formEditar.classList.remove('was-validated');
+                formEditar.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            });
+        }
+    }
+  });
+</script>
+
+{% if form.errors %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var modalEl = document.getElementById('modal_agregar_empleado');
+      if (modalEl) {
+        var modal = new bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    });
+  </script>
+{% endif %}
+
+{% if form_editar.errors %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var modalEl = document.getElementById('modal_editar_empleado');
+      if (modalEl) {
+        var modal = new bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    });
+  </script>
+{% endif %}
+
+{% endblock %}

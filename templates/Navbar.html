@@ -1,0 +1,107 @@
+<!-- cspell:disable -->
+{% load i18n %}
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+  <div class="container-fluid">
+    <a class="navbar-brand d-flex align-items-center gap-2 mb-0" href="{% url 'catalogo' %}">
+      <div style="width: 24px; height: 24px; color: #fff;">
+        {% include "svg/Brand.svg" %}
+      </div>
+      <p class="fs-5 mb-0">InkPOS</p>
+    </a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        {% for item in nav_items %}
+        {% include 'nav_item.html' with url_name=item.url_name label=item.label %}
+        {% endfor %}
+        {% if user.is_authenticated %}
+          {% if user.is_staff or user.is_superuser %}
+            {% include 'nav_item.html' with url_name='clientes:gestion' label=_('Clientes') %}
+          {% endif %}
+        {% endif %}
+      </ul>
+      <div class="d-flex align-items-center gap-2">
+        
+        <!-- Botón del Carrito (Oculto para personal de la tienda) -->
+        {% if not user.is_staff %}
+        <a href="{% url 'inventario:ver_carrito' %}" class="btn btn-outline-secondary position-relative me-2" aria-label="{% trans 'Ver Carrito' %}">
+          <i class="bi bi-cart3 fs-5"></i>
+          <span id="badge-carrito-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            {{ global_total_unidades_carrito|default:"0" }}
+            <span class="visually-hidden">{% trans "artículos en carrito" %}</span>
+          </span>
+        </a>
+        {% endif %}
+
+        {% if user.is_authenticated %}
+          <span class="mb-0 fw-medium">
+            {% if not user.is_staff and user.cliente %}{{ user.cliente.nombre }} ({{ user.username }}){% elif user.first_name %}{{ user.first_name }} ({{ user.username }}){% else %}{{ user.username }}{% endif %}
+          </span>
+          <div class="dropstart d-flex border rounded">
+            <button
+              class="btn"
+              type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              A
+            </button>
+
+            <ul class="dropdown-menu">
+              {% if user.is_staff or user.is_superuser %}
+              <li>
+                <a class="dropdown-item d-flex align-items-center" href="{% url 'clientes:gestion' %}">
+                  <i class="bi bi-buildings me-2"></i>
+                  {% trans "Gestión de Clientes" %}
+                </a>
+              </li>
+              {% endif %}
+              <li>
+                <a class="dropdown-item d-flex align-items-center" href="#">
+                  <i class="bi bi-gear-fill me-2"></i>
+                  {% trans "Ajustes" %}
+                </a>
+              </li>
+
+              <li>
+                <form
+                  action="{% if not user.is_staff and not user.is_superuser and user.cliente %}{% url 'clientes:logout' %}{% else %}{% url 'autenticacion:logout' %}{% endif %}"
+                  method="post"
+                  class="m-0 p-0 w-100"
+                >
+                  {% csrf_token %}
+                  <button
+                    type="submit"
+                    class="dropdown-item d-flex align-items-center border-0 bg-transparent text-start w-100"
+                  >
+                    <i class="bi bi-door-open-fill me-2"></i>
+                    {% trans "Cerrar Sesión" %}
+                  </button>
+                </form>
+              </li>
+            </ul>
+          </div>
+        {% else %}
+          <a
+            href="{% url 'clientes:login' %}?next={{ request.get_full_path|urlencode }}"
+            data-staff-login="{% url 'autenticacion:login' %}"
+            class="btn btn-outline-light btn-sm d-flex align-items-center gap-2"
+          >
+            <i class="bi bi-box-arrow-in-right"></i>
+            <span>{% trans "Iniciar Sesión" %}</span>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</nav>

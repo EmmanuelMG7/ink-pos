@@ -1,0 +1,120 @@
+<!-- cspell:disable -->
+{% load static %}
+<div class="modal fade" tabindex="-1" id="modal_editar_empleado">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Editar Empleado</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      {% with f=form_editar|default:form %}
+      <form action="{% if empleado_editando_id %}{% url 'empleados:editar_empleado' empleado_editando_id %}{% endif %}" method="post" class="needs-validation" novalidate id="form_editar_empleado">
+        {% csrf_token %}
+        
+        <!-- Campo Oculto (HiddenInput) según forms.py -->
+        {{ f.tipo_documento }}
+        
+        <div class="modal-body m-2">
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+                <label class="form-label fw-bold">Identificación</label>
+                {{ f.identificacion }}
+                <div class="invalid-feedback text-wrap text-break">
+                    {% firstof f.identificacion.errors.0 "Por favor ingresa un valor valido" %}
+                </div>
+            </div>
+            <div class="col">
+                <label class="form-label fw-bold">Nombre Completo</label>
+                {{ f.nombre }}
+                <div class="invalid-feedback text-wrap text-break">
+                    {% firstof f.nombre.errors.0 "Por favor ingresa un valor valido" %}
+                </div>
+            </div>
+          </div>
+          
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+                <label class="form-label fw-bold">Usuario</label>
+                {{ f.usuario }}
+                <div class="invalid-feedback text-wrap text-break">
+                    {% firstof f.usuario.errors.0 "El usuario solo debe contener letras, números o guiones permitidos." %}
+                </div>
+            </div>
+            <div class="col">
+                <label class="form-label fw-bold">Teléfono</label>
+                {{ f.telefono }}
+                <div class="invalid-feedback text-wrap text-break">
+                    {% firstof f.telefono.errors.0 "El número debe ser un celular de 10 dígitos que inicie con 3." %}
+                </div>
+            </div>
+          </div>
+
+          <div class="row g-2 mb-2 align-items-start">
+            <div class="col">
+                <label class="form-label fw-bold">Nueva Contraseña</label>
+                {{ f.contrasena }}
+                <div class="form-text text-muted" style="font-size: 0.85em;">Déjalo en blanco para conservar la actual.</div>
+                <div class="invalid-feedback text-wrap text-break">
+                    {% firstof f.contrasena.errors.0 "Por favor ingresa un valor valido" %}
+                </div>
+            </div>
+          </div>
+
+          <div class="row g-2 mt-3 align-items-center">
+            <div class="col form-check ms-2">
+                {{ f.es_admin }}
+                <label class="form-check-label fw-bold" for="{{ f.es_admin.id_for_label }}">
+                    Es usuario administrador
+                </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar Empleado</button>
+        </div>
+      </form>
+      {% endwith %}
+    </div>
+  </div>
+  <script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const form = document.getElementById('form_editar_empleado');
+    const inputs = form.querySelectorAll('input');
+    const actualizarMensajeVacio = (input) => {
+        if (input.validity.valueMissing) {
+            const feedback = input.nextElementSibling;
+            if (feedback && feedback.classList.contains('invalid-feedback')) {
+                feedback.innerText = "Este campo es obligatorio.";
+            }
+        }
+    };
+    inputs.forEach(input => {
+      input.addEventListener('blur', function() {
+        if (!this.checkValidity()) {
+          this.classList.add('is-invalid');
+          this.classList.remove('is-valid');
+          actualizarMensajeVacio(this);
+        } else {
+          this.classList.add('is-valid');
+          this.classList.remove('is-invalid');
+        }
+      });
+    });
+    form.addEventListener('submit', function(event) {
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+        inputs.forEach(input => {
+          if (!input.checkValidity()) {
+              actualizarMensajeVacio(input);
+          }
+        });
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+</script>
+</div>

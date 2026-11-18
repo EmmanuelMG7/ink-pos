@@ -1,3 +1,4 @@
+# cspell:disable
 """
 Django settings for core project.
 
@@ -13,6 +14,8 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 import os
 from pathlib import Path
 from urllib.parse import urlparse
+
+from django.utils.translation import gettext_lazy as _
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,17 +45,28 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "pos",
+    "app_common",
+    "app_clientes",
+    "app_empleados",
+    "app_autenticacion",
+    "app_inventario",
+    "app_ventas",
+    "app_promociones",
+    "app_caja",
+    "app_proveedores",
+    "django_tables2",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "app_clientes.middleware.InactividadClienteMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -60,13 +74,16 @@ ROOT_URLCONF = "core.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
+                "django.template.context_processors.i18n",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "app_common.permissions.menu_navegacion",
+                "app_inventario.context_processors.totales_carrito",
             ],
         },
     },
@@ -81,12 +98,12 @@ WSGI_APPLICATION = "core.wsgi.application"
 if DEBUG:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": "inkpos_db",
-            "USER": "postgres",
-            "PASSWORD": "postgres",
-            "HOST": "inkpos-postgresdb.eu1.netbird.services",
-            "PORT": "5325",
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+            "OPTIONS": {
+                "timeout": 30,
+                "transaction_mode": "IMMEDIATE",
+            },
         }
     }
 else:
@@ -138,9 +155,18 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "es"
 
-TIME_ZONE = "UTC"
+LANGUAGES = [
+    ("es", _("Español")),
+    ("en", _("Inglés")),
+]
+
+LOCALE_PATHS = [
+    BASE_DIR / "locale",
+]
+
+TIME_ZONE = "America/Bogota"
 
 USE_I18N = True
 
@@ -152,6 +178,10 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 
 # Email
@@ -163,4 +193,15 @@ MAILERS = {
     },
 }
 
-LOGIN_URL = "login"
+LOGIN_URL = "autenticacion:login"
+
+# Proxies
+if DEBUG is False:
+    CSRF_TRUSTED_ORIGINS = [
+        f"https://{os.getenv("PROXY_HOSTNAME")}",
+    ]
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    USE_X_FORWARDED_HOST = True
+
+# Configuración DIAN / Facturación Electrónica
+NIT_EMISOR = os.environ.get("NIT_EMISOR", "")

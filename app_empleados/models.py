@@ -1,0 +1,113 @@
+from decimal import Decimal
+
+from django.contrib.auth.models import Group, User
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+from app_common.constants import RolUsuario, TipoDocumento
+
+
+class Empleado(models.Model):
+    TipoDocumento = TipoDocumento
+
+    tipo_documento = models.CharField(
+        max_length=2,
+        choices=TipoDocumento,
+        default=TipoDocumento.CEDULA,
+        verbose_name=_("models.empleado.field.tipo_documento"),
+    )
+    identificacion = models.CharField(
+        max_length=20,
+        unique=True,
+        verbose_name=_("models.empleado.field.identificacion"),
+    )
+    auth_user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="empleado",
+        verbose_name=_("models.empleado.field.auth_user"),
+    )
+    telefono = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name=_("models.empleado.field.telefono"),
+    )
+    salario = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        verbose_name=_("models.empleado.field.salario"),
+    )
+    es_admin = models.BooleanField(
+        default=False,
+        verbose_name=_("models.empleado.field.es_admin"),
+    )
+
+    class Meta:
+        verbose_name = _("models.empleado.verbose_name")
+        verbose_name_plural = _("models.empleado.verbose_name_plural")
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(salario__gte=0),
+                name="chk_empleado_salario_gte_0",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(identificacion=""),
+                name="chk_empleado_identificacion_no_vacia",
+            ),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.identificacion:
+            self.identificacion = self.identificacion.strip()
+        if not self.identificacion:
+            raise ValidationError({"identificacion": "La identificación no puede estar vacía."})
+
+        if self.telefono:
+            self.telefono = self.telefono.strip()
+
+        if self.salario is not None and self.salario < 0:
+            raise ValidationError({"salario": "El salario no puede ser negativo."})
+
+        if self.es_admin and hasattr(self, "auth_user") and self.auth_user:
+            self.auth_user.is_staff = True
+
+    def save(self, *args, skip_clean=False, **kwargs):
+        if not skip_clean:
+            self.full_clean()
+        super().save(*args, **kwargs)
+        if self.auth_user.id:
+            rol_activo = RolUsuario.ADMINISTRADOR if self.es_admin else RolUsuario.CAJERO
+            rol_inactivo = RolUsuario.CAJERO if self.es_admin else RolUsuario.ADMINISTRADOR
+            self.auth_user.groups.remove(*Group.objects.filter(name=rol_inactivo))
+            self.auth_user.groups.add(*Group.objects.filter(name=rol_activo))
+
+    @property
+    def es_activo(self) -> bool:
+        return self.auth_user.is_active
+
+    @es_activo.setter
+    def es_activo(self, value: bool):
+        self.auth_user.is_active = value
+
+    @property
+    def nombre(self) -> str:
+        if hasattr(self, "auth_user") and self.auth_user:
+            return self.auth_user.get_full_name() or self.auth_user.first_name or ""
+        return ""
+
+    @property
+    def usuario(self):
+        return self.auth_user
+
+    @property
+    def es_cajero(self) -> bool:
+        return not self.es_admin
+
+    def __str__(self):
+        return (
+            f"{self.auth_user.get_full_name() or self.auth_user.username} ({self.identificacion})"
+        )

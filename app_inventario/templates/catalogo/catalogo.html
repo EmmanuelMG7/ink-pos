@@ -1,0 +1,121 @@
+<!-- cspell:disable -->
+{% extends 'Master.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Catálogo de Productos" %} - InkPOS{% endblock %}
+
+{% block content %}
+<style>
+  .catalogo-card-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 2.8em;
+    line-height: 1.4em;
+    word-break: break-word;
+  }
+</style>
+
+<div class="d-flex flex-column flex-grow-1 overflow-y-auto py-4 px-3 px-md-5">
+  <div class="container-fluid max-w-7xl">
+    
+    <!-- Encabezado del Catálogo -->
+    <header class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-2 border-bottom border-secondary-subtle gap-3">
+      <div>
+        <h1 class="h3 mb-1 text-light fw-bold d-flex align-items-center gap-2">
+          <i class="bi bi-grid-3x3-gap-fill text-primary"></i>
+          {% trans "Catálogo de Productos" %}
+        </h1>
+        <p class="text-secondary mb-0 small">
+          {% if query %}
+            {% blocktrans with search_term=query %}Resultados de búsqueda para: <strong class="text-light">"{{ search_term }}"</strong>{% endblocktrans %}
+            <a href="{% url 'catalogo' %}" class="ms-2 text-decoration-none text-primary"><i class="bi bi-x-circle me-1"></i>{% trans "Limpiar búsqueda" %}</a>
+          {% else %}
+            {% trans "Explora nuestros artículos y existencias disponibles." %}
+          {% endif %}
+        </p>
+      </div>
+
+      <!-- Buscador en cabecera del catálogo (SCRUM-134) -->
+      <div class="ms-md-auto w-100" style="max-width: 420px;">
+        {% include 'catalogo/components/buscador.html' %}
+      </div>
+    </header>
+
+    <!-- Barra de Navegación de Categorías (SCRUM-159, SCRUM-161, SCRUM-162) -->
+    {% include 'catalogo/components/barra_categorias.html' %}
+
+    {% if page_obj.object_list %}
+      <!-- Cuadrícula Simétrica de Productos (SCRUM-136, SCRUM-139) -->
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4 mb-4">
+        {% for producto in productos %}
+          <div class="col">
+            {% include 'catalogo/components/producto_card.html' with producto=producto %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Barra de Paginación Estructurada (SCRUM-137) -->
+      {% include 'catalogo/components/paginador.html' %}
+
+    {% else %}
+      <!-- Panel de Catálogo Vacío / Empty State Amigable (SCRUM-143) -->
+      {% include 'catalogo/components/empty_state.html' %}
+    {% endif %}
+
+  </div>
+</div>
+
+<script>
+  function validarStockCatalogo(inputElement) {
+      let maxStock = parseInt(inputElement.getAttribute('data-max'));
+      let valorActual = parseInt(inputElement.value);
+
+      if (valorActual > maxStock) {
+          inputElement.value = maxStock;
+          mostrarToastError(`Solo hay ${maxStock} unidades disponibles.`);
+      }
+  }
+
+  function mostrarToastError(mensaje) {
+      let toastContainer = document.getElementById('toast-container-catalogo');
+      
+      if (!toastContainer) {
+          toastContainer = document.createElement('div');
+          toastContainer.id = 'toast-container-catalogo';
+          toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-4';
+          toastContainer.style.zIndex = '1055';
+          document.body.appendChild(toastContainer);
+      } else {
+          // Limpia las notificaciones anteriores para que no se apilen
+          toastContainer.innerHTML = '';
+      }
+
+      const toastEl = document.createElement('div');
+      toastEl.className = 'toast align-items-center text-bg-danger border-0 shadow-lg';
+      toastEl.setAttribute('role', 'alert');
+      toastEl.setAttribute('aria-live', 'assertive');
+      toastEl.setAttribute('aria-atomic', 'true');
+
+      toastEl.innerHTML = `
+          <div class="d-flex">
+              <div class="toast-body fw-bold fs-6">
+                  <i class="bi bi-exclamation-circle-fill me-2"></i> ${mensaje}
+              </div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+          </div>
+      `;
+
+      toastContainer.appendChild(toastEl);
+      const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+      toast.show();
+      
+      toastEl.addEventListener('hidden.bs.toast', () => {
+          toastEl.remove();
+      });
+  }
+</script>
+{% endblock %}

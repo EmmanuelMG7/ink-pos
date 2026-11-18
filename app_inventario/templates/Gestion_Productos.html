@@ -1,0 +1,317 @@
+<!-- cspell:disable -->
+{% extends 'Master.html' %}
+{% load django_tables2 %}
+{% block title %}
+    InkPOS - Gestión Productos
+{% endblock %}
+
+{% block content %}
+
+{% include "modals/Modal_Agregar_Producto.html" %}
+<!-- NUEVO: Inyectar modal de edición -->
+{% include "Form_Modificar_Producto.html" %}
+<!-- Modal Único de Confirmación de Eliminación -->
+<div class="modal fade" id="modal_eliminar_producto" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar Eliminación
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      
+      <div class="modal-body text-center mt-3">
+        <p class="fs-5 mb-1">¿Estás seguro de que deseas eliminar este producto?</p>
+        <!-- Elemento dinámico para inyectar el texto mediante AJAX -->
+        <p class="fs-4 fw-bold text-light" id="texto_producto_eliminar">
+        <span class="spinner-border spinner-border-sm text-danger" role="status" aria-hidden="true"></span> Cargando...
+        </p>
+        <div class="alert alert-warning mt-4 text-start small mb-0" role="alert">
+          <strong>Nota:</strong> Esta acción cambiará el estado del producto a <em>descontinuado</em>. No aparecerá en el módulo de ventas, pero se conservará en la base de datos para mantener la integridad de las facturas históricas.
+        </div>
+      </div>
+
+      <div class="modal-footer d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form action="" method="post" class="m-0" id="form_eliminar_producto">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Sí, Eliminar Producto</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lógica Dinámica de Eliminación (HU9) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const modalEliminarEl = document.getElementById('modal_eliminar_producto');
+    if (!modalEliminarEl) return;
+    
+    const modalEliminarObj = new bootstrap.Modal(modalEliminarEl);
+    const formEliminar = document.getElementById('form_eliminar_producto');
+    const textoProducto = document.getElementById('texto_producto_eliminar');
+
+    document.body.addEventListener('click', function(e) {
+        const btnEliminar = e.target.closest('.btn-eliminar-producto');
+        if (!btnEliminar) return;
+
+        // Extraer los datos directamente del botón
+        const productoId = btnEliminar.getAttribute('data-producto-id');
+        const productoCodigo = btnEliminar.getAttribute('data-producto-codigo');
+        const productoNombre = btnEliminar.getAttribute('data-producto-nombre');
+        
+        // Preparar el formulario y el texto (sin guiones extraños ni saltos de línea)
+        formEliminar.action = `/inventario/eliminar/${productoId}/`;
+        textoProducto.textContent = `${productoCodigo} - ${productoNombre}`;
+        
+        // Mostrar el modal
+        modalEliminarObj.show();
+    });
+  });
+</script>
+
+<div class="d-flex flex-column h-100 overflow-hidden">
+  <div class="d-flex p-2 gap-2 flex-shrink-0">
+
+    <p class="fs-3 fw-bold mb-0 w-100">
+        Gestión de Productos
+    </p>
+
+    <div class="w-100 d-flex gap-2 justify-content-end">
+        <form action="" method="post">
+        {% csrf_token %}
+        <input
+            type="text"
+            name="search_product"
+            class="form-control h-100"
+            placeholder="Busca Aquí un Producto"
+        />
+        </form>
+
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          data-bs-toggle="modal" 
+          data-bs-target="#modal_agregar_producto">
+        <i class="bi bi-plus-lg"></i>
+        </button>
+    </div>
+  </div>
+
+    <div class="m-2 border rounded flex-grow-1 overflow-auto">
+    {% if table.rows %}
+      {% render_table table %}
+    {% else %}
+      <div class="container text-center text-secondary my-5">
+        <i class="bi bi-slash-circle mb-3" style="font-size: 5rem;"></i>
+        <p class="fs-2 fw-bold mb-1">Nada que mostrar aún</p>
+        <p class="fs-4 fw-normal">
+          Puedes crear nuevos productos usando el botón + arriba a la derecha
+        </p>
+      </div>
+    {% endif %}
+  </div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="toast align-items-center text-bg-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body">
+            {{ message }}
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<!-- Lógica AJAX de Edición (HU7) -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const formEditar = document.getElementById('form_editar_producto');
+    if (formEditar) {
+        document.body.addEventListener('click', function(e) {
+            const btnEditar = e.target.closest('.btn-editar-producto');
+            if (!btnEditar) return;
+
+            const productoId = btnEditar.getAttribute('data-producto-id');
+            formEditar.action = `/inventario/editar/${productoId}/`;
+
+            fetch(`/inventario/obtener/${productoId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    formEditar.querySelector('[name="codigo"]').value = data.codigo;
+                    formEditar.querySelector('[name="nombre"]').value = data.nombre;
+                    formEditar.querySelector('[name="precio_venta"]').value = data.precio_venta;
+                    formEditar.querySelector('[name="costo_compra"]').value = data.costo_compra;
+                    formEditar.querySelector('[name="stock_actual"]').value = data.stock_actual;
+                    formEditar.querySelector('[name="stock_minimo"]').value = data.stock_minimo;
+                    
+                    const selectImpuesto = formEditar.querySelector('[name="impuesto"]');
+                    if (selectImpuesto) selectImpuesto.value = data.impuesto;
+
+                    // Precarga de Marca (search_and_create_dropdown)
+                    const marcaContainer = document.getElementById('dropdown_marca_edit_container');
+                    if (marcaContainer) {
+                        const hiddenMarca = marcaContainer.querySelector('.searchable-hidden-input');
+                        const labelMarca = marcaContainer.querySelector('.searchable-label');
+                        const marcaVal = data.marca || 'Genérico';
+                        if (hiddenMarca) hiddenMarca.value = data.marca || '';
+                        if (labelMarca) {
+                            labelMarca.textContent = marcaVal;
+                            if (data.marca && data.marca !== 'Ninguna' && data.marca !== 'Genérico') {
+                                labelMarca.classList.remove('text-secondary');
+                            } else {
+                                labelMarca.classList.add('text-secondary');
+                            }
+                        }
+                        marcaContainer.querySelectorAll('.searchable-item, .dropdown-item').forEach(btn => {
+                            if ((btn.getAttribute('data-valor') || '').trim() === data.marca) {
+                                btn.classList.add('active');
+                            } else {
+                                btn.classList.remove('active');
+                            }
+                        });
+                    }
+
+                    // Precarga de Categorías (multi_search_and_create_dropdown)
+                    const catContainer = document.getElementById('dropdown_categorias_edit_container');
+                    if (catContainer) {
+                        if (typeof catContainer.clearAllTags === 'function') {
+                            catContainer.clearAllTags();
+                            if (Array.isArray(data.categorias)) {
+                                data.categorias.forEach(cat => catContainer.addTag(cat));
+                            }
+                        }
+                    }
+
+                    // Precarga de imagen del producto en edición (SCRUM-149, SCRUM-150, SCRUM-151)
+                    const previewEdit = document.getElementById('preview_imagen_editar');
+                    if (previewEdit) {
+                        const imgUrl = data.imagen_url || previewEdit.getAttribute('data-default');
+                        previewEdit.src = imgUrl;
+                        previewEdit.setAttribute('data-original', imgUrl);
+                    }
+                    const inputEdit = document.getElementById('input_imagen_editar');
+                    if (inputEdit) {
+                        inputEdit.value = '';
+                        inputEdit.classList.remove('is-invalid');
+                    }
+                    const btnQuitar = document.getElementById('btn_quitar_imagen_editar');
+                    if (btnQuitar) btnQuitar.classList.add('d-none');
+                    const alertaEdit = document.getElementById('alerta_imagen_editar');
+                    if (alertaEdit) {
+                        alertaEdit.textContent = '';
+                        alertaEdit.classList.remove('d-block');
+                        alertaEdit.classList.add('d-none');
+                    }
+                    const contenedorEdit = document.getElementById('contenedor_imagen_editar');
+                    if (contenedorEdit) {
+                        contenedorEdit.classList.remove('border-danger');
+                        contenedorEdit.classList.add('border-secondary-subtle');
+                    }
+                })
+                .catch(error => console.error('Error al cargar datos:', error));
+        });
+
+        // Reseteo de campos y URL al cancelar
+        const modalEditarEl = document.getElementById('modal_editar_producto');
+        if (modalEditarEl) {
+            modalEditarEl.addEventListener('hidden.bs.modal', function () {
+                formEditar.reset();
+                formEditar.action = "";
+                formEditar.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                const catContainer = document.getElementById('dropdown_categorias_edit_container');
+                if (catContainer && typeof catContainer.clearAllTags === 'function') {
+                    catContainer.clearAllTags();
+                }
+                const marcaContainer = document.getElementById('dropdown_marca_edit_container');
+                if (marcaContainer && typeof marcaContainer.resetToDefault === 'function') {
+                    marcaContainer.resetToDefault();
+                }
+                const previewEdit = document.getElementById('preview_imagen_editar');
+                if (previewEdit) {
+                    previewEdit.src = previewEdit.getAttribute('data-default');
+                    previewEdit.removeAttribute('data-original');
+                }
+                const inputEdit = document.getElementById('input_imagen_editar');
+                if (inputEdit) {
+                    inputEdit.value = '';
+                    inputEdit.classList.remove('is-invalid');
+                }
+                const btnQuitar = document.getElementById('btn_quitar_imagen_editar');
+                if (btnQuitar) btnQuitar.classList.add('d-none');
+                const alertaEdit = document.getElementById('alerta_imagen_editar');
+                if (alertaEdit) {
+                    alertaEdit.textContent = '';
+                    alertaEdit.classList.remove('d-block');
+                    alertaEdit.classList.add('d-none');
+                }
+                const contenedorEdit = document.getElementById('contenedor_imagen_editar');
+                if (contenedorEdit) {
+                    contenedorEdit.classList.remove('border-danger');
+                    contenedorEdit.classList.add('border-secondary-subtle');
+                }
+            });
+        }
+    }
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+    var toastList = toastElList.map(function (toastEl) {
+      return new bootstrap.Toast(toastEl, {delay: 3000})
+    })
+    toastList.forEach(toast => toast.show())
+    
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+    popoverTriggerList.forEach(function (popoverTriggerEl) {
+      new bootstrap.Popover(popoverTriggerEl);
+    });
+  });
+</script>
+
+{% if form.errors %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var modalEl = document.getElementById('modal_agregar_producto');
+      if (modalEl) {
+        var modal = new bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    });
+  </script>
+{% endif %}
+
+<!-- NUEVO: Detecta errores en edición y reabre el modal de modificar -->
+{% if form_editar.errors %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var modalEditEl = document.getElementById('modal_editar_producto');
+      if (modalEditEl) {
+        var modal = new bootstrap.Modal(modalEditEl);
+        modal.show();
+        
+        // Si el error ocurrió en la página 2 (ej. impuesto), saltar directamente a ella
+        var tieneErrorImpuesto = "{% if form_editar.impuesto.errors %}true{% else %}false{% endif %}" === "true";
+        if (tieneErrorImpuesto) {
+          setTimeout(function() {
+            var btnSiguiente = document.getElementById('btn_modal_edit_siguiente');
+            if (btnSiguiente) {
+              btnSiguiente.click();
+            }
+          }, 100);
+        }
+      }
+    });
+  </script>
+{% endif %}
+
+{% endblock %}

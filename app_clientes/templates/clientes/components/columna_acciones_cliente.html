@@ -1,0 +1,22 @@
+<!-- cspell:disable -->
+<div class="d-flex align-items-center gap-2">
+  <button
+    type="button"
+    class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 btn-configurar-categoria"
+    data-bs-toggle="modal"
+    data-bs-target="#modalConfigurarCategoriaCliente"
+    data-cliente-id="{{ record.pk }}"
+    data-cliente-tipo-doc="{{ record.tipo_documento }}"
+    data-cliente-identificacion="{{ record.identificacion }}"
+    data-cliente-nombre="{{ record.nombre }}"
+    data-cliente-direccion="{{ record.direccion|default:'' }}"
+    data-cliente-telefono="{{ record.telefono|default:'' }}"
+    data-cliente-email="{{ record.email|default:'' }}"
+    data-cliente-institucional="{{ record.es_institucional|yesno:'true,false' }}"
+    data-action-url="{% url 'clientes:asignar_categoria_institucional' record.pk %}"
+    title="Configurar categoría del cliente"
+  >
+    <i class="bi bi-buildings"></i>
+    <span>Categoría</span>
+  </button>
+</div>

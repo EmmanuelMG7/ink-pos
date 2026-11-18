@@ -1,0 +1,349 @@
+<!-- cspell:disable -->
+{% load static %}
+<div class="modal fade" tabindex="-1" id="modal_editar_producto">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Editar Producto</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="progress" style="height: 4px; border-radius: 0;">
+        <div id="modal_producto_edit_progress" class="progress-bar bg-primary" role="progressbar" 
+             style="width: 50%; transition: width 0.3s ease;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">
+        </div>
+      </div>
+
+      <form action="{% if producto_edit_id %}/inventario/editar/{{ producto_edit_id }}/{% endif %}" method="post" enctype="multipart/form-data" class="needs-validation" novalidate id="form_editar_producto">
+        {% csrf_token %}
+        <div class="modal-body m-2">
+          
+          <!-- PÁGINA 1 -->
+          <div id="modal_producto_edit_page_1">
+            <div class="row g-3 align-items-stretch">
+              <!-- Selector interactivo de imagen del producto para edición (SCRUM-149, SCRUM-150) -->
+              <div class="col-12 col-md-4">
+                <div class="border {% if form_editar.imagen.errors %}border-danger{% else %}border-secondary-subtle{% endif %} rounded bg-body-tertiary d-flex flex-column align-items-center justify-content-between h-100 p-2 text-center position-relative" 
+                     id="contenedor_imagen_editar"
+                     style="min-height: 190px;">
+                  <div class="w-100 d-flex flex-column align-items-center justify-content-center flex-grow-1 overflow-hidden rounded bg-body p-1" style="min-height: 130px; max-height: 140px;">
+                    <img id="preview_imagen_editar" 
+                         src="{% static 'img/default_producto.svg' %}" 
+                         data-default="{% static 'img/default_producto.svg' %}"
+                         alt="Previsualización de producto" 
+                         class="img-fluid rounded" 
+                         style="max-height: 130px; width: 100%; object-fit: contain;">
+                  </div>
+                  <input type="file" 
+                         name="imagen" 
+                         id="input_imagen_editar" 
+                         accept="image/jpeg,image/png,image/webp" 
+                         class="d-none {% if form_editar.imagen.errors %}is-invalid{% endif %}">
+                  <div class="mt-2 w-100 d-flex gap-1">
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-primary w-100 text-truncate" 
+                            id="btn_seleccionar_imagen_editar">
+                      <i class="bi bi-upload me-1"></i> Cambiar Foto
+                    </button>
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-danger d-none" 
+                            id="btn_quitar_imagen_editar" 
+                            title="Restablecer a imagen previa">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                  <div id="alerta_imagen_editar" class="invalid-feedback text-wrap text-break text-start mt-1 {% if form_editar.imagen.errors %}d-block{% else %}d-none{% endif %}" style="font-size: 0.75rem; line-height: 1.2;">
+                    {% if form_editar.imagen.errors %}{{ form_editar.imagen.errors.0 }}{% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12 col-md-8">
+                <div class="row g-2 mb-2">
+                  <div class="col-4">
+                    {% with field=form_editar.codigo span_text="ID" %}
+                      {% include 'bootstrap_input_field.html' %}
+                    {% endwith %}
+                  </div>
+                  <div class="col-8">
+                    {% with field=form_editar.nombre span_icon="bi bi-fonts" %}
+                      {% include 'bootstrap_input_field.html' %}
+                    {% endwith %}
+                  </div>
+                </div>
+
+                <div class="row g-2 mb-2">
+                  <div class="col">
+                    {% with field=form_editar.precio_venta span_icon="bi bi-tags-fill" %}
+                      {% include 'bootstrap_input_field.html' %}
+                    {% endwith %}
+                  </div>
+                  <div class="col">
+                    {% with field=form_editar.costo_compra span_icon="bi bi-cash-stack" %}
+                      {% include 'bootstrap_input_field.html' %}
+                    {% endwith %}
+                  </div>
+                </div>
+
+                <div class="row g-2">
+                  <div class="col">
+                    {% with field=form_editar.stock_actual span_icon="bi bi-box-seam-fill" %}
+                      {% include 'bootstrap_input_field.html' %}
+                    {% endwith %}
+                  </div>
+                  <div class="col">
+                    {% with field=form_editar.stock_minimo span_icon="bi bi-box-arrow-in-down" %}
+                      {% include 'bootstrap_input_field.html' %}
+                    {% endwith %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PÁGINA 2 -->
+          <div id="modal_producto_edit_page_2" class="d-none">
+            <div class="row g-2 mb-3">
+              <div class="col-12">
+                <!-- Se usan IDs _edit para evitar conflicto con el modal de creación -->
+                {% with id='marca_edit' name='marca' label='Marca' default_value='Genérico' value=form_editar.marca.value|default:'Genérico' items=marcas %}
+                  {% include 'search_and_create_dropdown.html' %}
+                {% endwith %}
+              </div>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-12">
+                {% with id='categorias_edit' name='categorias' label='Categorías' items=categorias %}
+                  {% include 'multi_search_and_create_dropdown.html' %}
+                {% endwith %}
+              </div>
+            </div>
+
+            <div class="row g-2">
+              <div class="col-12">
+                {% with field=form_editar.impuesto span_icon="bi bi-receipt" %}
+                  {% include 'bootstrap_input_field.html' %} 
+                {% endwith %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer d-flex justify-content-between">
+          <div>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="btn_modal_edit_cancelar">Cancelar</button>
+            <button type="button" class="btn btn-secondary d-none" id="btn_modal_edit_anterior">
+              <i class="bi bi-arrow-left me-1"></i> Atrás
+            </button>
+          </div>
+          <div>
+            <button type="button" class="btn btn-primary" id="btn_modal_edit_siguiente">
+              Siguiente <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+            <button type="submit" class="btn btn-primary d-none" id="btn_modal_edit_guardar">
+              <i class="bi bi-check-lg me-1"></i> Guardar Cambios
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const page1 = document.getElementById('modal_producto_edit_page_1');
+    const page2 = document.getElementById('modal_producto_edit_page_2');
+    const progressBar = document.getElementById('modal_producto_edit_progress');
+    const btnCancelar = document.getElementById('btn_modal_edit_cancelar');
+    const btnAnterior = document.getElementById('btn_modal_edit_anterior');
+    const btnSiguiente = document.getElementById('btn_modal_edit_siguiente');
+    const btnGuardar = document.getElementById('btn_modal_edit_guardar');
+
+    function irAPagina1Edit() {
+      if(!page2) return;
+      page2.classList.add('d-none');
+      page1.classList.remove('d-none');
+      progressBar.style.width = '50%';
+      progressBar.setAttribute('aria-valuenow', '50');
+      btnAnterior.classList.add('d-none');
+      btnCancelar.classList.remove('d-none');
+      btnGuardar.classList.add('d-none');
+      btnSiguiente.classList.remove('d-none');
+    }
+
+    function irAPagina2Edit() {
+      page1.classList.add('d-none');
+      page2.classList.remove('d-none');
+      progressBar.style.width = '100%';
+      progressBar.setAttribute('aria-valuenow', '100');
+      btnCancelar.classList.add('d-none');
+      btnAnterior.classList.remove('d-none');
+      btnSiguiente.classList.add('d-none');
+      btnGuardar.classList.remove('d-none');
+    }
+
+    if (btnSiguiente) {
+      btnSiguiente.addEventListener('click', function () {
+        const inputs = page1.querySelectorAll('input');
+        let valido = true;
+        for (let i = 0; i < inputs.length; i++) {
+          if (inputs[i].checkValidity && !inputs[i].checkValidity()) {
+            valido = false;
+            inputs[i].reportValidity();
+            break;
+          }
+        }
+        if (valido) irAPagina2Edit();
+      });
+    }
+
+    if (btnAnterior) {
+      btnAnterior.addEventListener('click', irAPagina1Edit);
+    }
+
+    // Control de Imagen y Previsualización Instantánea en Edición (SCRUM-149, SCRUM-150, SCRUM-153, SCRUM-155)
+    const btnFotoEdit = document.getElementById('btn_seleccionar_imagen_editar');
+    const inputFotoEdit = document.getElementById('input_imagen_editar');
+    const previewFotoEdit = document.getElementById('preview_imagen_editar');
+    const btnQuitarFotoEdit = document.getElementById('btn_quitar_imagen_editar');
+    const alertaFotoEdit = document.getElementById('alerta_imagen_editar');
+    const contenedorFotoEdit = document.getElementById('contenedor_imagen_editar');
+    let fotoOriginalUrl = previewFotoEdit ? (previewFotoEdit.getAttribute('data-original') || previewFotoEdit.getAttribute('data-default')) : '';
+
+    function limpiarErrorFotoEdit() {
+      if (inputFotoEdit) {
+        inputFotoEdit.classList.remove('is-invalid');
+      }
+      if (contenedorFotoEdit) {
+        contenedorFotoEdit.classList.remove('border-danger');
+        contenedorFotoEdit.classList.add('border-secondary-subtle');
+      }
+      if (alertaFotoEdit) {
+        alertaFotoEdit.textContent = '';
+        alertaFotoEdit.classList.remove('d-block');
+        alertaFotoEdit.classList.add('d-none');
+      }
+    }
+
+    function mostrarErrorFotoEdit(mensaje) {
+      if (inputFotoEdit) {
+        inputFotoEdit.value = '';
+        inputFotoEdit.classList.add('is-invalid');
+      }
+      if (previewFotoEdit) {
+        previewFotoEdit.src = previewFotoEdit.getAttribute('data-original') || previewFotoEdit.getAttribute('data-default');
+      }
+      if (btnQuitarFotoEdit) {
+        btnQuitarFotoEdit.classList.add('d-none');
+      }
+      if (contenedorFotoEdit) {
+        contenedorFotoEdit.classList.remove('border-secondary-subtle');
+        contenedorFotoEdit.classList.add('border-danger');
+      }
+      if (alertaFotoEdit) {
+        alertaFotoEdit.textContent = mensaje;
+        alertaFotoEdit.classList.remove('d-none');
+        alertaFotoEdit.classList.add('d-block');
+      }
+    }
+
+    function resetearFotoEdit() {
+      if (inputFotoEdit) inputFotoEdit.value = '';
+      if (previewFotoEdit) {
+        previewFotoEdit.src = previewFotoEdit.getAttribute('data-original') || previewFotoEdit.getAttribute('data-default');
+      }
+      if (btnQuitarFotoEdit) btnQuitarFotoEdit.classList.add('d-none');
+      limpiarErrorFotoEdit();
+    }
+
+    if (btnFotoEdit && inputFotoEdit) {
+      btnFotoEdit.addEventListener('click', function () {
+        inputFotoEdit.click();
+      });
+    }
+
+    if (btnQuitarFotoEdit) {
+      btnQuitarFotoEdit.addEventListener('click', resetearFotoEdit);
+    }
+
+    if (inputFotoEdit) {
+      inputFotoEdit.addEventListener('change', function () {
+        if (!inputFotoEdit.files || inputFotoEdit.files.length === 0) return;
+        const archivo = inputFotoEdit.files[0];
+
+        // 1. Validación de tamaño máx: 5MB (SCRUM-153)
+        const maxBytes = 5 * 1024 * 1024;
+        if (archivo.size > maxBytes) {
+          mostrarErrorFotoEdit('El archivo es muy pesado (máx 5 MB). Por favor optimícelo antes de continuar.');
+          return;
+        }
+
+        // 2. Validación de extensiones permitidas y seguridad (SCRUM-152, SCRUM-155)
+        const nombre = archivo.name.toLowerCase();
+        const partes = nombre.split('.');
+        const extensionesPermitidas = ['jpg', 'jpeg', 'png', 'webp'];
+        const extensionesPeligrosas = [
+          'exe', 'bat', 'cmd', 'sh', 'bash', 'php', 'php3', 'php4', 'php5', 'phtml',
+          'py', 'rb', 'pl', 'cgi', 'js', 'vbs', 'msi', 'dll', 'scr', 'com', 'jar',
+          'war', 'jsp', 'asp', 'aspx', 'html', 'htm', 'xhtml', 'svg'
+        ];
+
+        if (partes.length < 2) {
+          mostrarErrorFotoEdit('El archivo no tiene una extensión válida. Formatos permitidos: JPG, JPEG, PNG, WEBP.');
+          return;
+        }
+
+        for (let i = 1; i < partes.length - 1; i++) {
+          if (extensionesPeligrosas.includes(partes[i]) || extensionesPermitidas.includes(partes[i])) {
+            mostrarErrorFotoEdit('Archivo rechazado por seguridad: se detectó un archivo con doble extensión o extensión potencialmente maliciosa.');
+            return;
+          }
+        }
+
+        const extFinal = partes[partes.length - 1];
+        if (extensionesPeligrosas.includes(extFinal)) {
+          mostrarErrorFotoEdit('Archivo rechazado por seguridad: formato ejecutable o potencialmente malicioso bloqueado.');
+          return;
+        }
+
+        if (!extensionesPermitidas.includes(extFinal)) {
+          mostrarErrorFotoEdit('Formato de archivo no permitido. Formatos permitidos: JPG, JPEG, PNG, WEBP.');
+          return;
+        }
+
+        // 3. Previsualización instantánea y validación estructural del contenido (SCRUM-150)
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const imgVerif = new Image();
+          imgVerif.onload = function () {
+            limpiarErrorFotoEdit();
+            if (previewFotoEdit) {
+              previewFotoEdit.src = e.target.result;
+            }
+            if (btnQuitarFotoEdit) {
+              btnQuitarFotoEdit.classList.remove('d-none');
+            }
+          };
+          imgVerif.onerror = function () {
+            mostrarErrorFotoEdit('El archivo subido no es una imagen válida o se encuentra corrupto. Formatos permitidos: JPG, JPEG, PNG, WEBP.');
+          };
+          imgVerif.src = e.target.result;
+        };
+        reader.onerror = function () {
+          mostrarErrorFotoEdit('Error al leer el archivo. Intente de nuevo.');
+        };
+        reader.readAsDataURL(archivo);
+      });
+    }
+
+    const modalEditEl = document.getElementById('modal_editar_producto');
+    if (modalEditEl) {
+      modalEditEl.addEventListener('hidden.bs.modal', function () {
+        resetearFotoEdit();
+        irAPagina1Edit();
+      });
+    }
+  })();
+</script>
