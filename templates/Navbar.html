@@ -41,7 +41,7 @@
 
         {% if user.is_authenticated %}
           <span class="mb-0 fw-medium">
-            {% if user.cliente %}{{ user.cliente.nombre }} ({{ user.username }}){% else %}{{ user.username }}{% endif %}
+            {% if not user.is_staff and user.cliente %}{{ user.cliente.nombre }} ({{ user.username }}){% elif user.first_name %}{{ user.first_name }} ({{ user.username }}){% else %}{{ user.username }}{% endif %}
           </span>
           <div class="dropstart d-flex border rounded">
             <button
@@ -63,7 +63,7 @@
 
               <li>
                 <form
-                  action="{% if user.cliente %}{% url 'clientes:logout' %}{% else %}{% url 'autenticacion:logout' %}{% endif %}"
+                  action="{% if not user.is_staff and user.cliente %}{% url 'clientes:logout' %}{% else %}{% url 'autenticacion:logout' %}{% endif %}"
                   method="post"
                   class="m-0 p-0 w-100"
                 >
@@ -81,8 +81,8 @@
           </div>
         {% else %}
           <a
-            href="{% url \'clientes:login\' %}?next={{ request.get_full_path|urlencode }}"
-            data-staff-login="{% url \'autenticacion:login\' %}"
+            href="{% url 'clientes:login' %}?next={{ request.get_full_path|urlencode }}"
+            data-staff-login="{% url 'autenticacion:login' %}"
             class="btn btn-outline-light btn-sm d-flex align-items-center gap-2"
           >
             <i class="bi bi-box-arrow-in-right"></i>
